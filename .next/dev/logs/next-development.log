@@ -1,0 +1,14 @@
+{"timestamp":"00:00:09.146","source":"Server","level":"LOG","message":""}
+{"timestamp":"00:00:58.224","source":"Server","level":"LOG","message":"○ Compiling / ..."}
+{"timestamp":"00:01:05.669","source":"Server","level":"ERROR","message":"Watchpack Error (watcher): Error: EACCES: permission denied, watch '/data/data'"}
+{"timestamp":"00:01:05.671","source":"Server","level":"ERROR","message":"Watchpack Error (watcher): Error: EACCES: permission denied, watch '/data'"}
+{"timestamp":"00:01:05.672","source":"Server","level":"ERROR","message":"Watchpack Error (watcher): Error: EACCES: permission denied, watch '/'"}
+{"timestamp":"00:01:05.726","source":"Server","level":"ERROR","message":"Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/data/data'"}
+{"timestamp":"00:01:05.727","source":"Server","level":"ERROR","message":"Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/data'"}
+{"timestamp":"00:01:05.729","source":"Server","level":"ERROR","message":"Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/'"}
+{"timestamp":"00:01:09.146","source":"Server","level":"ERROR","message":"Watchpack Error (watcher): Error: EACCES: permission denied, watch '/data/data'"}
+{"timestamp":"00:01:09.147","source":"Server","level":"ERROR","message":"Watchpack Error (watcher): Error: EACCES: permission denied, watch '/data'"}
+{"timestamp":"00:01:09.147","source":"Server","level":"ERROR","message":"Watchpack Error (watcher): Error: EACCES: permission denied, watch '/'"}
+{"timestamp":"00:01:09.161","source":"Server","level":"ERROR","message":"Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/data/data'"}
+{"timestamp":"00:01:09.162","source":"Server","level":"ERROR","message":"Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/data'"}
+{"timestamp":"00:01:09.164","source":"Server","level":"ERROR","message":"Watchpack Error (initial scan): Error: EACCES: permission denied, scandir '/'"}
