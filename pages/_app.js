@@ -61,12 +61,7 @@ export default function App({ Component, pageProps }) {
                   serif: ["'Manrope', 'sans-serif'"],
                   mono: ["'Sora', 'sans-serif'"]
                 },
-                colors: {
-                  primary: '#1d1d1f',
-                  accent: '#86868b',
-                  soft: '#f5f5f7',
-                  blue: '#007aff'
-                }
+                colors: { primary: '#1d1d1f', accent: '#86868b', soft: '#f5f5f7', blue: '#007aff' }
               }
             }
           }
@@ -74,51 +69,15 @@ export default function App({ Component, pageProps }) {
       }} />
 
       <style jsx global>{`
-        :root {
-          --primary: #1d1d1f;
-          --accent: #86868b;
-          --soft: #f5f5f7;
-          --blue: #007aff;
-          --card-width: 260px;
-          --card-gap: 16px;
-        }
-        * {
-          -webkit-tap-highlight-color: transparent;
-          box-sizing: border-box;
-          -webkit-user-select: none;
-          user-select: none;
-        }
-        body {
-          background-color: #ffffff;
-          color: #1d1d1f;
-          overflow-x: hidden;
-          display: flex;
-          flex-direction: column;
-          min-height: 100vh;
-          -webkit-font-smoothing: antialiased;
-          -moz-osx-font-smoothing: grayscale;
-        }
-        main {
-          flex-grow: 1;
-          min-height: calc(100vh - 280px);
-        }
-        html {
-          scroll-behavior: smooth;
-        }
-        img {
-          max-width: 100%;
-          height: auto;
-          pointer-events: none;
-        }
+        :root { --primary: #1d1d1f; --accent: #86868b; --soft: #f5f5f7; --blue: #007aff; --card-width: 260px; --card-gap: 16px; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+        body { background-color: #ffffff; color: #1d1d1f; overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; -webkit-font-smoothing: antialiased; }
+        main { flex-grow: 1; min-height: calc(100vh - 280px); }
+        html { scroll-behavior: smooth; }
+        img { max-width: 100%; height: auto; pointer-events: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .page-section {
-          display: none;
-          opacity: 0;
-          transform: translateY(8px);
-          transition: opacity 0.3s ease, transform 0.3s ease;
-          min-height: 60vh;
-        }
+        .page-section { display: none; opacity: 0; transform: translateY(8px); transition: opacity 0.3s ease, transform 0.3s ease; min-height: 60vh; }
         .page-section.active-page { display: block; }
         .page-section.fade-in { opacity: 1; transform: translateY(0); }
         .carousel-section { padding: 48px 0; background: #ffffff; }
@@ -126,106 +85,37 @@ export default function App({ Component, pageProps }) {
         .carousel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
         .carousel-header .section-title { font-size: 28px; color: var(--primary); font-weight: 700; }
         .carousel-header .section-link { font-size: 14px; font-weight: 500; color: var(--blue); text-decoration: none; display: flex; align-items: center; gap: 4px; }
-        .carousel-header .section-link:hover { gap: 8px; }
         .carousel-wrapper { position: relative; overflow: hidden; }
-        .carousel-track {
-          display: flex; gap: var(--card-gap); overflow-x: auto; overflow-y: hidden;
-          scroll-behavior: smooth; scrollbar-width: none;
-          cursor: grab; padding: 4px;
-        }
+        .carousel-track { display: flex; gap: var(--card-gap); overflow-x: auto; overflow-y: hidden; scroll-behavior: smooth; scrollbar-width: none; cursor: grab; padding: 4px; }
         .carousel-track::-webkit-scrollbar { display: none; }
-        .carousel-track:active { cursor: grabbing; }
-        .carousel-card {
-          flex: 0 0 auto; width: var(--card-width);
-          cursor: pointer; text-decoration: none; color: inherit; display: flex;
-          flex-direction: column; transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
-          position: relative; background: transparent;
-        }
+        .carousel-card { flex: 0 0 auto; width: var(--card-width); cursor: pointer; text-decoration: none; color: inherit; display: flex; flex-direction: column; transition: transform 0.3s; position: relative; }
         .carousel-card:active { transform: scale(0.96); }
-        @media (hover: hover) {
-          .carousel-card:hover { transform: translateY(-2px); }
-        }
-        .carousel-card .card-img {
-          position: relative; aspect-ratio: 3/4; background: #fafafa; overflow: hidden;
-          margin-bottom: 12px;
-        }
-        .carousel-card .card-img img {
-          width: 100%; height: 100%; object-fit: cover;
-          transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
-        }
-        @media (hover: hover) {
-          .carousel-card:hover .card-img img { transform: scale(1.03); }
-        }
+        .carousel-card .card-img { aspect-ratio: 3/4; background: #fafafa; overflow: hidden; margin-bottom: 12px; }
+        .carousel-card .card-img img { width: 100%; height: 100%; object-fit: cover; }
         .carousel-card .card-body { padding: 0 4px; display: flex; flex-direction: column; gap: 4px; }
         .carousel-card .card-title { font-size: 14px; font-weight: 500; color: var(--primary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .carousel-card .card-price { font-size: 14px; font-weight: 600; color: var(--primary); }
-        .carousel-card .card-old-price { font-size: 13px; color: #b0b0b5; text-decoration: line-through; margin-left: 6px; font-weight: 400; }
+        .carousel-card .card-old-price { font-size: 13px; color: #b0b0b5; text-decoration: line-through; margin-left: 6px; }
         .carousel-card .card-category { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--accent); }
-        .carousel-card .card-badge {
-          position: absolute; top: 8px; left: 8px; z-index: 2; padding: 2px 8px;
-          font-size: 10px; font-weight: 600; text-transform: uppercase; background: #ffffff;
-          color: var(--primary); pointer-events: none;
-        }
+        .carousel-card .card-badge { position: absolute; top: 8px; left: 8px; z-index: 2; padding: 2px 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; background: #fff; color: var(--primary); }
         .badge-sale { color: #d70015 !important; }
-        .carousel-card .card-soldout-overlay {
-          position: absolute; inset: 0; background: rgba(255,255,255,0.6);
-          display: flex; align-items: center; justify-content: center; z-index: 5; pointer-events: none;
-        }
-        .carousel-card .card-soldout-overlay span {
-          background: var(--primary); color: #fff; font-size: 10px; font-weight: 600;
-          text-transform: uppercase; padding: 6px 16px;
-        }
-        .carousel-nav {
-          position: absolute; top: 35%; transform: translateY(-50%); z-index: 20;
-          width: 44px; height: 44px; border-radius: 50%; background: #ffffff;
-          border: none; display: flex; align-items: center; justify-content: center;
-          cursor: pointer; transition: all 0.2s ease; color: var(--primary);
-          font-size: 14px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
-        }
-        @media (hover: hover) {
-          .carousel-nav { opacity: 0; }
-          .carousel-wrapper:hover .carousel-nav { opacity: 1; }
-        }
+        .carousel-card .card-soldout-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; z-index: 5; }
+        .carousel-card .card-soldout-overlay span { background: var(--primary); color: #fff; font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 6px 16px; }
+        .carousel-nav { position: absolute; top: 35%; transform: translateY(-50%); z-index: 20; width: 44px; height: 44px; border-radius: 50%; background: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
         .carousel-nav.prev { left: -20px; }
         .carousel-nav.next { right: -20px; }
-        #limited-edition-section { background: #000000 !important; }
-        #limited-edition-section .section-title { color: #ffffff !important; }
-        #limited-edition-section .carousel-card .card-title { color: #ffffff !important; }
-        #limited-edition-section .carousel-card .card-price { color: #ffffff !important; }
-        #limited-edition-section .carousel-card .card-badge { background: #2d2d2f !important; color: #ffffff !important; }
-        #limited-edition-section .carousel-nav { background: rgba(255,255,255,0.15) !important; color: #fff !important; }
-        .cookie-consent-overlay {
-          position: fixed; bottom: 0; left: 0; right: 0; background: rgba(29,29,31,0.95);
-          backdrop-filter: blur(20px); z-index: 9999;
-          transform: translateY(100%); transition: transform 0.5s;
-          border-top: 1px solid rgba(255,255,255,0.1);
-        }
+        #limited-edition-section { background: #000 !important; }
+        #limited-edition-section .section-title { color: #fff !important; }
+        #limited-edition-section .card-title { color: #fff !important; }
+        #limited-edition-section .card-price { color: #fff !important; }
+        .cookie-consent-overlay { position: fixed; bottom: 0; left: 0; right: 0; background: rgba(29,29,31,0.95); backdrop-filter: blur(20px); z-index: 9999; transform: translateY(100%); transition: transform 0.5s; }
         .cookie-consent-overlay.show { transform: translateY(0); }
-        .cookie-banner { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
-        .cookie-icon { width: 40px; height: 40px; background: #007aff; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .cookie-text { flex: 1; min-width: 200px; color: white; }
-        .cookie-text h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; color: #fff; }
-        .cookie-text p { font-size: 11px; color: #a1a1a6; line-height: 1.4; margin: 0; }
-        .cookie-text a { color: #007aff; text-decoration: underline; }
-        .cookie-buttons { display: flex; gap: 10px; flex-shrink: 0; }
-        .cookie-btn { padding: 10px 24px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.3s; border: none; outline: none; }
+        .cookie-banner { max-width: 1200px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .cookie-btn { padding: 10px 24px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; border: none; }
         .cookie-btn.accept { background: #007aff; color: white; }
         .cookie-btn.decline { background: transparent; color: #a1a1a6; border: 1px solid #48484a; }
-        @media (max-width: 767px) {
-          .carousel-container { padding: 0 20px; }
-          .carousel-section { padding: 32px 0; }
-          .carousel-header .section-title { font-size: 22px; }
-          .carousel-nav { display: none; }
-          :root { --card-width: 220px; --card-gap: 12px; }
-        }
-        @media (max-width: 768px) {
-          .cookie-banner { flex-direction: column; padding: 16px; text-align: center; }
-          .cookie-buttons { width: 100%; flex-direction: column; }
-          .cookie-btn { width: 100%; text-align: center; }
-        }
-        @media (min-width: 1400px) {
-          :root { --card-width: 300px; --card-gap: 20px; }
-        }
+        @media (max-width: 767px) { .carousel-container { padding: 0 20px; } .carousel-section { padding: 32px 0; } .carousel-nav { display: none; } :root { --card-width: 220px; --card-gap: 12px; } }
+        @media (min-width: 1400px) { :root { --card-width: 300px; --card-gap: 20px; } }
       `}</style>
 
       <div id="header-container"></div>
@@ -241,10 +131,7 @@ export default function App({ Component, pageProps }) {
           <div className="cookie-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
           </div>
-          <div className="cookie-text">
-            <h4>We Value Your Privacy</h4>
-            <p>We use cookies. <a href="/privacy-policy">Privacy Policy</a></p>
-          </div>
+          <div className="cookie-text"><h4>We Value Your Privacy</h4><p>We use cookies. <a href="/privacy-policy">Privacy Policy</a></p></div>
           <div className="cookie-buttons">
             <button className="cookie-btn decline" onClick={() => { localStorage.setItem('jayenware_consent', 'declined'); document.getElementById('cookieConsent')?.classList.remove('show'); }}>Decline</button>
             <button className="cookie-btn accept" onClick={() => { localStorage.setItem('jayenware_consent', 'accepted'); document.getElementById('cookieConsent')?.classList.remove('show'); }}>Accept</button>
