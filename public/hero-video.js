@@ -1083,6 +1083,6 @@
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => setTimeout(tryAutoInit, 150));
     } else {
-        setTimeout(tryAutoInit, 150);
+        setTimeout(tryAutoInit, 1000);
     }
 })();
