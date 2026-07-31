@@ -40,7 +40,7 @@ export default function App({ Component, pageProps }) {
         <script src="/components.js"></script>
         <script src="/footer.js"></script>
         <script src="/hero-banner.js"></script>
-        <script src="/hero-video.js"></script>
+        {/* hero-video.js REMOVED - now React component */}
         <script src="/hero-secondary-banner.js"></script>
         <script src="/categoryshow.js"></script>
         <script src="/newarrival.js"></script>
