@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
+import HeroVideo from '../components/home/HeroVideo';
 
 export default function Home() {
   const [currentData, setCurrentData] = useState({
@@ -124,6 +125,7 @@ export default function Home() {
       </Head>
 
       <section id="home" className="page-section active-page fade-in" style={{ display: activePage === 'home' ? 'block' : 'none' }}>
+        <HeroVideo videos={currentData.heroVideos} />
         <div id="categoryshow-container"></div>
         <div id="new-arrivals-container"></div>
         <div id="hero-secondary-container"></div>
