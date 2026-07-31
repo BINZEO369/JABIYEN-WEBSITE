@@ -12,13 +12,8 @@ export default function Home() {
   const productsLoadMoreIncrement = 12;
 
   const fetchAPI = useCallback(async (endpoint) => {
-    try {
-      const res = await fetch(endpoint);
-      if (!res.ok) throw new Error();
-      return await res.json();
-    } catch (e) {
-      return [];
-    }
+    try { const res = await fetch(endpoint); if (!res.ok) throw new Error(); return await res.json(); }
+    catch (e) { return []; }
   }, []);
 
   const getCategorySlug = (c) => c ? c.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '') : '';
@@ -43,23 +38,18 @@ export default function Home() {
           hero: hero || [], categories: cats || [], products: prods || [],
           news: newsData || [], heroVideos: heroVideosData || [], hero_secondary: heroSecondaryData || []
         });
-        if (cats?.length && typeof window.renderCategoryShow === 'function') {
-          window.renderCategoryShow(cats);
-        }
+        if (cats?.length && typeof window.renderCategoryShow === 'function') window.renderCategoryShow(cats);
         window.dispatchEvent(new CustomEvent('jayenware:dataLoaded', {
           detail: { hero: hero || [], heroVideos: heroVideosData || [], hero_secondary: heroSecondaryData || [] }
         }));
-      } catch (err) {
-        console.error('[App] Error:', err);
-      }
+      } catch (err) { console.error('[App] Error:', err); }
       setLoading(false);
     }
     loadData();
   }, [fetchAPI]);
 
   const productCard = (p) => {
-    const isOut = p.stock <= 0;
-    const slug = getProductSlug(p);
+    const isOut = p.stock <= 0; const slug = getProductSlug(p);
     return (
       <a key={p.id} href={`/product/${slug}`} className="carousel-card" style={{ width: '100%' }}>
         <div className="card-img" style={{ aspectRatio: '3/4' }}>
@@ -71,10 +61,7 @@ export default function Home() {
         <div className="card-body">
           <span className="card-category">{p.category}</span>
           <h3 className="card-title">{p.title}</h3>
-          <div>
-            <span className="card-price">৳ {p.price}</span>
-            {p.old_price && <span className="card-old-price">৳{p.old_price}</span>}
-          </div>
+          <div><span className="card-price">৳ {p.price}</span>{p.old_price && <span className="card-old-price">৳{p.old_price}</span>}</div>
         </div>
       </a>
     );
@@ -124,10 +111,18 @@ export default function Home() {
   return (
     <>
       <Head>
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context":"https://schema.org","@type":"Website","name":"Jayenware","url":"https://www.jayenware.shop","description":"Premium lifestyle products and quality cotton T-shirts store by BINZEO." }) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          "@context":"https://schema.org","@type":"Website","name":"Jayenware","alternateName":"JAYENWARE SHOP",
+          "url":"https://www.jayenware.shop","logo":"https://www.jayenware.shop/logo.png",
+          "description":"Premium lifestyle products and quality cotton T-shirts store by BINZEO.",
+          "priceRange":"৳450 - ৳5000","image":"https://www.jayenware.shop/logo.png",
+          "address":{"@type":"PostalAddress","addressLocality":"Dhaka","addressRegion":"Dhaka Division","addressCountry":"BD"},
+          "contactPoint":{"@type":"ContactPoint","contactType":"customer service","url":"https://m.me/861762253694814"},
+          "sameAs":["https://www.facebook.com/jayenware","https://www.instagram.com/jayenware","https://www.twitter.com/jayenware"],
+          "parentOrganization":{"@type":"Organization","name":"BINZEO","url":"https://binzeo.vercel.app"}
+        })}} />
       </Head>
 
-      {/* HOME PAGE */}
       <section id="home" className="page-section active-page fade-in" style={{ display: activePage === 'home' ? 'block' : 'none' }}>
         <div id="categoryshow-container"></div>
         <div id="new-arrivals-container"></div>
@@ -137,33 +132,21 @@ export default function Home() {
         <div id="best-sellers-container"></div>
         <div id="on-sale-container"></div>
         <div id="limited-edition-container"></div>
-
-        {newArrivals.length > 0 && (
-          <section className="carousel-section">
-            <div className="carousel-container">
-              <div className="carousel-header"><h2 className="section-title">New Arrivals</h2><a href="/products?category=new" className="section-link">Shop New <i className="fa-solid fa-arrow-right text-xs"></i></a></div>
-              <div className="carousel-wrapper">
-                <div id="new-arrivals-carousel" className="carousel-track no-scrollbar">{newArrivals.map(p => productCard(p))}</div>
-              </div>
-            </div>
-          </section>
-        )}
       </section>
 
-      {/* PRODUCTS PAGE */}
       <section id="products" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'products' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
             <aside className="lg:w-64 shrink-0">
               <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100">
-                <h3 className="font-semibold text-sm uppercase tracking-wider text-primary mb-4">Categories</h3>
-                <div id="sidebar-categories" className="space-y-1 hidden lg:block" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+                <h3 className="font-semibold text-sm uppercase mb-4">Categories</h3>
+                <div id="sidebar-categories" className="space-y-1" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
                   <button onClick={() => filterByCategory('all')} className={`block w-full text-left py-2 px-3 rounded-lg text-xs font-semibold ${currentFilters.cat==='all'?'bg-primary text-white':'hover:bg-gray-50'}`}>All</button>
                   {currentData.categories.map(c => (
                     <button key={c.id||c.name} onClick={() => filterByCategory(c.name)} className={`block w-full text-left py-2 px-3 rounded-lg text-xs font-semibold ${currentFilters.cat===c.name?'bg-primary text-white':'hover:bg-gray-50'}`}>{c.name}</button>
                   ))}
                 </div>
-                <div id="mobile-filters" className="hidden lg:hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
+                <div id="mobile-filters" className="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
                   <div><label className="text-[10px] font-semibold uppercase text-accent block mb-1">Min Price</label><input type="number" id="filter-min-price" placeholder="৳ Min" className="w-full p-2 rounded-xl bg-gray-50 border border-gray-100 text-xs" /></div>
                   <div><label className="text-[10px] font-semibold uppercase text-accent block mb-1">Max Price</label><input type="number" id="filter-max-price" placeholder="৳ Max" className="w-full p-2 rounded-xl bg-gray-50 border border-gray-100 text-xs" /></div>
                   <button onClick={applyPriceFilter} className="w-full py-2 bg-primary text-white rounded-xl text-xs font-semibold">Apply</button>
@@ -174,7 +157,9 @@ export default function Home() {
               <div className="flex items-center justify-between mb-4 sm:mb-6">
                 <p className="text-xs font-medium text-accent">Showing {displayedProducts.length} of {totalProducts} products</p>
                 <select onChange={(e) => handleSorting(e.target.value)} className="bg-white border border-gray-100 rounded-xl px-4 py-2 text-xs font-semibold">
-                  <option value="newest">Newest</option><option value="price-low">Price: Low to High</option><option value="price-high">Price: High to Low</option>
+                  <option value="newest">Newest</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
                 </select>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
@@ -186,10 +171,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PRODUCT DETAILS */}
       <section id="product-details" className="page-section" style={{ display: activePage === 'product-details' ? 'block' : 'none' }}></section>
 
-      {/* WISHLIST */}
       <section id="wishlist" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'wishlist' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-bold mb-8">Your Wishlist</h2>
@@ -202,7 +185,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* NEWS */}
       <section id="news" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'news' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-4xl font-bold text-center mb-8">The Journal</h2>
