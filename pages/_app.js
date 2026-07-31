@@ -36,6 +36,7 @@ export default function App({ Component, pageProps }) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="/fonts.js"></script>
         <script src="/components.js"></script>
         <script src="/footer.js"></script>
         <script src="/hero-banner.js"></script>
@@ -50,7 +51,6 @@ export default function App({ Component, pageProps }) {
         <script src="/limitededition.js"></script>
       </Head>
 
-      {/* Tailwind Config */}
       <script dangerouslySetInnerHTML={{
         __html: `
           tailwind.config = {
@@ -73,7 +73,6 @@ export default function App({ Component, pageProps }) {
         `
       }} />
 
-      {/* Global Styles */}
       <style jsx global>{`
         :root {
           --primary: #1d1d1f;
@@ -142,7 +141,7 @@ export default function App({ Component, pageProps }) {
           flex-direction: column; transition: transform 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
           position: relative; background: transparent;
         }
-        .carousel-card:active { transform: scale(0.96); transition: transform 0.1s cubic-bezier(0.25, 0.1, 0.25, 1); }
+        .carousel-card:active { transform: scale(0.96); }
         @media (hover: hover) {
           .carousel-card:hover { transform: translateY(-2px); }
         }
@@ -189,16 +188,12 @@ export default function App({ Component, pageProps }) {
         }
         .carousel-nav.prev { left: -20px; }
         .carousel-nav.next { right: -20px; }
-        
-        /* Limited Edition Dark Theme */
         #limited-edition-section { background: #000000 !important; }
         #limited-edition-section .section-title { color: #ffffff !important; }
         #limited-edition-section .carousel-card .card-title { color: #ffffff !important; }
         #limited-edition-section .carousel-card .card-price { color: #ffffff !important; }
         #limited-edition-section .carousel-card .card-badge { background: #2d2d2f !important; color: #ffffff !important; }
         #limited-edition-section .carousel-nav { background: rgba(255,255,255,0.15) !important; color: #fff !important; }
-
-        /* Cookie Consent */
         .cookie-consent-overlay {
           position: fixed; bottom: 0; left: 0; right: 0; background: rgba(29,29,31,0.95);
           backdrop-filter: blur(20px); z-index: 9999;
@@ -216,7 +211,6 @@ export default function App({ Component, pageProps }) {
         .cookie-btn { padding: 10px 24px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; transition: all 0.3s; border: none; outline: none; }
         .cookie-btn.accept { background: #007aff; color: white; }
         .cookie-btn.decline { background: transparent; color: #a1a1a6; border: 1px solid #48484a; }
-
         @media (max-width: 767px) {
           .carousel-container { padding: 0 20px; }
           .carousel-section { padding: 32px 0; }
@@ -234,66 +228,14 @@ export default function App({ Component, pageProps }) {
         }
       `}</style>
 
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-xl border-b border-gray-100">
-        <div className="bg-[#1d1d1f] text-white text-center py-2 text-[10px] sm:text-xs font-medium tracking-wider uppercase">
-          Free Shipping on Orders Over ৳2000 | Easy Returns
-        </div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <a href="/" className="flex items-center gap-2">
-              <img src="/logo.png" alt="JAYENWARE" className="h-8 w-8 sm:h-10 sm:w-10" />
-              <span className="font-bold text-lg sm:text-xl text-[#1d1d1f]">JAYENWARE</span>
-            </a>
-            <nav className="hidden lg:flex items-center gap-8">
-              <a href="/products" className="text-sm font-medium hover:text-[#86868b] transition">Shop</a>
-              <a href="/journal" className="text-sm font-medium hover:text-[#86868b] transition">Journal</a>
-            </nav>
-            <div className="flex items-center gap-2 sm:gap-4">
-              <a href="/wishlist" className="p-2 hover:bg-gray-100 rounded-full"><i className="fa-regular fa-heart"></i></a>
-              <a href="/checkout" className="p-2 hover:bg-gray-100 rounded-full"><i className="fa-solid fa-bag-shopping"></i></a>
-              <a href="/signin" className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold hover:bg-gray-100 rounded-full"><i className="fa-regular fa-user"></i><span>Sign In</span></a>
-            </div>
-          </div>
-        </div>
-      </header>
+      <div id="header-container"></div>
 
-      {/* Main Content */}
       <main className="flex-grow">
         <Component {...pageProps} />
       </main>
 
-      {/* Footer */}
-      <footer className="bg-[#1d1d1f] text-white mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div>
-              <a href="/" className="flex items-center gap-2 mb-4">
-                <img src="/logo.png" alt="JAYENWARE" className="h-8 w-8 brightness-0 invert" />
-                <span className="font-bold text-lg">JAYENWARE</span>
-              </a>
-              <p className="text-sm text-gray-400">Premium lifestyle products by BINZEO.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm uppercase mb-4">Shop</h4>
-              <a href="/products" className="block text-sm text-gray-400 hover:text-white">All Products</a>
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm uppercase mb-4">Support</h4>
-              <a href="/faq" className="block text-sm text-gray-400 hover:text-white">FAQ</a>
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm uppercase mb-4">Legal</h4>
-              <a href="/privacy-policy" className="block text-sm text-gray-400 hover:text-white">Privacy Policy</a>
-            </div>
-          </div>
-          <div className="border-t border-white/10 mt-8 pt-8 text-center">
-            <p className="text-xs text-gray-500">© 2026 JAYENWARE. A BINZEO Brand.</p>
-          </div>
-        </div>
-      </footer>
+      <div id="footer-container"></div>
 
-      {/* Cookie Consent */}
       <div id="cookieConsent" className="cookie-consent-overlay">
         <div className="cookie-banner">
           <div className="cookie-icon">
