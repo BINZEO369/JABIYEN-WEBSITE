@@ -40,9 +40,9 @@ export default function App({ Component, pageProps }) {
         <script src="/components.js"></script>
         <script src="/footer.js"></script>
         <script src="/hero-banner.js"></script>
-        {/* hero-video.js REMOVED - now React component */}
+        {/* hero-video.js → React HeroVideo component */}
+        {/* categoryshow.js → React CategoryShowcase component */}
         <script src="/hero-secondary-banner.js"></script>
-        <script src="/categoryshow.js"></script>
         <script src="/newarrival.js"></script>
         <script src="/hot.js"></script>
         <script src="/featuredproducts.js"></script>
