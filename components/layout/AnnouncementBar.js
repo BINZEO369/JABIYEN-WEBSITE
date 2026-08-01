@@ -6,9 +6,12 @@ export default function AnnouncementBar() {
   const [announcement, setAnnouncement] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const lastScrollY = useRef(0);
   const barRef = useRef(null);
+  const contentRef = useRef(null);
 
+  // ============ FETCH ANNOUNCEMENT ============
   useEffect(() => {
     const dismissed = localStorage.getItem('jabiyen_announcement_hidden') === 'true';
     setIsDismissed(dismissed);
@@ -20,31 +23,45 @@ export default function AnnouncementBar() {
         const data = await res.json();
         if (data && data.message && !dismissed) {
           setAnnouncement(data);
-          // Delay appearance for smooth entrance
-          setTimeout(() => setIsVisible(true), 100);
+          const timer = setTimeout(() => setIsVisible(true), 150);
+          return () => clearTimeout(timer);
         }
       } catch (e) {}
     }
     fetchAnnouncement();
   }, []);
 
+  // ============ SCROLL LOGIC (Apple/Gucci-style) ============
   useEffect(() => {
     let ticking = false;
     let lastKnownScroll = window.scrollY;
+    let scrollAccumulator = 0;
     
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
-          const delta = currentScrollY - lastKnownScroll;
-          const scrollingDown = delta > 2;
-          const scrollingUp = delta < -2;
-          const atTop = currentScrollY <= 3;
+          const rawDelta = currentScrollY - lastKnownScroll;
           
-          if (scrollingDown && currentScrollY > 50) {
-            setIsVisible(false);
-          } else if ((scrollingUp || atTop) && currentScrollY < 100) {
+          // Accumulate small scrolls for natural feel
+          scrollAccumulator += rawDelta;
+          
+          if (Math.abs(scrollAccumulator) > 8) {
+            const scrollingDown = scrollAccumulator > 0;
+            
+            if (scrollingDown && currentScrollY > 40) {
+              setIsVisible(false);
+            } else if (!scrollingDown && currentScrollY < 80) {
+              setIsVisible(true);
+            }
+            
+            scrollAccumulator = 0;
+          }
+          
+          // Always show at absolute top
+          if (currentScrollY <= 2) {
             setIsVisible(true);
+            scrollAccumulator = 0;
           }
           
           lastKnownScroll = currentScrollY;
@@ -58,31 +75,40 @@ export default function AnnouncementBar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [announcement, isDismissed]);
 
+  // ============ DISMISS ============
   const dismiss = () => {
     setIsVisible(false);
     setIsDismissed(true);
     localStorage.setItem('jabiyen_announcement_hidden', 'true');
-    setTimeout(() => setAnnouncement(null), 600);
+    setTimeout(() => setAnnouncement(null), 700);
   };
 
   if (!announcement || !announcement.message) return null;
 
-  const bgColor = announcement.bg_color || '#000000';
-  const textColor = announcement.text_color || '#ffffff';
+  const bgColor = announcement.bg_color || '#0a0a0a';
+  const textColor = announcement.text_color || '#f5f5f7';
 
   return (
     <>
+      {/* ============ MAIN BAR ============ */}
       <div
         ref={barRef}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         style={{
+          // Background
           background: bgColor,
           color: textColor,
+          
+          // Typography
           fontFamily: "var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-          fontSize: 'clamp(11px, 1.2vw, 13px)',
-          fontWeight: 500,
-          letterSpacing: '0.04em',
+          fontSize: '0.6875rem',
+          fontWeight: 450,
+          letterSpacing: '0.035em',
           textTransform: 'uppercase',
-          height: 38,
+          
+          // Layout
+          height: 40,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -91,87 +117,131 @@ export default function AnnouncementBar() {
           top: 0,
           left: 0,
           zIndex: 60,
-          padding: '0 45px',
+          padding: '0 48px',
           textAlign: 'center',
           overflow: 'hidden',
-          transition: 'transform 0.6s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.5s cubic-bezier(0.33, 1, 0.68, 1)',
+          
+          // Animation
+          transition: 'transform 0.65s cubic-bezier(0.32, 0.94, 0.60, 1), opacity 0.45s cubic-bezier(0.32, 0.94, 0.60, 1)',
           transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
           opacity: isVisible ? 1 : 0,
           pointerEvents: isVisible ? 'auto' : 'none',
-          willChange: 'transform, opacity',
-          boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset'
+          willChange: 'transform',
+          
+          // Subtle styling
+          borderBottom: isHovered ? `1px solid ${textColor}15` : '1px solid transparent',
+          transition: 'transform 0.65s cubic-bezier(0.32, 0.94, 0.60, 1), opacity 0.45s cubic-bezier(0.32, 0.94, 0.60, 1), border-color 0.4s ease'
         }}
       >
-        {/* Left spacer */}
-        <div style={{ width: 28, flexShrink: 0 }} />
-        
-        {/* Center content */}
-        <span style={{
-          flex: 1,
-          textAlign: 'center',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis'
-        }}>
+        {/* ============ LEFT SPACER ============ */}
+        <div style={{ width: 32, flexShrink: 0 }} />
+
+        {/* ============ CENTER CONTENT ============ */}
+        <div
+          ref={contentRef}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 0,
+            overflow: 'hidden'
+          }}
+        >
           <span style={{
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
             opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
-            transition: 'opacity 0.5s cubic-bezier(0.33, 1, 0.68, 1) 0.15s, transform 0.5s cubic-bezier(0.33, 1, 0.68, 1) 0.15s',
-            display: 'inline-block'
+            transform: isVisible ? 'translateY(0)' : 'translateY(8px)',
+            transition: 'opacity 0.55s cubic-bezier(0.32, 0.94, 0.60, 1) 0.2s, transform 0.55s cubic-bezier(0.32, 0.94, 0.60, 1) 0.2s'
           }}>
             {announcement.message}
+            
             {announcement.link_url && announcement.link_title && (
-              <a href={announcement.link_url} target="_blank" rel="noopener noreferrer" style={{
-                color: textColor,
-                textDecoration: 'none',
-                fontWeight: 600,
-                marginLeft: 8,
-                opacity: 0.8,
-                borderBottom: `1px solid ${textColor}`,
-                borderBottomWidth: 1,
-                paddingBottom: 1,
-                transition: 'opacity 0.2s ease, border-color 0.2s ease'
-              }}
-              onMouseEnter={(e) => { e.target.style.opacity = '1'; }}
-              onMouseLeave={(e) => { e.target.style.opacity = '0.8'; }}
-              >
-                {announcement.link_title}
-              </a>
+              <>
+                <span style={{ margin: '0 6px', opacity: 0.3' }}>·</span>
+                <a
+                  href={announcement.link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    color: textColor,
+                    textDecoration: 'none',
+                    fontWeight: 550,
+                    opacity: 0.75,
+                    position: 'relative',
+                    paddingBottom: 2,
+                    transition: 'opacity 0.25s ease',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={(e) => { e.target.style.opacity = '1'; }}
+                  onMouseLeave={(e) => { e.target.style.opacity = '0.75'; }}
+                >
+                  {announcement.link_title}
+                  {/* Underline effect */}
+                  <span style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    width: '100%',
+                    height: 1,
+                    background: textColor,
+                    transform: 'scaleX(0)',
+                    transformOrigin: 'right',
+                    transition: 'transform 0.35s cubic-bezier(0.32, 0.94, 0.60, 1)'
+                  }}
+                  className="link-underline"
+                  />
+                </a>
+              </>
             )}
           </span>
-        </span>
+        </div>
 
-        {/* Close button */}
-        <button onClick={dismiss} style={{
-          width: 28,
-          height: 28,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'none',
-          border: 'none',
-          color: textColor,
-          cursor: 'pointer',
-          opacity: 0.5,
-          transition: 'opacity 0.3s ease, transform 0.3s cubic-bezier(0.33, 1, 0.68, 1)',
-          flexShrink: 0,
-          borderRadius: '50%'
-        }}
-        onMouseEnter={(e) => { e.target.style.opacity = '0.9'; e.target.style.transform = 'scale(1.08)'; e.target.style.background = 'rgba(255,255,255,0.08)'; }}
-        onMouseLeave={(e) => { e.target.style.opacity = '0.5'; e.target.style.transform = 'scale(1)'; e.target.style.background = 'none'; }}
-        aria-label="Close Announcement">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* ============ CLOSE BUTTON ============ */}
+        <button
+          onClick={dismiss}
+          style={{
+            width: 32,
+            height: 32,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: isHovered ? `${textColor}08` : 'transparent',
+            border: 'none',
+            color: textColor,
+            cursor: 'pointer',
+            opacity: isHovered ? 0.7 : 0.35,
+            transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+            transition: 'all 0.35s cubic-bezier(0.32, 0.94, 0.60, 1)',
+            flexShrink: 0,
+            borderRadius: '50%',
+            outline: 'none'
+          }}
+          aria-label="Close announcement"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
 
+      {/* ============ SPACER ============ */}
       <div style={{
-        height: isVisible ? 38 : 0,
+        height: isVisible ? 40 : 0,
         flexShrink: 0,
-        transition: 'height 0.6s cubic-bezier(0.33, 1, 0.68, 1)'
+        transition: 'height 0.65s cubic-bezier(0.32, 0.94, 0.60, 1)'
       }} />
+
+      {/* ============ LINK UNDERLINE HOVER ============ */}
+      <style jsx>{`
+        a:hover .link-underline {
+          transform: scaleX(1) !important;
+          transform-origin: left !important;
+        }
+      `}</style>
     </>
   );
 }
