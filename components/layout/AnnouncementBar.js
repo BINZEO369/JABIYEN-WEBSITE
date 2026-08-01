@@ -70,7 +70,7 @@ export default function AnnouncementBar() {
       <div style={{
         background: bgColor,
         color: textColor,
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontFamily: "var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
         fontSize: 'clamp(8px, 1vw, 10px)',
         fontWeight: 600,
         letterSpacing: '0.08em',
@@ -139,14 +139,12 @@ export default function AnnouncementBar() {
         </button>
       </div>
 
-      {/* Spacer */}
       <div style={{
         height: isVisible ? 36 : 0,
         flexShrink: 0,
         transition: 'height 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
       }} />
 
-      {/* Smooth scroll styles */}
       <style jsx global>{`
         @media (max-width: 480px) {
           .announcement-text {
