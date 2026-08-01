@@ -2,6 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import HeroVideo from '../components/home/HeroVideo';
 import CategoryShowcase from '../components/home/CategoryShowcase';
+import HeroBanner from '../components/home/HeroBanner';
+import HeroSecondaryBanner from '../components/home/HeroSecondaryBanner';
+import NewArrivals from '../components/home/NewArrivals';
+import TrendingNow from '../components/home/TrendingNow';
+import FeaturedProducts from '../components/home/FeaturedProducts';
+import BestSellers from '../components/home/BestSellers';
+import OnSale from '../components/home/OnSale';
+import LimitedEdition from '../components/home/LimitedEdition';
 
 export default function Home() {
   const [currentData, setCurrentData] = useState({
@@ -41,7 +49,7 @@ export default function Home() {
           news: newsData || [], heroVideos: heroVideosData || [], hero_secondary: heroSecondaryData || []
         });
         window.dispatchEvent(new CustomEvent('jayenware:dataLoaded', {
-          detail: { hero: hero || [], heroVideos: heroVideosData || [], hero_secondary: heroSecondaryData || [] }
+          detail: { products: prods || [], hero: hero || [], heroVideos: heroVideosData || [], hero_secondary: heroSecondaryData || [] }
         }));
       } catch (err) { console.error('[App] Error:', err); }
       setLoading(false);
@@ -93,12 +101,6 @@ export default function Home() {
   const displayedProducts = filteredProducts.slice(0, productsDisplayLimit);
   const totalProducts = filteredProducts.length;
   const hasMore = totalProducts > productsDisplayLimit;
-  const newArrivals = currentData.products.filter(p => p.is_new_arrival);
-  const trendingNow = currentData.products.filter(p => p.is_hot);
-  const featured = currentData.products.filter(p => p.is_featured);
-  const bestSellers = currentData.products.filter(p => p.is_best);
-  const onSale = currentData.products.filter(p => p.is_on_sale);
-  const limitedEdition = currentData.products.filter(p => p.is_limited_edition);
 
   if (loading) {
     return (
@@ -124,18 +126,21 @@ export default function Home() {
         })}} />
       </Head>
 
+      {/* ==================== HOME PAGE ==================== */}
       <section id="home" className="page-section active-page fade-in" style={{ display: activePage === 'home' ? 'block' : 'none' }}>
         <HeroVideo videos={currentData.heroVideos} />
         <CategoryShowcase />
-        <div id="new-arrivals-container"></div>
-        <div id="hero-secondary-container"></div>
-        <div id="trending-now-container"></div>
-        <div id="featured-products-container"></div>
-        <div id="best-sellers-container"></div>
-        <div id="on-sale-container"></div>
-        <div id="limited-edition-container"></div>
+        <HeroBanner slides={currentData.hero} />
+        <NewArrivals products={currentData.products} />
+        <HeroSecondaryBanner slides={currentData.hero_secondary} />
+        <TrendingNow products={currentData.products} />
+        <FeaturedProducts products={currentData.products} />
+        <BestSellers products={currentData.products} />
+        <OnSale products={currentData.products} />
+        <LimitedEdition products={currentData.products} />
       </section>
 
+      {/* ==================== PRODUCTS PAGE ==================== */}
       <section id="products" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'products' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
@@ -173,8 +178,10 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ==================== PRODUCT DETAILS ==================== */}
       <section id="product-details" className="page-section" style={{ display: activePage === 'product-details' ? 'block' : 'none' }}></section>
 
+      {/* ==================== WISHLIST ==================== */}
       <section id="wishlist" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'wishlist' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-bold mb-8">Your Wishlist</h2>
@@ -187,6 +194,7 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ==================== NEWS / JOURNAL ==================== */}
       <section id="news" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'news' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-4xl font-bold text-center mb-8">The Journal</h2>
