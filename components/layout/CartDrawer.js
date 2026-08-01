@@ -4,25 +4,37 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './Toast';
 import Link from 'next/link';
 
-// Cart state (module-level singleton)
+// Cart state (module-level singleton - SSR safe)
 let cartData = [];
 let wishlistData = [];
+
 if (typeof window !== 'undefined') {
-  cartData = JSON.parse(localStorage.getItem('jabiyen_cart') || '[]');
-  wishlistData = JSON.parse(localStorage.getItem('jabiyen_wish') || '[]');
+  try {
+    cartData = JSON.parse(localStorage.getItem('jabiyen_cart') || '[]');
+    wishlistData = JSON.parse(localStorage.getItem('jabiyen_wish') || '[]');
+  } catch (e) {
+    cartData = [];
+    wishlistData = [];
+  }
 }
 
 export function getCart() { return cartData; }
 export function getWishlist() { return wishlistData; }
 
 export function saveCart() {
-  localStorage.setItem('jabiyen_cart', JSON.stringify(cartData));
-  window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cartData }));
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('jabiyen_cart', JSON.stringify(cartData));
+    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: cartData }));
+  } catch (e) {}
 }
 
 export function saveWishlist() {
-  localStorage.setItem('jabiyen_wish', JSON.stringify(wishlistData));
-  window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: wishlistData }));
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem('jabiyen_wish', JSON.stringify(wishlistData));
+    window.dispatchEvent(new CustomEvent('wishlistUpdated', { detail: wishlistData }));
+  } catch (e) {}
 }
 
 export function useCartState() {
@@ -147,7 +159,6 @@ export default function CartDrawer({ isOpen, onClose }) {
 
   return (
     <>
-      {/* Overlay */}
       <div
         onClick={onClose}
         style={{
@@ -158,7 +169,6 @@ export default function CartDrawer({ isOpen, onClose }) {
         }}
       />
 
-      {/* Drawer */}
       <div style={{
         position: 'fixed', top: 0, right: 0, width: '100%', maxWidth: 420,
         height: '100vh', height: '100dvh',
@@ -222,7 +232,6 @@ export default function CartDrawer({ isOpen, onClose }) {
                         letterSpacing: '-0.01em', margin: 0
                       }}>{item.title}</h4>
 
-                      {/* Variant badges */}
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                         {item.color_name && (
                           <span style={{
@@ -258,7 +267,6 @@ export default function CartDrawer({ isOpen, onClose }) {
                         )}
                       </div>
 
-                      {/* Bottom Row */}
                       <div style={{
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         marginTop: 8, flexWrap: 'wrap', gap: 4
@@ -274,7 +282,6 @@ export default function CartDrawer({ isOpen, onClose }) {
                           )}
                         </div>
 
-                        {/* Quantity Controls */}
                         <div style={{
                           display: 'flex', alignItems: 'center', gap: 2,
                           background: 'rgba(255,255,255,0.06)', borderRadius: 10,
@@ -288,7 +295,6 @@ export default function CartDrawer({ isOpen, onClose }) {
                         </div>
                       </div>
 
-                      {/* Details Toggle */}
                       {hasDetails && (
                         <>
                           <button onClick={() => toggleDetails(idx)} style={{
@@ -317,7 +323,6 @@ export default function CartDrawer({ isOpen, onClose }) {
                       )}
                     </div>
 
-                    {/* Remove Button */}
                     <button onClick={() => handleRemove(idx)} style={{
                       background: 'none', border: 'none', color: 'rgba(255,255,255,0.12)',
                       cursor: 'pointer', padding: 4, flexShrink: 0, alignSelf: 'flex-start'
