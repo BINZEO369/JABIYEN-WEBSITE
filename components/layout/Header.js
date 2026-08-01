@@ -92,7 +92,8 @@ export default function Header() {
                 fontSize: 'clamp(14px, 2vw, 20px)',
                 fontWeight: 900,
                 letterSpacing: '0.1em',
-                color: '#1d1d1f'
+                color: '#fff',
+                mixBlendMode: 'difference'
               }}>
                 JABIYEN
               </span>
@@ -108,8 +109,9 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#1d1d1f',
-                position: 'relative', textDecoration: 'none'
+                cursor: 'pointer', color: '#fff',
+                position: 'relative', textDecoration: 'none',
+                mixBlendMode: 'difference'
               }}
                 className="header-icon-btn"
               >
@@ -119,13 +121,14 @@ export default function Header() {
                 {totalWishItems > 0 && (
                   <span style={{
                     position: 'absolute', top: -2, right: -2,
-                    background: '#1d1d1f', color: '#fff',
+                    background: '#fff', color: '#000',
                     fontSize: 7, fontWeight: 700,
                     minWidth: 16, height: 16,
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 4px',
-                    border: '1px solid rgba(255,255,255,0.55)'
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    mixBlendMode: 'difference'
                   }}>
                     {totalWishItems}
                   </span>
@@ -137,8 +140,9 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#1d1d1f',
-                position: 'relative'
+                cursor: 'pointer', color: '#fff',
+                position: 'relative',
+                mixBlendMode: 'difference'
               }}
                 className="header-icon-btn"
               >
@@ -149,13 +153,14 @@ export default function Header() {
                 {totalCartItems > 0 && (
                   <span style={{
                     position: 'absolute', top: -2, right: -2,
-                    background: '#1d1d1f', color: '#fff',
+                    background: '#fff', color: '#000',
                     fontSize: 7, fontWeight: 700,
                     minWidth: 16, height: 16,
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 4px',
-                    border: '1px solid rgba(255,255,255,0.55)'
+                    border: '1px solid rgba(0,0,0,0.2)',
+                    mixBlendMode: 'difference'
                   }}>
                     {totalCartItems}
                   </span>
@@ -167,7 +172,8 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#1d1d1f'
+                cursor: 'pointer', color: '#fff',
+                mixBlendMode: 'difference'
               }}
                 className="header-icon-btn"
               >
