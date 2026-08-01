@@ -4,47 +4,52 @@ import { useState, useEffect } from 'react';
 
 export default function AnnouncementBar() {
   const [announcement, setAnnouncement] = useState(null);
-  const [isVisible, setIsVisible] = useState(true);
+  const [isVisible, setIsVisible] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
 
   useEffect(() => {
-    // Check if previously dismissed
     const dismissed = localStorage.getItem('jabiyen_announcement_hidden') === 'true';
-    if (dismissed) {
-      setIsVisible(false);
-      document.body.classList.add('announcement-dismissed');
-    }
+    setIsDismissed(dismissed);
 
-    // Fetch announcement
     async function fetchAnnouncement() {
       try {
         const res = await fetch('/api/announcement');
         if (!res.ok) throw new Error();
         const data = await res.json();
-        if (data && data.message) {
+        if (data && data.message && !dismissed) {
           setAnnouncement(data);
-          if (dismissed) setIsVisible(false);
-        } else {
-          setIsVisible(false);
-          document.body.classList.add('announcement-dismissed');
+          setIsVisible(true);
         }
-      } catch (e) {
-        setIsVisible(false);
-        document.body.classList.add('announcement-dismissed');
-      }
+      } catch (e) {}
     }
     fetchAnnouncement();
   }, []);
 
+  // Scroll handler - hide on scroll
+  useEffect(() => {
+    let lastScrollY = 0;
+    
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > 50) {
+        setIsVisible(false);
+      } else if (currentScrollY <= 10 && announcement && !isDismissed) {
+        setIsVisible(true);
+      }
+      
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [announcement, isDismissed]);
+
   const dismiss = () => {
     setIsVisible(false);
+    setIsDismissed(true);
     localStorage.setItem('jabiyen_announcement_hidden', 'true');
-    document.body.classList.add('announcement-dismissed');
-    
-    // Update nav position
-    const nav = document.getElementById('main-nav');
-    if (nav && !nav.classList.contains('nav-scrolled')) {
-      nav.style.top = '0px';
-    }
+    setTimeout(() => setAnnouncement(null), 500);
   };
 
   if (!announcement || !announcement.message) return null;
@@ -62,7 +67,7 @@ export default function AnnouncementBar() {
         fontWeight: 600,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
-        height: isVisible ? 36 : 0,
+        height: 36,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -71,14 +76,15 @@ export default function AnnouncementBar() {
         top: 0,
         left: 0,
         zIndex: 60,
-        padding: isVisible ? '0 45px 0 16px' : 0,
+        padding: '0 45px 0 16px',
         textAlign: 'center',
         overflow: 'hidden',
-        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, height 0.4s ease',
+        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
         transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
-        opacity: isVisible ? 1 : 0
+        opacity: isVisible ? 1 : 0,
+        pointerEvents: isVisible ? 'auto' : 'none'
       }}>
-        <span>
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {announcement.message}
           {announcement.link_url && announcement.link_title && (
             <a href={announcement.link_url} target="_blank" rel="noopener noreferrer" style={{
@@ -102,7 +108,8 @@ export default function AnnouncementBar() {
           color: 'rgba(255,255,255,0.6)',
           cursor: 'pointer',
           padding: 4,
-          transition: 'color 0.2s ease, transform 0.2s ease'
+          transition: 'color 0.2s ease',
+          flexShrink: 0
         }}
         aria-label="Close Announcement">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -111,8 +118,8 @@ export default function AnnouncementBar() {
         </button>
       </div>
 
-      {/* Spacer div when bar is visible */}
-      {isVisible && <div style={{ height: 36 }} />}
+      {/* Spacer */}
+      {announcement && <div style={{ height: 36, flexShrink: 0 }} />}
     </>
   );
 }
