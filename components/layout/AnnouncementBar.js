@@ -84,7 +84,7 @@ export default function AnnouncementBar() {
         top: 0,
         left: 0,
         zIndex: 60,
-        padding: '0 45px 0 16px',
+        padding: '0 45px',
         textAlign: 'center',
         overflow: 'hidden',
         transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -95,11 +95,16 @@ export default function AnnouncementBar() {
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)'
       }}>
+        {/* Left spacer - same width as close button */}
+        <div style={{ width: 28, flexShrink: 0 }} />
+        
+        {/* Center content */}
         <span style={{
+          flex: 1,
+          textAlign: 'center',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          maxWidth: 'calc(100% - 60px)'
+          textOverflow: 'ellipsis'
         }}>
           {announcement.message}
           {announcement.link_url && announcement.link_title && (
@@ -116,22 +121,24 @@ export default function AnnouncementBar() {
             </a>
           )}
         </span>
+
+        {/* Close button - fixed width */}
         <button onClick={dismiss} style={{
-          position: 'absolute',
-          right: 16,
-          top: '50%',
-          transform: 'translateY(-50%)',
+          width: 28,
+          height: 28,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           background: 'none',
           border: 'none',
           color: textColor,
           cursor: 'pointer',
-          padding: 4,
           opacity: 0.6,
           transition: 'opacity 0.2s ease, transform 0.2s ease',
           flexShrink: 0
         }}
-        onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(-50%) scale(1.1)'; }}
-        onMouseLeave={(e) => { e.target.style.opacity = '0.6'; e.target.style.transform = 'translateY(-50%) scale(1)'; }}
+        onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'scale(1.1)'; }}
+        onMouseLeave={(e) => { e.target.style.opacity = '0.6'; e.target.style.transform = 'scale(1)'; }}
         aria-label="Close Announcement">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
