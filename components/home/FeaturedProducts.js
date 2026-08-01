@@ -1,0 +1,184 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
+
+export default function FeaturedProducts({ products = [] }) {
+  const [items, setItems] = useState([]);
+  const [colorCache, setColorCache] = useState({});
+  const [loading, setLoading] = useState(true);
+  const maxProducts = 8;
+
+  useEffect(() => {
+    async function fetchItems() {
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        const all = Array.isArray(data) ? data : data?.data || data?.products || [];
+        const filtered = all.filter(p => p.is_featured === true || p.is_featured === 1);
+        filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        setItems(filtered.slice(0, maxProducts));
+      } catch {
+        const filtered = products.filter(p => p.is_featured === true || p.is_featured === 1);
+        setItems(filtered.slice(0, maxProducts));
+      }
+      setLoading(false);
+    }
+
+    if (products.length > 0) {
+      const filtered = products.filter(p => p.is_featured === true || p.is_featured === 1);
+      setItems(filtered.slice(0, maxProducts));
+      setLoading(false);
+    } else {
+      fetchItems();
+    }
+  }, [products]);
+
+  const fetchColors = async (slug) => {
+    if (colorCache[slug]) return colorCache[slug];
+    try {
+      const res = await fetch(`/api/product-colors?slug=${encodeURIComponent(slug)}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      setColorCache(prev => ({ ...prev, [slug]: data || [] }));
+      return data || [];
+    } catch { return []; }
+  };
+
+  const getImageUrl = (p) => p.img?.trim() || p.image?.trim() || p.image_url?.trim() || '/placeholder.png';
+  const getSlug = (p) => (p.slug || p.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
+
+  if (loading) {
+    return (
+      <section style={{ padding: '32px 0', background: '#fafafa' }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>Featured Products</h2>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
+          {[...Array(4)].map((_, i) => (
+            <div key={i} style={{ background: '#fff' }}>
+              <div style={{ aspectRatio: '4/5', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
+              <div style={{ padding: '4px 6px' }}><div style={{ height: 13, background: '#e5e5ea', width: '85%', margin: '0 auto', borderRadius: 4 }} /></div>
+            </div>
+          ))}
+        </div>
+        <style>{`@keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }`}</style>
+      </section>
+    );
+  }
+
+  if (!items.length) {
+    return (
+      <section style={{ padding: '32px 0', background: '#fafafa' }}>
+        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>Featured Products</h2>
+        </div>
+        <div style={{ textAlign: 'center', padding: '60px 20px', maxWidth: 400, margin: '0 auto' }}>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.4 }}>
+            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+          </svg>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#86868b' }}>No featured products right now</p>
+          <p style={{ fontSize: 12, color: '#b0b0b5', marginTop: 6 }}>Curated picks coming soon — stay tuned</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section style={{ padding: '32px 0', maxWidth: 1400, margin: '0 auto', background: '#fafafa' }}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>Featured Products</h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }} className="fp-grid">
+        {items.map(p => (
+          <ProductCard key={p.id} product={p} getImageUrl={getImageUrl} getSlug={getSlug} fetchColors={fetchColors} colorCache={colorCache} />
+        ))}
+      </div>
+      <style jsx>{`
+        @media (min-width: 768px) { .fp-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (min-width: 1024px) { .fp-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+      `}</style>
+    </section>
+  );
+}
+
+function ProductCard({ product, getImageUrl, getSlug, fetchColors, colorCache }) {
+  const [colors, setColors] = useState([]);
+  const [currentImage, setCurrentImage] = useState(0);
+  const [dragOffset, setDragOffset] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startX = useRef(0);
+
+  const isOut = product.is_out_of_stock || product.stock === 0;
+  const slug = getSlug(product);
+  const mainImg = getImageUrl(product);
+
+  const allImages = (() => {
+    const imgs = [];
+    if (mainImg !== '/placeholder.png') imgs.push(mainImg);
+    colors.forEach(c => { if (c.color_image?.trim() && !imgs.includes(c.color_image)) imgs.push(c.color_image); });
+    return imgs;
+  })();
+  const totalImages = allImages.length;
+
+  useEffect(() => { fetchColors(slug).then(setColors); }, [slug]);
+
+  const navigate = (i) => { if (i >= 0 && i < totalImages) { setCurrentImage(i); setDragOffset(0); } };
+
+  return (
+    <div style={{ position: 'relative', background: '#fff', cursor: 'pointer', overflow: 'hidden', transition: 'transform 0.3s' }}
+      className="fp-card"
+      onTouchStart={totalImages > 1 ? (e) => { startX.current = e.touches[0].clientX; setIsDragging(true); } : undefined}
+      onTouchMove={totalImages > 1 ? (e) => { if (!isDragging) return; setDragOffset(e.touches[0].clientX - startX.current); } : undefined}
+      onTouchEnd={totalImages > 1 ? () => {
+        setIsDragging(false);
+        if (Math.abs(dragOffset) > 60) dragOffset < 0 && currentImage < totalImages - 1 ? navigate(currentImage + 1) : dragOffset > 0 && currentImage > 0 ? navigate(currentImage - 1) : null;
+        setDragOffset(0);
+      } : undefined}
+    >
+      <Link href={`/product/${encodeURIComponent(slug)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f5f5f7', overflow: 'hidden', marginBottom: 6 }}>
+          {allImages.map((img, i) => (
+            <img key={i} src={img} alt="" style={{
+              position: 'absolute', top: 0,
+              left: isDragging ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)` : `${(i - currentImage) * 100}%`,
+              width: '100%', height: '100%', objectFit: 'cover',
+              transition: isDragging ? 'none' : 'left 0.45s ease', zIndex: i === currentImage ? 2 : 1
+            }} />
+          ))}
+          {!isOut && (product.is_featured === true || product.is_featured === 1) && (
+            <span style={{ position: 'absolute', top: 4, left: 4, zIndex: 5, padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 8, textTransform: 'uppercase', background: '#fff', color: '#1d1d1f', borderRadius: 1 }}>Featured</span>
+          )}
+          {isOut && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
+              <span style={{ background: '#1d1d1f', color: '#fff', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 9, textTransform: 'uppercase', padding: '5px 14px' }}>Sold Out</span>
+            </div>
+          )}
+          {totalImages > 1 && (
+            <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
+              {allImages.map((_, i) => (
+                <span key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(i); }}
+                  style={{ width: i === currentImage ? 8 : 6, height: i === currentImage ? 8 : 6, borderRadius: '50%', background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)', cursor: 'pointer', transition: 'all 0.35s ease' }} />
+              ))}
+            </div>
+          )}
+        </div>
+        <div style={{ padding: '4px 6px 6px' }}>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13, color: '#1d1d1f', textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{product.title}</h3>
+          {colors.length > 0 && (
+            <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 6 }}>
+              {colors.map((c, i) => (
+                <span key={i} title={c.color_name} style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: c.color_code || '#ccc', border: '1px solid rgba(0,0,0,0.08)' }} />
+              ))}
+            </div>
+          )}
+        </div>
+      </Link>
+      <style jsx>{`
+        .fp-card:active { transform: scale(0.98); }
+        @media (hover: hover) { .fp-card:hover { transform: translateY(-2px); z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.12); } }
+      `}</style>
+    </div>
+  );
+}
