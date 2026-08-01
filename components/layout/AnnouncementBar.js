@@ -7,6 +7,7 @@ export default function AnnouncementBar() {
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
   const lastScrollY = useRef(0);
+  const barRef = useRef(null);
 
   useEffect(() => {
     const dismissed = localStorage.getItem('jabiyen_announcement_hidden') === 'true';
@@ -19,7 +20,8 @@ export default function AnnouncementBar() {
         const data = await res.json();
         if (data && data.message && !dismissed) {
           setAnnouncement(data);
-          setIsVisible(true);
+          // Delay appearance for smooth entrance
+          setTimeout(() => setIsVisible(true), 100);
         }
       } catch (e) {}
     }
@@ -28,21 +30,24 @@ export default function AnnouncementBar() {
 
   useEffect(() => {
     let ticking = false;
+    let lastKnownScroll = window.scrollY;
     
     const handleScroll = () => {
       if (!ticking) {
         requestAnimationFrame(() => {
           const currentScrollY = window.scrollY;
-          const scrollingDown = currentScrollY > lastScrollY.current;
-          const nearTop = currentScrollY <= 5;
+          const delta = currentScrollY - lastKnownScroll;
+          const scrollingDown = delta > 2;
+          const scrollingUp = delta < -2;
+          const atTop = currentScrollY <= 3;
           
-          if (scrollingDown && currentScrollY > 60) {
+          if (scrollingDown && currentScrollY > 50) {
             setIsVisible(false);
-          } else if (nearTop) {
+          } else if ((scrollingUp || atTop) && currentScrollY < 100) {
             setIsVisible(true);
           }
           
-          lastScrollY.current = currentScrollY;
+          lastKnownScroll = currentScrollY;
           ticking = false;
         });
         ticking = true;
@@ -57,7 +62,7 @@ export default function AnnouncementBar() {
     setIsVisible(false);
     setIsDismissed(true);
     localStorage.setItem('jabiyen_announcement_hidden', 'true');
-    setTimeout(() => setAnnouncement(null), 500);
+    setTimeout(() => setAnnouncement(null), 600);
   };
 
   if (!announcement || !announcement.message) return null;
@@ -67,35 +72,37 @@ export default function AnnouncementBar() {
 
   return (
     <>
-      <div style={{
-        background: bgColor,
-        color: textColor,
-        fontFamily: "var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-        fontSize: 'clamp(11px, 1.2vw, 13px)',
-        fontWeight: 600,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-        height: 36,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        zIndex: 60,
-        padding: '0 45px',
-        textAlign: 'center',
-        overflow: 'hidden',
-        transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
-        opacity: isVisible ? 1 : 0,
-        pointerEvents: isVisible ? 'auto' : 'none',
-        willChange: 'transform, opacity',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)'
-      }}>
-        {/* Left spacer - same width as close button */}
+      <div
+        ref={barRef}
+        style={{
+          background: bgColor,
+          color: textColor,
+          fontFamily: "var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+          fontSize: 'clamp(11px, 1.2vw, 13px)',
+          fontWeight: 500,
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          height: 38,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          zIndex: 60,
+          padding: '0 45px',
+          textAlign: 'center',
+          overflow: 'hidden',
+          transition: 'transform 0.6s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.5s cubic-bezier(0.33, 1, 0.68, 1)',
+          transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
+          opacity: isVisible ? 1 : 0,
+          pointerEvents: isVisible ? 'auto' : 'none',
+          willChange: 'transform, opacity',
+          boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset'
+        }}
+      >
+        {/* Left spacer */}
         <div style={{ width: 28, flexShrink: 0 }} />
         
         {/* Center content */}
@@ -106,23 +113,35 @@ export default function AnnouncementBar() {
           overflow: 'hidden',
           textOverflow: 'ellipsis'
         }}>
-          {announcement.message}
-          {announcement.link_url && announcement.link_title && (
-            <a href={announcement.link_url} target="_blank" rel="noopener noreferrer" style={{
-              color: textColor,
-              textDecoration: 'underline',
-              textUnderlineOffset: 3,
-              fontWeight: 700,
-              marginLeft: 6,
-              opacity: 0.85,
-              transition: 'opacity 0.2s ease'
-            }}>
-              {announcement.link_title}
-            </a>
-          )}
+          <span style={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(6px)',
+            transition: 'opacity 0.5s cubic-bezier(0.33, 1, 0.68, 1) 0.15s, transform 0.5s cubic-bezier(0.33, 1, 0.68, 1) 0.15s',
+            display: 'inline-block'
+          }}>
+            {announcement.message}
+            {announcement.link_url && announcement.link_title && (
+              <a href={announcement.link_url} target="_blank" rel="noopener noreferrer" style={{
+                color: textColor,
+                textDecoration: 'none',
+                fontWeight: 600,
+                marginLeft: 8,
+                opacity: 0.8,
+                borderBottom: `1px solid ${textColor}`,
+                borderBottomWidth: 1,
+                paddingBottom: 1,
+                transition: 'opacity 0.2s ease, border-color 0.2s ease'
+              }}
+              onMouseEnter={(e) => { e.target.style.opacity = '1'; }}
+              onMouseLeave={(e) => { e.target.style.opacity = '0.8'; }}
+              >
+                {announcement.link_title}
+              </a>
+            )}
+          </span>
         </span>
 
-        {/* Close button - fixed width */}
+        {/* Close button */}
         <button onClick={dismiss} style={{
           width: 28,
           height: 28,
@@ -133,23 +152,25 @@ export default function AnnouncementBar() {
           border: 'none',
           color: textColor,
           cursor: 'pointer',
-          opacity: 0.6,
-          transition: 'opacity 0.2s ease, transform 0.2s ease',
-          flexShrink: 0
+          opacity: 0.5,
+          transition: 'opacity 0.3s ease, transform 0.3s cubic-bezier(0.33, 1, 0.68, 1)',
+          flexShrink: 0,
+          borderRadius: '50%'
         }}
-        onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'scale(1.1)'; }}
-        onMouseLeave={(e) => { e.target.style.opacity = '0.6'; e.target.style.transform = 'scale(1)'; }}
+        onMouseEnter={(e) => { e.target.style.opacity = '0.9'; e.target.style.transform = 'scale(1.08)'; e.target.style.background = 'rgba(255,255,255,0.08)'; }}
+        onMouseLeave={(e) => { e.target.style.opacity = '0.5'; e.target.style.transform = 'scale(1)'; e.target.style.background = 'none'; }}
         aria-label="Close Announcement">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
 
       <div style={{
-        height: isVisible ? 36 : 0,
+        height: isVisible ? 38 : 0,
         flexShrink: 0,
-        transition: 'height 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+        transition: 'height 0.6s cubic-bezier(0.33, 1, 0.68, 1)'
       }} />
     </>
   );
