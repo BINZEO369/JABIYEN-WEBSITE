@@ -1,5 +1,8 @@
 import Head from 'next/head';
+import { ToastProvider } from '../components/layout/Toast';
+import Header from '../components/layout/Header';
 import Footer from '../components/layout/Footer';
+import Fonts from '../components/layout/Fonts';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -37,8 +40,8 @@ export default function App({ Component, pageProps }) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="/fonts.js"></script>
-        <script src="/components.js"></script>
+        {/* fonts.js → React Fonts component */}
+        {/* components.js → React Header, CartDrawer, MenuDrawer, Toast, AnnouncementBar */}
         {/* footer.js → React Footer component */}
         {/* hero-banner.js → React HeroBanner component */}
         {/* hero-video.js → React HeroVideo component */}
@@ -51,6 +54,8 @@ export default function App({ Component, pageProps }) {
         {/* onsale.js → React OnSale component */}
         {/* limitededition.js → React LimitedEdition component */}
       </Head>
+
+      <Fonts />
 
       <script dangerouslySetInnerHTML={{
         __html: `
@@ -119,13 +124,13 @@ export default function App({ Component, pageProps }) {
         @media (min-width: 1400px) { :root { --card-width: 300px; --card-gap: 20px; } }
       `}</style>
 
-      <div id="header-container"></div>
-
-      <main className="flex-grow">
-        <Component {...pageProps} />
-      </main>
-
-      <Footer />
+      <ToastProvider>
+        <Header />
+        <main className="flex-grow">
+          <Component {...pageProps} />
+        </main>
+        <Footer />
+      </ToastProvider>
 
       <div id="cookieConsent" className="cookie-consent-overlay">
         <div className="cookie-banner">
