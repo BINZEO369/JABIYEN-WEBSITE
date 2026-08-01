@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 
 export default function AnnouncementBar() {
   const [announcement, setAnnouncement] = useState(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     const dismissed = localStorage.getItem('jabiyen_announcement_hidden') === 'true';
@@ -26,14 +27,28 @@ export default function AnnouncementBar() {
   }, []);
 
   useEffect(() => {
+    let ticking = false;
+    
     const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > 50) {
-        setIsVisible(false);
-      } else if (currentScrollY <= 10 && announcement && !isDismissed) {
-        setIsVisible(true);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          const currentScrollY = window.scrollY;
+          const scrollingDown = currentScrollY > lastScrollY.current;
+          const nearTop = currentScrollY <= 5;
+          
+          if (scrollingDown && currentScrollY > 60) {
+            setIsVisible(false);
+          } else if (nearTop) {
+            setIsVisible(true);
+          }
+          
+          lastScrollY.current = currentScrollY;
+          ticking = false;
+        });
+        ticking = true;
       }
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [announcement, isDismissed]);
@@ -55,8 +70,8 @@ export default function AnnouncementBar() {
       <div style={{
         background: bgColor,
         color: textColor,
-        fontFamily: "'Inter', sans-serif",
-        fontSize: 10,
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
+        fontSize: 'clamp(8px, 1vw, 10px)',
         fontWeight: 600,
         letterSpacing: '0.08em',
         textTransform: 'uppercase',
@@ -72,17 +87,26 @@ export default function AnnouncementBar() {
         padding: '0 45px 0 16px',
         textAlign: 'center',
         overflow: 'hidden',
-        transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease',
+        transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
         opacity: isVisible ? 1 : 0,
-        pointerEvents: isVisible ? 'auto' : 'none'
+        pointerEvents: isVisible ? 'auto' : 'none',
+        willChange: 'transform, opacity',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)'
       }}>
-        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <span style={{
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          maxWidth: 'calc(100% - 60px)'
+        }}>
           {announcement.message}
           {announcement.link_url && announcement.link_title && (
             <a href={announcement.link_url} target="_blank" rel="noopener noreferrer" style={{
               color: textColor,
               textDecoration: 'underline',
+              textUnderlineOffset: 3,
               fontWeight: 700,
               marginLeft: 6,
               opacity: 0.85,
@@ -103,9 +127,11 @@ export default function AnnouncementBar() {
           cursor: 'pointer',
           padding: 4,
           opacity: 0.6,
-          transition: 'opacity 0.2s ease',
+          transition: 'opacity 0.2s ease, transform 0.2s ease',
           flexShrink: 0
         }}
+        onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(-50%) scale(1.1)'; }}
+        onMouseLeave={(e) => { e.target.style.opacity = '0.6'; e.target.style.transform = 'translateY(-50%) scale(1)'; }}
         aria-label="Close Announcement">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -113,7 +139,22 @@ export default function AnnouncementBar() {
         </button>
       </div>
 
-      {announcement && <div style={{ height: 36, flexShrink: 0 }} />}
+      {/* Spacer */}
+      <div style={{
+        height: isVisible ? 36 : 0,
+        flexShrink: 0,
+        transition: 'height 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+      }} />
+
+      {/* Smooth scroll styles */}
+      <style jsx global>{`
+        @media (max-width: 480px) {
+          .announcement-text {
+            font-size: 8px !important;
+            letter-spacing: 0.05em !important;
+          }
+        }
+      `}</style>
     </>
   );
 }
