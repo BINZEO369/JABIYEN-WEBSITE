@@ -36,19 +36,6 @@ export default function App({ Component, pageProps }) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         <script src="https://cdn.tailwindcss.com"></script>
-        <script src="/fonts.js"></script>
-        <script src="/components.js"></script>
-        <script src="/footer.js"></script>
-        <script src="/hero-banner.js"></script>
-        {/* hero-video.js → React HeroVideo component */}
-        {/* categoryshow.js → React CategoryShowcase component */}
-        <script src="/hero-secondary-banner.js"></script>
-        <script src="/newarrival.js"></script>
-        <script src="/hot.js"></script>
-        <script src="/featuredproducts.js"></script>
-        <script src="/bestseller.js"></script>
-        <script src="/onsale.js"></script>
-        <script src="/limitededition.js"></script>
       </Head>
 
       <script dangerouslySetInnerHTML={{
@@ -118,13 +105,9 @@ export default function App({ Component, pageProps }) {
         @media (min-width: 1400px) { :root { --card-width: 300px; --card-gap: 20px; } }
       `}</style>
 
-      <div id="header-container"></div>
-
       <main className="flex-grow">
         <Component {...pageProps} />
       </main>
-
-      <div id="footer-container"></div>
 
       <div id="cookieConsent" className="cookie-consent-overlay">
         <div className="cookie-banner">
