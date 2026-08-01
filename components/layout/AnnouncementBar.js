@@ -71,9 +71,9 @@ export default function AnnouncementBar() {
         background: bgColor,
         color: textColor,
         fontFamily: "var(--font-body), 'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-        fontSize: 'clamp(8px, 1vw, 10px)',
+        fontSize: 'clamp(11px, 1.2vw, 13px)',
         fontWeight: 600,
-        letterSpacing: '0.08em',
+        letterSpacing: '0.06em',
         textTransform: 'uppercase',
         height: 36,
         display: 'flex',
@@ -133,7 +133,7 @@ export default function AnnouncementBar() {
         onMouseEnter={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'translateY(-50%) scale(1.1)'; }}
         onMouseLeave={(e) => { e.target.style.opacity = '0.6'; e.target.style.transform = 'translateY(-50%) scale(1)'; }}
         aria-label="Close Announcement">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
         </button>
@@ -144,15 +144,6 @@ export default function AnnouncementBar() {
         flexShrink: 0,
         transition: 'height 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
       }} />
-
-      <style jsx global>{`
-        @media (max-width: 480px) {
-          .announcement-text {
-            font-size: 8px !important;
-            letter-spacing: 0.05em !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
