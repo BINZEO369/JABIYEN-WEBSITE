@@ -55,14 +55,14 @@ export default function Header() {
           left: 0,
           right: 0,
           width: '100%',
-          background: isScrolled ? 'rgba(255,255,255,0.85)' : 'transparent',
+          background: isScrolled ? 'rgba(255,255,255,0.05)' : 'transparent',
           backdropFilter: isScrolled ? 'blur(10px) saturate(180%)' : 'none',
           WebkitBackdropFilter: isScrolled ? 'blur(5px) saturate(180%)' : 'none',
           borderBottom: isScrolled ? '1px solid rgba(0,0,0,0.06)' : '1px solid transparent',
           boxShadow: isScrolled ? '0 4px 30px rgba(0,0,0,0.03)' : 'none',
           zIndex: 50,
           transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, top 0.4s ease',
-          isolation: 'isolate' // Important for mix-blend-mode
+          isolation: 'isolate'
         }}
       >
         <div style={{
@@ -82,7 +82,7 @@ export default function Header() {
               display: 'flex', alignItems: 'center', gap: 10,
               flexShrink: 0, textDecoration: 'none',
               mixBlendMode: 'difference',
-              color: '#fff' // difference mode will invert based on background
+              color: '#fff'
             }}>
               <img src="/logo.png" alt="JABIYEN" style={{
                 width: 40, height: 40,
@@ -96,7 +96,7 @@ export default function Header() {
                 fontSize: 'clamp(14px, 2vw, 20px)',
                 fontWeight: 900,
                 letterSpacing: '0.1em',
-                color: '#fff' // Base color, difference mode will handle inversion
+                color: '#fff'
               }}>
                 JABIYEN
               </span>
