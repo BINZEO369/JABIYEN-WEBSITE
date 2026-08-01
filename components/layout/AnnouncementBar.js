@@ -25,22 +25,15 @@ export default function AnnouncementBar() {
     fetchAnnouncement();
   }, []);
 
-  // Scroll handler - hide on scroll
   useEffect(() => {
-    let lastScrollY = 0;
-    
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
       if (currentScrollY > 50) {
         setIsVisible(false);
       } else if (currentScrollY <= 10 && announcement && !isDismissed) {
         setIsVisible(true);
       }
-      
-      lastScrollY = currentScrollY;
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [announcement, isDismissed]);
@@ -88,11 +81,12 @@ export default function AnnouncementBar() {
           {announcement.message}
           {announcement.link_url && announcement.link_title && (
             <a href={announcement.link_url} target="_blank" rel="noopener noreferrer" style={{
-              color: 'rgba(255,255,255,0.7)',
+              color: textColor,
               textDecoration: 'underline',
               fontWeight: 700,
               marginLeft: 6,
-              transition: 'color 0.2s ease'
+              opacity: 0.85,
+              transition: 'opacity 0.2s ease'
             }}>
               {announcement.link_title}
             </a>
@@ -105,10 +99,11 @@ export default function AnnouncementBar() {
           transform: 'translateY(-50%)',
           background: 'none',
           border: 'none',
-          color: 'rgba(255,255,255,0.6)',
+          color: textColor,
           cursor: 'pointer',
           padding: 4,
-          transition: 'color 0.2s ease',
+          opacity: 0.6,
+          transition: 'opacity 0.2s ease',
           flexShrink: 0
         }}
         aria-label="Close Announcement">
@@ -118,7 +113,6 @@ export default function AnnouncementBar() {
         </button>
       </div>
 
-      {/* Spacer */}
       {announcement && <div style={{ height: 36, flexShrink: 0 }} />}
     </>
   );
