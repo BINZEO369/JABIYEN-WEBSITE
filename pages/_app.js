@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Footer from '../components/layout/Footer';
 
 export default function App({ Component, pageProps }) {
   return (
@@ -36,6 +37,19 @@ export default function App({ Component, pageProps }) {
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         <script src="https://cdn.tailwindcss.com"></script>
+        <script src="/fonts.js"></script>
+        <script src="/components.js"></script>
+        {/* footer.js → React Footer component */}
+        {/* hero-banner.js → React HeroBanner component */}
+        {/* hero-video.js → React HeroVideo component */}
+        {/* categoryshow.js → React CategoryShowcase component */}
+        {/* hero-secondary-banner.js → React HeroSecondaryBanner component */}
+        {/* newarrival.js → React NewArrivals component */}
+        {/* hot.js → React TrendingNow component */}
+        {/* featuredproducts.js → React FeaturedProducts component */}
+        {/* bestseller.js → React BestSellers component */}
+        {/* onsale.js → React OnSale component */}
+        {/* limitededition.js → React LimitedEdition component */}
       </Head>
 
       <script dangerouslySetInnerHTML={{
@@ -105,9 +119,13 @@ export default function App({ Component, pageProps }) {
         @media (min-width: 1400px) { :root { --card-width: 300px; --card-gap: 20px; } }
       `}</style>
 
+      <div id="header-container"></div>
+
       <main className="flex-grow">
         <Component {...pageProps} />
       </main>
+
+      <Footer />
 
       <div id="cookieConsent" className="cookie-consent-overlay">
         <div className="cookie-banner">
