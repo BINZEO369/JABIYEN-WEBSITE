@@ -10,15 +10,13 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [iconColor, setIconColor] = useState('#1d1d1f'); // Default dark color
+  const [iconColor, setIconColor] = useState('#1d1d1f');
   const { cart, wishlist } = useCartState();
   const navRef = useRef(null);
-  const headerRef = useRef(null);
 
   const totalCartItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
   const totalWishItems = wishlist.length;
 
-  // Scroll handler with background detection
   useEffect(() => {
     const handleScroll = () => {
       const scrolled = window.scrollY > 20;
@@ -28,108 +26,34 @@ export default function Header() {
       if (!nav) return;
       
       if (scrolled) {
-        nav.classList.add('nav-scrolled');
         nav.style.top = '0px';
       } else {
-        nav.classList.remove('nav-scrolled');
         const isDismissed = localStorage.getItem('jabiyen_announcement_hidden') === 'true';
-        nav.style.top = isDismissed ? '0px' : '36px';
-      }
-
-      // Detect background color under header
-      detectBackgroundColor();
-    };
-
-    const detectBackgroundColor = () => {
-      // Create a canvas to sample pixels
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = window.innerWidth;
-      canvas.height = 1;
-      
-      // Sample multiple points across the header
-      const samplePoints = [
-        window.innerWidth * 0.1,  // Left area (logo)
-        window.innerWidth * 0.5,  // Center
-        window.innerWidth * 0.85, // Right area (icons)
-        window.innerWidth * 0.9,  // Far right
-      ];
-      
-      let totalBrightness = 0;
-      
-      // Use html2canvas or simple DOM inspection
-      // For simplicity, we'll check elements at header position
-      const headerTop = navRef.current?.getBoundingClientRect().top || 0;
-      const elementAtHeader = document.elementFromPoint(window.innerWidth / 2, headerTop + 30);
-      
-      if (elementAtHeader) {
-        const bgColor = window.getComputedStyle(elementAtHeader).backgroundColor;
-        if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
-          const rgb = bgColor.match(/\d+/g);
-          if (rgb && rgb.length >= 3) {
-            // Calculate brightness (0-255)
-            const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
-            
-            if (brightness < 128) {
-              // Dark background - use white icons
-              setIconColor('#ffffff');
-            } else {
-              // Light background - use dark icons
-              setIconColor('#1d1d1f');
-            }
-          }
-        } else {
-          // Check parent elements
-          let parent = elementAtHeader.parentElement;
-          let found = false;
-          while (parent && !found) {
-            const parentBg = window.getComputedStyle(parent).backgroundColor;
-            if (parentBg && parentBg !== 'rgba(0, 0, 0, 0)' && parentBg !== 'transparent') {
-              const rgb = parentBg.match(/\d+/g);
-              if (rgb && rgb.length >= 3) {
-                const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
-                setIconColor(brightness < 128 ? '#ffffff' : '#1d1d1f');
-                found = true;
-              }
-            }
-            parent = parent.parentElement;
-          }
-        }
+        nav.style.top = isDismissed ? '0px' : '38px';
       }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
-    
-    // Also detect on load and resize
-    window.addEventListener('load', detectBackgroundColor);
-    window.addEventListener('resize', detectBackgroundColor);
-    
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('load', detectBackgroundColor);
-      window.removeEventListener('resize', detectBackgroundColor);
-    };
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
     <>
       <AnnouncementBar />
 
-      {/* Main Navigation */}
       <nav
         ref={navRef}
-        className="glass-nav"
         id="main-nav"
         style={{
           position: 'fixed',
-          top: localStorage.getItem('jabiyen_announcement_hidden') === 'true' ? '0px' : '36px',
+          top: localStorage.getItem('jabiyen_announcement_hidden') === 'true' ? '0px' : '38px',
           left: 0,
           right: 0,
           width: '100%',
-          background: isScrolled ? 'rgba(255,255,255,0.05)' : 'transparent',
-          backdropFilter: isScrolled ? 'blur(10px) saturate(180%)' : 'none',
-          WebkitBackdropFilter: isScrolled ? 'blur(5px) saturate(180%)' : 'none',
+          background: isScrolled ? 'rgba(255,255,255,0.85)' : 'transparent',
+          backdropFilter: isScrolled ? 'blur(20px) saturate(180%)' : 'none',
+          WebkitBackdropFilter: isScrolled ? 'blur(20px) saturate(180%)' : 'none',
           borderBottom: isScrolled ? '1px solid rgba(0,0,0,0.06)' : '1px solid transparent',
           boxShadow: isScrolled ? '0 4px 30px rgba(0,0,0,0.03)' : 'none',
           zIndex: 50,
@@ -151,8 +75,7 @@ export default function Header() {
             {/* Logo */}
             <Link href="/" style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              flexShrink: 0, textDecoration: 'none',
-              transition: 'color 0.3s ease'
+              flexShrink: 0, textDecoration: 'none'
             }}>
               <img src="/logo.png" alt="JABIYEN" style={{
                 width: 40, height: 40,
@@ -161,12 +84,11 @@ export default function Header() {
                 className="nav-logo"
               />
               <span style={{
-                fontFamily: "'Manrope', sans-serif",
+                fontFamily: "var(--font-heading), 'Manrope', sans-serif",
                 fontSize: 'clamp(14px, 2vw, 20px)',
-                fontWeight: 900,
-                letterSpacing: '0.1em',
-                color: iconColor,
-                transition: 'color 0.3s ease'
+                fontWeight: 800,
+                letterSpacing: '0.08em',
+                color: '#1d1d1f'
               }}>
                 JABIYEN
               </span>
@@ -182,9 +104,8 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: iconColor,
-                position: 'relative', textDecoration: 'none',
-                transition: 'color 0.3s ease'
+                cursor: 'pointer', color: '#1d1d1f',
+                position: 'relative', textDecoration: 'none'
               }}
                 className="header-icon-btn"
               >
@@ -194,14 +115,12 @@ export default function Header() {
                 {totalWishItems > 0 && (
                   <span style={{
                     position: 'absolute', top: -2, right: -2,
-                    background: iconColor, color: iconColor === '#ffffff' ? '#000' : '#fff',
+                    background: '#1d1d1f', color: '#fff',
                     fontSize: 7, fontWeight: 700,
                     minWidth: 16, height: 16,
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px',
-                    border: '1px solid rgba(255,255,255,0.55)',
-                    transition: 'all 0.3s ease'
+                    padding: '0 4px'
                   }}>
                     {totalWishItems}
                   </span>
@@ -213,9 +132,8 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: iconColor,
-                position: 'relative',
-                transition: 'color 0.3s ease'
+                cursor: 'pointer', color: '#1d1d1f',
+                position: 'relative'
               }}
                 className="header-icon-btn"
               >
@@ -226,14 +144,12 @@ export default function Header() {
                 {totalCartItems > 0 && (
                   <span style={{
                     position: 'absolute', top: -2, right: -2,
-                    background: iconColor, color: iconColor === '#ffffff' ? '#000' : '#fff',
+                    background: '#1d1d1f', color: '#fff',
                     fontSize: 7, fontWeight: 700,
                     minWidth: 16, height: 16,
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    padding: '0 4px',
-                    border: '1px solid rgba(255,255,255,0.55)',
-                    transition: 'all 0.3s ease'
+                    padding: '0 4px'
                   }}>
                     {totalCartItems}
                   </span>
@@ -245,8 +161,7 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: iconColor,
-                transition: 'color 0.3s ease'
+                cursor: 'pointer', color: '#1d1d1f'
               }}
                 className="header-icon-btn"
               >
@@ -259,11 +174,9 @@ export default function Header() {
         </div>
       </nav>
 
-      {/* Drawers */}
       <MenuDrawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
 
-      {/* Responsive Styles */}
       <style jsx>{`
         @media (min-width: 1024px) {
           .nav-container {
