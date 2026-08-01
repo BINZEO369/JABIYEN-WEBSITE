@@ -61,8 +61,7 @@ export default function Header() {
           borderBottom: isScrolled ? '1px solid rgba(0,0,0,0.06)' : '1px solid transparent',
           boxShadow: isScrolled ? '0 4px 30px rgba(0,0,0,0.03)' : 'none',
           zIndex: 50,
-          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, top 0.4s ease',
-          isolation: 'isolate'
+          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, top 0.4s ease'
         }}
       >
         <div style={{
@@ -80,14 +79,11 @@ export default function Header() {
             {/* Logo */}
             <Link href="/" style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              flexShrink: 0, textDecoration: 'none',
-              mixBlendMode: 'difference',
-              color: '#fff'
+              flexShrink: 0, textDecoration: 'none'
             }}>
               <img src="/logo.png" alt="JABIYEN" style={{
                 width: 40, height: 40,
-                borderRadius: 6, objectFit: 'cover',
-                mixBlendMode: 'difference'
+                borderRadius: 6, objectFit: 'cover'
               }}
                 className="nav-logo"
               />
@@ -96,7 +92,8 @@ export default function Header() {
                 fontSize: 'clamp(14px, 2vw, 20px)',
                 fontWeight: 900,
                 letterSpacing: '0.1em',
-                color: '#fff'
+                color: '#fff',
+                mixBlendMode: 'difference'
               }}>
                 JABIYEN
               </span>
@@ -105,16 +102,17 @@ export default function Header() {
             {/* Right Icons */}
             <div style={{
               display: 'flex', alignItems: 'center',
-              gap: 2, flexShrink: 0,
-              mixBlendMode: 'difference'
+              gap: 2, flexShrink: 0
             }}>
               {/* Wishlist */}
               <Link href="/wishlist" style={{
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#fff',
-                position: 'relative', textDecoration: 'none'
+                cursor: 'pointer', position: 'relative',
+                textDecoration: 'none',
+                color: '#fff',
+                mixBlendMode: 'difference'
               }}
                 className="header-icon-btn"
               >
@@ -143,8 +141,9 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#fff',
-                position: 'relative'
+                cursor: 'pointer', position: 'relative',
+                color: '#fff',
+                mixBlendMode: 'difference'
               }}
                 className="header-icon-btn"
               >
@@ -174,7 +173,9 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#fff'
+                cursor: 'pointer',
+                color: '#fff',
+                mixBlendMode: 'difference'
               }}
                 className="header-icon-btn"
               >
