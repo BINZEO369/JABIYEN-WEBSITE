@@ -41,24 +41,6 @@ export default function Header() {
     };
 
     const detectBackgroundColor = () => {
-      // Create a canvas to sample pixels
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      canvas.width = window.innerWidth;
-      canvas.height = 1;
-      
-      // Sample multiple points across the header
-      const samplePoints = [
-        window.innerWidth * 0.1,  // Left area (logo)
-        window.innerWidth * 0.5,  // Center
-        window.innerWidth * 0.85, // Right area (icons)
-        window.innerWidth * 0.9,  // Far right
-      ];
-      
-      let totalBrightness = 0;
-      
-      // Use html2canvas or simple DOM inspection
-      // For simplicity, we'll check elements at header position
       const headerTop = navRef.current?.getBoundingClientRect().top || 0;
       const elementAtHeader = document.elementFromPoint(window.innerWidth / 2, headerTop + 30);
       
@@ -67,19 +49,15 @@ export default function Header() {
         if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
           const rgb = bgColor.match(/\d+/g);
           if (rgb && rgb.length >= 3) {
-            // Calculate brightness (0-255)
             const brightness = (parseInt(rgb[0]) * 299 + parseInt(rgb[1]) * 587 + parseInt(rgb[2]) * 114) / 1000;
             
             if (brightness < 128) {
-              // Dark background - use white icons
               setIconColor('#ffffff');
             } else {
-              // Light background - use dark icons
               setIconColor('#1d1d1f');
             }
           }
         } else {
-          // Check parent elements
           let parent = elementAtHeader.parentElement;
           let found = false;
           while (parent && !found) {
@@ -99,9 +77,7 @@ export default function Header() {
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
-    handleScroll(); // Initial check
-    
-    // Also detect on load and resize
+    handleScroll();
     window.addEventListener('load', detectBackgroundColor);
     window.addEventListener('resize', detectBackgroundColor);
     
@@ -148,28 +124,39 @@ export default function Header() {
           }}
             className="nav-inner"
           >
-            {/* Logo */}
-            <Link href="/" style={{
-              display: 'flex', alignItems: 'center', gap: 10,
+            {/* Luxury Brand Logo */}
+            <Link href="/" className="brand-logo-link" style={{
+              display: 'flex', alignItems: 'center', gap: 8,
               flexShrink: 0, textDecoration: 'none',
-              transition: 'color 0.3s ease'
+              transition: 'all 0.3s ease'
             }}>
-              <img src="/logo.png" alt="JABIYEN" style={{
-                width: 40, height: 40,
-                borderRadius: 6, objectFit: 'cover'
-              }}
-                className="nav-logo"
-              />
-              <span style={{
-                fontFamily: "'Manrope', sans-serif",
-                fontSize: 'clamp(14px, 2vw, 20px)',
-                fontWeight: 900,
-                letterSpacing: '0.1em',
-                color: iconColor,
-                transition: 'color 0.3s ease'
-              }}>
-                JABIYEN
-              </span>
+              <div className="logo-wrapper">
+                <svg className="logo-monogram" viewBox="0 0 50 50" width="44" height="44">
+                  <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={iconColor} stopOpacity="1" />
+                      <stop offset="100%" stopColor={iconColor} stopOpacity="0.7" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="25" cy="25" r="24" fill="none" stroke="url(#logoGradient)" strokeWidth="1.5" />
+                  <text x="25" y="32" textAnchor="middle" fill={iconColor} fontSize="22" fontWeight="900" fontFamily="'Manrope', 'Helvetica Neue', sans-serif" letterSpacing="2">J</text>
+                </svg>
+              </div>
+              <div className="brand-text-container">
+                <span className="brand-name" style={{
+                  color: iconColor,
+                  transition: 'color 0.3s ease'
+                }}>
+                  JABIYEN
+                </span>
+                <span className="brand-subtitle" style={{
+                  color: iconColor,
+                  opacity: 0.6,
+                  transition: 'color 0.3s ease'
+                }}>
+                  HAUTE COUTURE
+                </span>
+              </div>
             </Link>
 
             {/* Right Icons */}
@@ -263,8 +250,63 @@ export default function Header() {
       <MenuDrawer isOpen={menuOpen} onClose={() => setMenuOpen(false)} />
       <CartDrawer isOpen={cartOpen} onClose={() => setCartOpen(false)} />
 
-      {/* Responsive Styles */}
+      {/* Luxury Brand Styles */}
       <style jsx>{`
+        /* Brand Logo Styles */
+        .brand-logo-link {
+          position: relative;
+        }
+        
+        .logo-wrapper {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .logo-monogram {
+          filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+          transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .brand-logo-link:hover .logo-monogram {
+          transform: scale(1.05);
+          filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+        }
+        
+        .brand-text-container {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          line-height: 1;
+        }
+        
+        .brand-name {
+          font-family: 'Cormorant Garamond', 'Manrope', 'Didot', 'Bodoni MT', serif;
+          font-size: clamp(18px, 2.5vw, 24px);
+          font-weight: 700;
+          letter-spacing: 0.35em;
+          text-transform: uppercase;
+          line-height: 1;
+          transition: all 0.3s ease;
+          position: relative;
+        }
+        
+        .brand-subtitle {
+          font-family: 'Manrope', 'Helvetica Neue', sans-serif;
+          font-size: 7px;
+          font-weight: 500;
+          letter-spacing: 0.5em;
+          text-transform: uppercase;
+          margin-top: 2px;
+          transition: all 0.3s ease;
+        }
+        
+        .brand-logo-link:hover .brand-name {
+          letter-spacing: 0.4em;
+        }
+
+        /* Responsive */
         @media (min-width: 1024px) {
           .nav-container {
             padding-left: 40px !important;
@@ -273,12 +315,36 @@ export default function Header() {
           .nav-inner {
             height: 64px !important;
           }
-          .nav-logo {
-            width: 48px !important;
-            height: 48px !important;
+          .brand-name {
+            font-size: clamp(22px, 3vw, 28px) !important;
+          }
+          .brand-subtitle {
+            font-size: 8px !important;
+            letter-spacing: 0.6em !important;
+          }
+          .logo-monogram {
+            width: 50px;
+            height: 50px;
           }
         }
-        .header-icon-btn:hover { opacity: 0.6; }
+        
+        .header-icon-btn:hover { 
+          opacity: 0.6; 
+          transform: scale(0.95);
+          transition: all 0.2s ease;
+        }
+
+        /* Animation for scroll */
+        .nav-scrolled .brand-name {
+          font-size: clamp(16px, 2vw, 22px) !important;
+        }
+        
+        .nav-scrolled .brand-subtitle {
+          opacity: 0 !important;
+          max-height: 0 !important;
+          margin-top: 0 !important;
+          transition: all 0.3s ease;
+        }
       `}</style>
     </>
   );
