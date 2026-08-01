@@ -112,6 +112,9 @@ export default function Header() {
     };
   }, []);
 
+  // Filter effect for logo image based on icon color
+  const logoFilter = iconColor === '#ffffff' ? 'brightness(0) invert(1)' : 'none';
+
   return (
     <>
       <AnnouncementBar />
@@ -154,20 +157,22 @@ export default function Header() {
               flexShrink: 0, textDecoration: 'none',
               transition: 'color 0.3s ease'
             }}>
-              <img src="/logo.png" alt="JABIYEN" style={{
+              <img src="/logo.png" alt="JABIYEN Logo" style={{
                 width: 40, height: 40,
                 borderRadius: 6, objectFit: 'cover'
               }}
                 className="nav-logo"
               />
-              <img src="/jabiyen.png" alt="JABIYEN" style={{
-                height: 20,
-                width: 'auto',
-                objectFit: 'contain',
-                filter: iconColor === '#ffffff' ? 'brightness(0) invert(1)' : 'brightness(0)',
-                transition: 'filter 0.3s ease'
-              }}
-                className="nav-brand-text"
+              <img 
+                src="/jabiyen.png" 
+                alt="JABIYEN" 
+                style={{
+                  height: 24,
+                  width: 'auto',
+                  filter: logoFilter,
+                  transition: 'filter 0.3s ease'
+                }}
+                className="brand-name-img"
               />
             </Link>
 
@@ -276,8 +281,8 @@ export default function Header() {
             width: 48px !important;
             height: 48px !important;
           }
-          .nav-brand-text {
-            height: 24px !important;
+          .brand-name-img {
+            height: 32px !important;
           }
         }
         .header-icon-btn:hover { opacity: 0.6; }
