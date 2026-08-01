@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import HeroVideo from '../components/home/HeroVideo';
+import CategoryShowcase from '../components/home/CategoryShowcase';
 
 export default function Home() {
   const [currentData, setCurrentData] = useState({
@@ -39,7 +40,6 @@ export default function Home() {
           hero: hero || [], categories: cats || [], products: prods || [],
           news: newsData || [], heroVideos: heroVideosData || [], hero_secondary: heroSecondaryData || []
         });
-        if (cats?.length && typeof window.renderCategoryShow === 'function') window.renderCategoryShow(cats);
         window.dispatchEvent(new CustomEvent('jayenware:dataLoaded', {
           detail: { hero: hero || [], heroVideos: heroVideosData || [], hero_secondary: heroSecondaryData || [] }
         }));
@@ -126,7 +126,7 @@ export default function Home() {
 
       <section id="home" className="page-section active-page fade-in" style={{ display: activePage === 'home' ? 'block' : 'none' }}>
         <HeroVideo videos={currentData.heroVideos} />
-        <div id="categoryshow-container"></div>
+        <CategoryShowcase />
         <div id="new-arrivals-container"></div>
         <div id="hero-secondary-container"></div>
         <div id="trending-now-container"></div>
