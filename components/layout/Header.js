@@ -61,7 +61,8 @@ export default function Header() {
           borderBottom: isScrolled ? '1px solid rgba(0,0,0,0.06)' : '1px solid transparent',
           boxShadow: isScrolled ? '0 4px 30px rgba(0,0,0,0.03)' : 'none',
           zIndex: 50,
-          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, top 0.4s ease'
+          transition: 'background 0.4s ease, backdrop-filter 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, top 0.4s ease',
+          isolation: 'isolate' // Important for mix-blend-mode
         }}
       >
         <div style={{
@@ -79,11 +80,14 @@ export default function Header() {
             {/* Logo */}
             <Link href="/" style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              flexShrink: 0, textDecoration: 'none'
+              flexShrink: 0, textDecoration: 'none',
+              mixBlendMode: 'difference',
+              color: '#fff' // difference mode will invert based on background
             }}>
               <img src="/logo.png" alt="JABIYEN" style={{
                 width: 40, height: 40,
-                borderRadius: 6, objectFit: 'cover'
+                borderRadius: 6, objectFit: 'cover',
+                mixBlendMode: 'difference'
               }}
                 className="nav-logo"
               />
@@ -92,8 +96,7 @@ export default function Header() {
                 fontSize: 'clamp(14px, 2vw, 20px)',
                 fontWeight: 900,
                 letterSpacing: '0.1em',
-                color: '#fff',
-                mixBlendMode: 'difference'
+                color: '#fff' // Base color, difference mode will handle inversion
               }}>
                 JABIYEN
               </span>
@@ -102,7 +105,8 @@ export default function Header() {
             {/* Right Icons */}
             <div style={{
               display: 'flex', alignItems: 'center',
-              gap: 2, flexShrink: 0
+              gap: 2, flexShrink: 0,
+              mixBlendMode: 'difference'
             }}>
               {/* Wishlist */}
               <Link href="/wishlist" style={{
@@ -110,8 +114,7 @@ export default function Header() {
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', color: '#fff',
-                position: 'relative', textDecoration: 'none',
-                mixBlendMode: 'difference'
+                position: 'relative', textDecoration: 'none'
               }}
                 className="header-icon-btn"
               >
@@ -127,7 +130,7 @@ export default function Header() {
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 4px',
-                    border: '1px solid rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(0,0,0,0.3)',
                     mixBlendMode: 'difference'
                   }}>
                     {totalWishItems}
@@ -141,8 +144,7 @@ export default function Header() {
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', color: '#fff',
-                position: 'relative',
-                mixBlendMode: 'difference'
+                position: 'relative'
               }}
                 className="header-icon-btn"
               >
@@ -159,7 +161,7 @@ export default function Header() {
                     borderRadius: '50%',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     padding: '0 4px',
-                    border: '1px solid rgba(0,0,0,0.2)',
+                    border: '1px solid rgba(0,0,0,0.3)',
                     mixBlendMode: 'difference'
                   }}>
                     {totalCartItems}
@@ -172,8 +174,7 @@ export default function Header() {
                 background: 'none', border: 'none',
                 padding: 4, margin: '0 1px',
                 display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', color: '#fff',
-                mixBlendMode: 'difference'
+                cursor: 'pointer', color: '#fff'
               }}
                 className="header-icon-btn"
               >
