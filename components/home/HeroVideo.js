@@ -412,11 +412,11 @@ export default function HeroVideo({ videos = [] }) {
           </div>
         )}
 
-        {/* Top Progress Bar */}
+        {/* Bottom Progress Bar */}
         {videos.length > 1 && (
           <div style={{
             position: 'absolute',
-            top: 0,
+            bottom: 0,
             left: 0,
             right: 0,
             height: 2,
