@@ -95,8 +95,26 @@ export default function HeroVideo({ videos = [] }) {
     };
   }, []);
 
-  const toggleSound = () => setIsMuted(prev => !prev);
-  const togglePlay = () => setIsPaused(prev => !prev);
+  const toggleSound = (e) => {
+    e.stopPropagation();
+    if (playerRef.current) {
+      playerRef.current.muted = !playerRef.current.muted;
+      setIsMuted(!playerRef.current.muted);
+    }
+  };
+
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    if (!playerRef.current) return;
+
+    if (isPaused) {
+      playerRef.current.play().catch(() => {});
+      setIsPaused(false);
+    } else {
+      playerRef.current.pause();
+      setIsPaused(true);
+    }
+  };
 
   const switchToVideo = (index) => {
     if (isTransitioning || index === currentIndex) return;
@@ -274,27 +292,106 @@ export default function HeroVideo({ videos = [] }) {
           )}
         </div>
 
-        {/* Controls */}
-        <div style={{ position: 'absolute', bottom: 24, right: 24, zIndex: 10, display: 'flex', gap: 10 }}>
-          <button onClick={togglePlay} style={{
-            width: 34, height: 34, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: isPaused ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.75)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: 12
-          }}>
-            <i className={`fa-solid ${isPaused ? 'fa-play' : 'fa-pause'}`}></i>
+        {/* Controls - ছোট ও উন্নত */}
+        <div style={{ 
+          position: 'absolute', 
+          bottom: 20, 
+          right: 20, 
+          zIndex: 10, 
+          display: 'flex', 
+          gap: 8,
+          alignItems: 'center'
+        }}>
+          {/* Play/Pause Button */}
+          <button 
+            onClick={togglePlay}
+            className="control-btn"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              background: 'rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: 'rgba(255, 255, 255, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: 10,
+              padding: 0,
+              transition: 'all 0.3s ease',
+              outline: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              {isPaused ? (
+                <path d="M8 5v14l11-7z"/>
+              ) : (
+                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
+              )}
+            </svg>
           </button>
-          <button onClick={toggleSound} style={{
-            width: 34, height: 34, borderRadius: '50%',
-            background: 'rgba(255,255,255,0.12)', backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            color: isMuted ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.75)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', fontSize: 12
-          }}>
-            <i className={`fa-solid ${isMuted ? 'fa-volume-xmark' : 'fa-volume-high'}`}></i>
+
+          {/* Sound Button */}
+          <button 
+            onClick={toggleSound}
+            className="control-btn"
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: '50%',
+              background: 'rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              color: 'rgba(255, 255, 255, 0.8)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              fontSize: 10,
+              padding: 0,
+              transition: 'all 0.3s ease',
+              outline: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+              {isMuted ? (
+                <>
+                  <path d="M3 9v6h4l5 5V4L7 9H3z"/>
+                  <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2"/>
+                  <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2"/>
+                </>
+              ) : (
+                <>
+                  <path d="M3 9v6h4l5 5V4L7 9H3z"/>
+                  <path d="M16 7.5c1.5 1.5 1.5 4 0 5.5" fill="none" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M19 5c3 3.5 3 9 0 13" fill="none" stroke="currentColor" strokeWidth="2"/>
+                </>
+              )}
+            </svg>
           </button>
         </div>
 
@@ -308,7 +405,7 @@ export default function HeroVideo({ videos = [] }) {
         {/* Dots Navigation */}
         {videos.length > 1 && (
           <div style={{
-            position: 'absolute', bottom: 28, left: '50%',
+            position: 'absolute', bottom: 24, left: '50%',
             transform: 'translateX(-50%)', zIndex: 3,
             display: 'flex', gap: 8
           }}>
@@ -349,6 +446,10 @@ export default function HeroVideo({ videos = [] }) {
           border-radius: 100px;
           z-index: -1;
           animation: liquidPulse 2s ease-in-out infinite;
+        }
+
+        .control-btn:active {
+          transform: scale(0.95) !important;
         }
         
         @media (max-width: 1024px) {
