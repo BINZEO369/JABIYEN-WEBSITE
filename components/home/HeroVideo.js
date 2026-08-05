@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function HeroVideo({ videos = [] }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -11,15 +12,14 @@ export default function HeroVideo({ videos = [] }) {
   const [progress, setProgress] = useState(0);
   const [textPhase, setTextPhase] = useState('entering');
   const [showFullVideoCard, setShowFullVideoCard] = useState(false);
-  const [isFullVideoOpen, setIsFullVideoOpen] = useState(false);
 
   const playerRef = useRef(null);
-  const fullVideoRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const autoplayIntervalRef = useRef(null);
   const isMutedRef = useRef(true);
   const preloadedVideos = useRef({});
   const cardTimerRef = useRef(null);
+  const router = useRouter();
 
   const videoDuration = 8000;
   const cardAppearTime = 6500; // Show card at 6.5 seconds
@@ -54,7 +54,6 @@ export default function HeroVideo({ videos = [] }) {
     setIsTransitioning(true);
     setTextPhase('exiting');
     setShowFullVideoCard(false);
-    setIsFullVideoOpen(false);
     
     // Clear any existing card timer
     if (cardTimerRef.current) {
@@ -110,7 +109,6 @@ export default function HeroVideo({ videos = [] }) {
   // Reset card when video changes or pauses
   useEffect(() => {
     setShowFullVideoCard(false);
-    setIsFullVideoOpen(false);
   }, [currentIndex, isPaused]);
 
   // Progress tracking
@@ -136,19 +134,19 @@ export default function HeroVideo({ videos = [] }) {
 
   // Autoplay
   useEffect(() => {
-    if (videos.length <= 1 || isPaused || isFullVideoOpen) {
+    if (videos.length <= 1 || isPaused) {
       clearInterval(autoplayIntervalRef.current);
       return;
     }
 
     autoplayIntervalRef.current = setInterval(() => {
-      if (!isTransitioning && isLoaded && !isPaused && !isFullVideoOpen) {
+      if (!isTransitioning && isLoaded && !isPaused) {
         setCurrentIndex(prev => (prev + 1) % videos.length);
       }
     }, videoDuration);
 
     return () => clearInterval(autoplayIntervalRef.current);
-  }, [videos.length, isPaused, isTransitioning, isLoaded, videoDuration, isFullVideoOpen]);
+  }, [videos.length, isPaused, isTransitioning, isLoaded, videoDuration]);
 
   // Cleanup
   useEffect(() => {
@@ -194,37 +192,23 @@ export default function HeroVideo({ videos = [] }) {
 
   const openFullVideo = (e) => {
     e.stopPropagation();
-    setIsFullVideoOpen(true);
     setShowFullVideoCard(false);
     
-    if (playerRef.current) {
-      playerRef.current.pause();
-      setIsPaused(true);
-    }
+    // Store current video data in sessionStorage
+    const videoData = {
+      url: videos[currentIndex].video_url,
+      title: videos[currentIndex].title,
+      description: videos[currentIndex].description,
+      label: videos[currentIndex].label,
+      duration: videos[currentIndex].duration || 'Full Length',
+      cta_title: videos[currentIndex].cta_title,
+      cta_link: videos[currentIndex].cta_link,
+    };
     
-    // Clear autoplay interval
-    clearInterval(autoplayIntervalRef.current);
+    sessionStorage.setItem('fullVideoData', JSON.stringify(videoData));
     
-    // Play full video in background with sound
-    setTimeout(() => {
-      if (playerRef.current) {
-        playerRef.current.currentTime = 0;
-        playerRef.current.muted = false;
-        setIsMuted(false);
-        isMutedRef.current = false;
-        playerRef.current.play().catch(() => {});
-        setIsPaused(false);
-      }
-    }, 100);
-  };
-
-  const closeFullVideo = (e) => {
-    e.stopPropagation();
-    setIsFullVideoOpen(false);
-    
-    if (playerRef.current) {
-      playerRef.current.muted = isMutedRef.current;
-    }
+    // Navigate to full video page
+    router.push('/full-video');
   };
 
   if (!videos.length) return null;
@@ -270,190 +254,90 @@ export default function HeroVideo({ videos = [] }) {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.6) 100%)'
         }} />
 
-        {/* Full Video Overlay */}
-        {isFullVideoOpen && (
-          <div 
-            style={{
-              position: 'absolute', inset: 0, zIndex: 4,
-              background: 'rgba(0,0,0,0.3)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              animation: 'fadeIn 0.3s ease'
-            }}
-          >
-            <div style={{
-              position: 'absolute',
-              top: 20, right: 20,
-              zIndex: 5
+        {/* Text Content */}
+        <div style={{
+          position: 'relative', zIndex: 2, textAlign: 'center',
+          padding: '0 24px', maxWidth: 700, width: '100%', marginBottom: 60
+        }}>
+          {currentVideo?.label && (
+            <span style={{
+              display: 'inline-block', color: 'rgba(255,255,255,0.55)',
+              fontSize: 11, fontWeight: 600, letterSpacing: '0.3em',
+              textTransform: 'uppercase', marginBottom: 16,
+              opacity: textPhase === 'visible' ? 1 : 0,
+              transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(14px)',
+              filter: textPhase === 'visible' ? 'blur(0)' : 'blur(4px)',
+              transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.5s ease'
             }}>
-              <button
-                onClick={closeFullVideo}
-                style={{
-                  width: 40, height: 40,
-                  borderRadius: '50%',
-                  background: 'rgba(0,0,0,0.5)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  color: '#fff',
-                  fontSize: 20,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.7)';
-                  e.currentTarget.style.transform = 'scale(1.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(0,0,0,0.5)';
-                  e.currentTarget.style.transform = 'scale(1)';
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <div style={{
-              textAlign: 'center',
-              padding: '40px',
-              animation: 'slideUp 0.5s ease'
+              {currentVideo.label}
+            </span>
+          )}
+
+          {currentVideo?.title && (
+            <h2 style={{
+              color: '#fff', fontSize: 48, fontWeight: 800,
+              lineHeight: 1.1, margin: '0 0 16px', letterSpacing: '-0.02em',
+              opacity: textPhase === 'visible' ? 1 : 0,
+              transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(18px)',
+              filter: textPhase === 'visible' ? 'blur(0)' : 'blur(6px)',
+              transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.6s ease'
             }}>
-              <div style={{
+              {currentVideo.title}
+            </h2>
+          )}
+
+          {currentVideo?.description && (
+            <p style={{
+              color: 'rgba(255,255,255,0.7)', fontSize: 14,
+              maxWidth: 480, margin: '0 auto 24px', lineHeight: 1.5,
+              opacity: textPhase === 'visible' ? 1 : 0,
+              transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(12px)',
+              filter: textPhase === 'visible' ? 'blur(0)' : 'blur(3px)',
+              transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.6s ease'
+            }}>
+              {currentVideo.description}
+            </p>
+          )}
+
+          {showCTA && (
+            <a 
+              href={currentVideo.cta_link} 
+              style={{
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 80,
-                height: 80,
-                borderRadius: '50%',
-                background: 'rgba(255,255,255,0.1)',
-                backdropFilter: 'blur(20px)',
-                border: '2px solid rgba(255,255,255,0.3)',
-                marginBottom: 20
-              }}>
-                <svg width="30" height="30" viewBox="0 0 24 24" fill="white">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </div>
-              <h3 style={{
                 color: '#fff',
-                fontSize: 24,
-                fontWeight: 700,
-                marginBottom: 8
-              }}>
-                Watching Full Video
-              </h3>
-              <p style={{
-                color: 'rgba(255,255,255,0.7)',
-                fontSize: 14,
-                marginBottom: 24
-              }}>
-                {currentVideo?.title || 'Enjoy the complete experience'}
-              </p>
-              <div style={{
-                width: 60,
-                height: 3,
-                background: 'rgba(255,255,255,0.3)',
-                borderRadius: 2,
-                margin: '0 auto',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: '100%',
-                  height: '100%',
-                  background: '#fff',
-                  animation: 'loadingBar 1.5s infinite'
-                }} />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Text Content */}
-        {!isFullVideoOpen && (
-          <div style={{
-            position: 'relative', zIndex: 2, textAlign: 'center',
-            padding: '0 24px', maxWidth: 700, width: '100%', marginBottom: 60
-          }}>
-            {currentVideo?.label && (
-              <span style={{
-                display: 'inline-block', color: 'rgba(255,255,255,0.55)',
-                fontSize: 11, fontWeight: 600, letterSpacing: '0.3em',
-                textTransform: 'uppercase', marginBottom: 16,
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                padding: '14px 36px',
+                borderRadius: '100px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                transition: 'all 0.3s ease',
                 opacity: textPhase === 'visible' ? 1 : 0,
-                transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(14px)',
-                filter: textPhase === 'visible' ? 'blur(0)' : 'blur(4px)',
-                transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.5s ease'
-              }}>
-                {currentVideo.label}
-              </span>
-            )}
-
-            {currentVideo?.title && (
-              <h2 style={{
-                color: '#fff', fontSize: 48, fontWeight: 800,
-                lineHeight: 1.1, margin: '0 0 16px', letterSpacing: '-0.02em',
-                opacity: textPhase === 'visible' ? 1 : 0,
-                transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(18px)',
-                filter: textPhase === 'visible' ? 'blur(0)' : 'blur(6px)',
-                transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.6s ease'
-              }}>
-                {currentVideo.title}
-              </h2>
-            )}
-
-            {currentVideo?.description && (
-              <p style={{
-                color: 'rgba(255,255,255,0.7)', fontSize: 14,
-                maxWidth: 480, margin: '0 auto 24px', lineHeight: 1.5,
-                opacity: textPhase === 'visible' ? 1 : 0,
-                transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(12px)',
-                filter: textPhase === 'visible' ? 'blur(0)' : 'blur(3px)',
-                transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.6s ease'
-              }}>
-                {currentVideo.description}
-              </p>
-            )}
-
-            {showCTA && (
-              <a 
-                href={currentVideo.cta_link} 
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontSize: 12,
-                  fontWeight: 600,
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  padding: '14px 36px',
-                  borderRadius: '100px',
-                  background: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  transition: 'all 0.3s ease',
-                  opacity: textPhase === 'visible' ? 1 : 0,
-                  transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-10px)' : 'translateY(10px)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                }}
-              >
-                {currentVideo.cta_title}
-              </a>
-            )}
-          </div>
-        )}
+                transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-10px)' : 'translateY(10px)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+              }}
+            >
+              {currentVideo.cta_title}
+            </a>
+          )}
+        </div>
 
         {/* Watch Full Video Card */}
-        {showFullVideoCard && !isFullVideoOpen && (
+        {showFullVideoCard && (
           <div style={{
             position: 'absolute',
             bottom: 120,
@@ -712,7 +596,7 @@ export default function HeroVideo({ videos = [] }) {
         }} />
 
         {/* Dots Navigation */}
-        {videos.length > 1 && !isFullVideoOpen && (
+        {videos.length > 1 && (
           <div style={{
             position: 'absolute', bottom: 24, left: '50%',
             transform: 'translateX(-50%)', zIndex: 3,
@@ -751,27 +635,6 @@ export default function HeroVideo({ videos = [] }) {
         @keyframes pulse {
           0%, 100% { opacity: 0.5; }
           50% { opacity: 1; }
-        }
-        
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        
-        @keyframes slideUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
-        @keyframes loadingBar {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
         }
         
         @media (max-width: 1024px) {
