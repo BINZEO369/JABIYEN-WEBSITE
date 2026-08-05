@@ -14,31 +14,55 @@ export default function HeroVideo({ videos = [] }) {
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const autoplayIntervalRef = useRef(null);
-  const isMutedRef = useRef(true); // useRef to track mute state without triggering re-render
+  const isMutedRef = useRef(true);
+  const preloadedVideos = useRef({});
 
   const videoDuration = 8000;
 
-  // Load video - isMuted removed from dependencies
+  // Preload all videos for faster switching
+  useEffect(() => {
+    if (!videos.length) return;
+    
+    videos.forEach((video, index) => {
+      if (!preloadedVideos.current[index] && video.video_url) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'video';
+        link.href = video.video_url;
+        document.head.appendChild(link);
+        
+        // Preload video element
+        const preloadVideo = document.createElement('video');
+        preloadVideo.preload = 'auto';
+        preloadVideo.src = video.video_url;
+        preloadVideo.muted = true;
+        preloadedVideos.current[index] = preloadVideo;
+      }
+    });
+  }, [videos]);
+
+  // Load video with faster transition
   useEffect(() => {
     if (!videos.length || !playerRef.current) return;
     
     const video = videos[currentIndex];
     setIsTransitioning(true);
-    setIsLoaded(false);
     setTextPhase('exiting');
 
+    // Faster text transition
     const textOutTimer = setTimeout(() => {
       setTextPhase('entering');
       
       if (playerRef.current) {
         playerRef.current.src = video.video_url;
-        playerRef.current.muted = isMutedRef.current; // Use ref instead of state
+        playerRef.current.muted = isMutedRef.current;
+        playerRef.current.preload = 'auto';
         playerRef.current.load();
       }
-    }, 400);
+    }, 200); // Reduced from 400ms
 
     return () => clearTimeout(textOutTimer);
-  }, [currentIndex, videos]); // Removed isMuted from dependencies
+  }, [currentIndex, videos]);
 
   // Handle video load
   const handleCanPlay = useCallback(() => {
@@ -102,7 +126,7 @@ export default function HeroVideo({ videos = [] }) {
       const newMutedState = !playerRef.current.muted;
       playerRef.current.muted = newMutedState;
       setIsMuted(newMutedState);
-      isMutedRef.current = newMutedState; // Update ref
+      isMutedRef.current = newMutedState;
     }
   };
 
@@ -124,7 +148,7 @@ export default function HeroVideo({ videos = [] }) {
     setProgress(100);
     clearInterval(autoplayIntervalRef.current);
     clearInterval(progressIntervalRef.current);
-    setTimeout(() => setCurrentIndex(index), 300);
+    setTimeout(() => setCurrentIndex(index), 200); // Faster switch
   };
 
   if (!videos.length) return null;
@@ -142,18 +166,6 @@ export default function HeroVideo({ videos = [] }) {
         overflow: 'hidden'
       }}
     >
-      {/* Poster */}
-      {currentVideo?.poster && !isLoaded && (
-        <img
-          src={currentVideo.poster}
-          alt=""
-          style={{
-            position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', zIndex: 0
-          }}
-        />
-      )}
-
       {/* Video */}
       <div style={{
         position: 'relative', width: '100%',
@@ -165,14 +177,14 @@ export default function HeroVideo({ videos = [] }) {
           muted={isMuted}
           playsInline
           loop
-          preload="metadata"
+          preload="auto"
           onCanPlay={handleCanPlay}
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
             objectFit: 'cover', pointerEvents: 'none',
             filter: 'brightness(0.85)',
             opacity: isLoaded ? 1 : 0,
-            transition: 'opacity 0.5s ease'
+            transition: 'opacity 0.3s ease'
           }}
         />
 
@@ -195,7 +207,7 @@ export default function HeroVideo({ videos = [] }) {
               opacity: textPhase === 'visible' ? 1 : 0,
               transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(14px)',
               filter: textPhase === 'visible' ? 'blur(0)' : 'blur(4px)',
-              transition: textPhase === 'exiting' ? 'all 0.4s ease' : 'all 0.7s ease'
+              transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.5s ease'
             }}>
               {currentVideo.label}
             </span>
@@ -208,7 +220,7 @@ export default function HeroVideo({ videos = [] }) {
               opacity: textPhase === 'visible' ? 1 : 0,
               transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(18px)',
               filter: textPhase === 'visible' ? 'blur(0)' : 'blur(6px)',
-              transition: textPhase === 'exiting' ? 'all 0.4s ease' : 'all 0.9s ease'
+              transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.6s ease'
             }}>
               {currentVideo.title}
             </h2>
@@ -221,7 +233,7 @@ export default function HeroVideo({ videos = [] }) {
               opacity: textPhase === 'visible' ? 1 : 0,
               transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(12px)',
               filter: textPhase === 'visible' ? 'blur(0)' : 'blur(3px)',
-              transition: textPhase === 'exiting' ? 'all 0.4s ease' : 'all 0.8s ease'
+              transition: textPhase === 'exiting' ? 'all 0.3s ease' : 'all 0.6s ease'
             }}>
               {currentVideo.description}
             </p>
@@ -230,7 +242,6 @@ export default function HeroVideo({ videos = [] }) {
           {showCTA && (
             <a 
               href={currentVideo.cta_link} 
-              className="cta-bubble"
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -247,154 +258,112 @@ export default function HeroVideo({ videos = [] }) {
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.3s ease',
                 opacity: textPhase === 'visible' ? 1 : 0,
-                transform: textPhase === 'visible' ? 'translateY(0) scale(1)' : textPhase === 'exiting' ? 'translateY(-20px) scale(0.95)' : 'translateY(12px) scale(0.95)',
-                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.2)'
+                transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-10px)' : 'translateY(10px)',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
                 e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-                e.currentTarget.style.transform = 'scale(1.05)';
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.1)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
                 e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.2)';
               }}
             >
-              {/* Liquid effect overlay */}
-              <span style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'radial-gradient(circle at 50% 0%, rgba(255,255,255,0.15) 0%, transparent 70%)',
-                borderRadius: '100px',
-                pointerEvents: 'none'
-              }} />
-              
-              {/* Shine effect */}
-              <span style={{
-                position: 'absolute',
-                top: '-50%',
-                left: '-50%',
-                width: '200%',
-                height: '200%',
-                background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
-                animation: 'shine 3s infinite',
-                pointerEvents: 'none'
-              }} />
-              
-              <span style={{ position: 'relative', zIndex: 1 }}>
-                {currentVideo.cta_title}
-              </span>
+              {currentVideo.cta_title}
             </a>
           )}
         </div>
 
-        {/* Controls - ছোট ও উন্নত */}
+        {/* Controls - Same size buttons with image icons */}
         <div style={{ 
           position: 'absolute', 
           bottom: 20, 
           right: 20, 
           zIndex: 10, 
           display: 'flex', 
-          gap: 8,
+          gap: 6,
           alignItems: 'center'
         }}>
           {/* Play/Pause Button */}
           <button 
             onClick={togglePlay}
-            className="control-btn"
             style={{
-              width: 28,
-              height: 28,
+              width: 24,
+              height: 24,
               borderRadius: '50%',
-              background: 'rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: 'rgba(255, 255, 255, 0.8)',
+              background: 'transparent',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: 10,
               padding: 0,
               transition: 'all 0.3s ease',
-              outline: 'none'
+              outline: 'none',
+              opacity: 0.8
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.opacity = '1';
               e.currentTarget.style.transform = 'scale(1.1)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.opacity = '0.8';
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-              {isPaused ? (
-                <path d="M8 5v14l11-7z"/>
-              ) : (
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>
-              )}
-            </svg>
+            <img 
+              src="/videoicon.png" 
+              alt={isPaused ? "Play" : "Pause"}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'brightness(0) invert(1)',
+                opacity: isPaused ? 0.5 : 0.8
+              }}
+            />
           </button>
 
           {/* Sound Button */}
           <button 
             onClick={toggleSound}
-            className="control-btn"
             style={{
-              width: 28,
-              height: 28,
+              width: 24,
+              height: 24,
               borderRadius: '50%',
-              background: 'rgba(0, 0, 0, 0.3)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              color: 'rgba(255, 255, 255, 0.8)',
+              background: 'transparent',
+              border: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              fontSize: 10,
               padding: 0,
               transition: 'all 0.3s ease',
-              outline: 'none'
+              outline: 'none',
+              opacity: 0.8
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.5)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.3)';
+              e.currentTarget.style.opacity = '1';
               e.currentTarget.style.transform = 'scale(1.1)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(0, 0, 0, 0.3)';
-              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.opacity = '0.8';
               e.currentTarget.style.transform = 'scale(1)';
             }}
           >
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
-              {isMuted ? (
-                <>
-                  <path d="M3 9v6h4l5 5V4L7 9H3z"/>
-                  <line x1="23" y1="9" x2="17" y2="15" stroke="currentColor" strokeWidth="2"/>
-                  <line x1="17" y1="9" x2="23" y2="15" stroke="currentColor" strokeWidth="2"/>
-                </>
-              ) : (
-                <>
-                  <path d="M3 9v6h4l5 5V4L7 9H3z"/>
-                  <path d="M16 7.5c1.5 1.5 1.5 4 0 5.5" fill="none" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M19 5c3 3.5 3 9 0 13" fill="none" stroke="currentColor" strokeWidth="2"/>
-                </>
-              )}
-            </svg>
+            <img 
+              src="/soundicon.png" 
+              alt={isMuted ? "Unmute" : "Mute"}
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                filter: 'brightness(0) invert(1)',
+                opacity: isMuted ? 0.5 : 0.8
+              }}
+            />
           </button>
         </div>
 
@@ -422,7 +391,7 @@ export default function HeroVideo({ videos = [] }) {
                   borderRadius: i === currentIndex ? 4 : '50%',
                   background: i === currentIndex ? '#fff' : 'rgba(255,255,255,0.3)',
                   border: 'none', cursor: 'pointer',
-                  transition: 'all 0.4s ease'
+                  transition: 'all 0.3s ease'
                 }}
               />
             ))}
@@ -431,30 +400,6 @@ export default function HeroVideo({ videos = [] }) {
       </div>
 
       <style jsx>{`
-        @keyframes shine {
-          0% { transform: translateX(-100%) rotate(45deg); }
-          100% { transform: translateX(100%) rotate(45deg); }
-        }
-        
-        @keyframes liquidPulse {
-          0%, 100% { opacity: 0.5; }
-          50% { opacity: 0.8; }
-        }
-        
-        .cta-bubble::before {
-          content: '';
-          position: absolute;
-          inset: -1px;
-          background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1), rgba(255,255,255,0.4));
-          border-radius: 100px;
-          z-index: -1;
-          animation: liquidPulse 2s ease-in-out infinite;
-        }
-
-        .control-btn:active {
-          transform: scale(0.95) !important;
-        }
-        
         @media (max-width: 1024px) {
           h2 { font-size: 40px !important; }
         }
@@ -462,12 +407,10 @@ export default function HeroVideo({ videos = [] }) {
           h2 { font-size: 32px !important; margin-bottom: 12px !important; }
           p { font-size: 12px !important; }
           span { font-size: 10px !important; }
-          .cta-bubble { padding: 12px 28px !important; font-size: 11px !important; }
         }
         @media (max-width: 480px) {
           h2 { font-size: 26px !important; }
           p { font-size: 11px !important; }
-          .cta-bubble { padding: 10px 24px !important; font-size: 10px !important; }
         }
       `}</style>
     </section>
