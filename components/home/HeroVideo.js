@@ -14,10 +14,11 @@ export default function HeroVideo({ videos = [] }) {
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const autoplayIntervalRef = useRef(null);
+  const isMutedRef = useRef(true); // useRef to track mute state without triggering re-render
 
   const videoDuration = 8000;
 
-  // Load video
+  // Load video - isMuted removed from dependencies
   useEffect(() => {
     if (!videos.length || !playerRef.current) return;
     
@@ -31,13 +32,13 @@ export default function HeroVideo({ videos = [] }) {
       
       if (playerRef.current) {
         playerRef.current.src = video.video_url;
-        playerRef.current.muted = isMuted;
+        playerRef.current.muted = isMutedRef.current; // Use ref instead of state
         playerRef.current.load();
       }
     }, 400);
 
     return () => clearTimeout(textOutTimer);
-  }, [currentIndex, videos, isMuted]);
+  }, [currentIndex, videos]); // Removed isMuted from dependencies
 
   // Handle video load
   const handleCanPlay = useCallback(() => {
@@ -98,8 +99,10 @@ export default function HeroVideo({ videos = [] }) {
   const toggleSound = (e) => {
     e.stopPropagation();
     if (playerRef.current) {
-      playerRef.current.muted = !playerRef.current.muted;
-      setIsMuted(!playerRef.current.muted);
+      const newMutedState = !playerRef.current.muted;
+      playerRef.current.muted = newMutedState;
+      setIsMuted(newMutedState);
+      isMutedRef.current = newMutedState; // Update ref
     }
   };
 
