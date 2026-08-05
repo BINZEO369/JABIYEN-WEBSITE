@@ -17,20 +17,15 @@ export default function Header() {
   const totalCartItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
   const totalWishItems = wishlist.length;
 
-  // Filter effect for images based on icon color
-  const iconFilter = iconColor === '#ffffff' ? 'brightness(0) invert(1)' : 'none';
-  const badgeBg = iconColor === '#ffffff' ? '#ffffff' : '#1d1d1f';
-  const badgeText = iconColor === '#ffffff' ? '#000000' : '#ffffff';
-
   // Scroll handler with background detection
   useEffect(() => {
     const handleScroll = () => {
       const scrolled = window.scrollY > 20;
       setIsScrolled(scrolled);
-
+      
       const nav = navRef.current;
       if (!nav) return;
-
+      
       if (scrolled) {
         nav.classList.add('nav-scrolled');
         nav.style.top = '0px';
@@ -46,7 +41,7 @@ export default function Header() {
     const detectBackgroundColor = () => {
       const headerTop = navRef.current?.getBoundingClientRect().top || 0;
       const elementAtHeader = document.elementFromPoint(window.innerWidth / 2, headerTop + 30);
-
+      
       if (elementAtHeader) {
         const bgColor = window.getComputedStyle(elementAtHeader).backgroundColor;
         if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)' && bgColor !== 'transparent') {
@@ -76,16 +71,18 @@ export default function Header() {
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     handleScroll();
-
     window.addEventListener('load', detectBackgroundColor);
     window.addEventListener('resize', detectBackgroundColor);
-
+    
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('load', detectBackgroundColor);
       window.removeEventListener('resize', detectBackgroundColor);
     };
   }, []);
+
+  // Filter for icon images based on background
+  const iconFilter = iconColor === '#ffffff' ? 'brightness(0) invert(1)' : 'none';
 
   return (
     <>
@@ -98,7 +95,7 @@ export default function Header() {
         id="main-nav"
         style={{
           position: 'fixed',
-          top: typeof window !== 'undefined' && localStorage.getItem('jabiyen_announcement_hidden') === 'true' ? '0px' : '36px',
+          top: localStorage.getItem('jabiyen_announcement_hidden') === 'true' ? '0px' : '36px',
           left: 0,
           right: 0,
           width: '100%',
@@ -126,8 +123,7 @@ export default function Header() {
             {/* Logo Section */}
             <Link href="/" style={{
               display: 'flex', alignItems: 'center', gap: 10,
-              flexShrink: 1, textDecoration: 'none',
-              minWidth: 0
+              flexShrink: 0, textDecoration: 'none'
             }}>
               <img 
                 src="/logo.png" 
@@ -136,8 +132,7 @@ export default function Header() {
                   width: 40, 
                   height: 40,
                   borderRadius: 6, 
-                  objectFit: 'cover',
-                  flexShrink: 0
+                  objectFit: 'cover'
                 }}
                 className="nav-logo"
               />
@@ -146,9 +141,7 @@ export default function Header() {
                 alt="JABIYEN" 
                 style={{
                   height: 24,
-                  maxWidth: '100%',
-                  objectFit: 'contain',
-                  objectPosition: 'left',
+                  width: 'auto',
                   filter: iconFilter,
                   transition: 'filter 0.3s ease'
                 }}
@@ -160,51 +153,53 @@ export default function Header() {
             <div style={{
               display: 'flex', 
               alignItems: 'center',
-              gap: 4, 
-              flexShrink: 0,
-              marginLeft: 12
+              gap: 2, 
+              flexShrink: 0
             }}>
               {/* Wishlist Icon */}
               <Link 
                 href="/wishlist" 
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
+                  background: 'none', 
+                  border: 'none',
+                  padding: 4, 
+                  margin: '0 1px',
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
                   justifyContent: 'center',
-                  padding: 4,
-                  position: 'relative',
+                  cursor: 'pointer',
+                  position: 'relative', 
                   textDecoration: 'none'
                 }}
                 className="header-icon-btn"
               >
                 <img 
-                  src="/wishlist.png" 
+                  src="/wishlisticon.png" 
                   alt="Wishlist" 
                   style={{
-                    width: 22,
-                    height: 22,
-                    objectFit: 'contain',
+                    width: 18,
+                    height: 18,
                     filter: iconFilter,
                     transition: 'filter 0.3s ease'
                   }}
                 />
                 {totalWishItems > 0 && (
                   <span style={{
-                    position: 'absolute',
-                    top: -2,
+                    position: 'absolute', 
+                    top: -2, 
                     right: -2,
-                    background: badgeBg,
-                    color: badgeText,
-                    fontSize: 7,
+                    background: iconColor === '#ffffff' ? '#ffffff' : '#1d1d1f', 
+                    color: iconColor === '#ffffff' ? '#000000' : '#ffffff',
+                    fontSize: 7, 
                     fontWeight: 700,
-                    minWidth: 16,
+                    minWidth: 16, 
                     height: 16,
                     borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: 'flex', 
+                    alignItems: 'center', 
                     justifyContent: 'center',
                     padding: '0 4px',
-                    border: `1.5px solid ${badgeText === '#ffffff' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.2)'}`,
+                    border: `1px solid ${iconColor === '#ffffff' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.55)'}`,
                     transition: 'all 0.3s ease'
                   }}>
                     {totalWishItems}
@@ -216,45 +211,45 @@ export default function Header() {
               <button 
                 onClick={() => setCartOpen(!cartOpen)} 
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 4,
-                  position: 'relative',
-                  background: 'none',
+                  background: 'none', 
                   border: 'none',
-                  cursor: 'pointer'
+                  padding: 4, 
+                  margin: '0 1px',
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  position: 'relative'
                 }}
                 className="header-icon-btn"
               >
                 <img 
-                  src="/bagicon.png" 
+                  src="/carticon.png" 
                   alt="Cart" 
                   style={{
-                    width: 22,
-                    height: 22,
-                    objectFit: 'contain',
+                    width: 17,
+                    height: 19,
                     filter: iconFilter,
                     transition: 'filter 0.3s ease'
                   }}
                 />
                 {totalCartItems > 0 && (
                   <span style={{
-                    position: 'absolute',
-                    top: -2,
+                    position: 'absolute', 
+                    top: -2, 
                     right: -2,
-                    background: badgeBg,
-                    color: badgeText,
-                    fontSize: 7,
+                    background: iconColor === '#ffffff' ? '#ffffff' : '#1d1d1f', 
+                    color: iconColor === '#ffffff' ? '#000000' : '#ffffff',
+                    fontSize: 7, 
                     fontWeight: 700,
-                    minWidth: 16,
+                    minWidth: 16, 
                     height: 16,
                     borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
+                    display: 'flex', 
+                    alignItems: 'center', 
                     justifyContent: 'center',
                     padding: '0 4px',
-                    border: `1.5px solid ${badgeText === '#ffffff' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.2)'}`,
+                    border: `1px solid ${iconColor === '#ffffff' ? 'rgba(0,0,0,0.3)' : 'rgba(255,255,255,0.55)'}`,
                     transition: 'all 0.3s ease'
                   }}>
                     {totalCartItems}
@@ -262,16 +257,17 @@ export default function Header() {
                 )}
               </button>
 
-              {/* Menu Icon */}
+              {/* Menu Toggle Icon */}
               <button 
                 onClick={() => setMenuOpen(true)} 
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 4,
-                  background: 'none',
+                  background: 'none', 
                   border: 'none',
+                  padding: 4, 
+                  margin: '0 1px',
+                  display: 'inline-flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
                   cursor: 'pointer'
                 }}
                 className="header-icon-btn"
@@ -280,9 +276,8 @@ export default function Header() {
                   src="/menuicon.png" 
                   alt="Menu" 
                   style={{
-                    width: 24,
-                    height: 24,
-                    objectFit: 'contain',
+                    width: 20,
+                    height: 13,
                     filter: iconFilter,
                     transition: 'filter 0.3s ease'
                   }}
@@ -315,17 +310,15 @@ export default function Header() {
             height: 32px !important;
           }
           .header-icon-btn img {
-            width: 26px !important;
-            height: 26px !important;
-          }
-          .header-icon-btn:last-child img {
-            width: 28px !important;
-            height: 28px !important;
+            width: auto !important;
+            height: auto !important;
           }
         }
         .header-icon-btn:hover { 
-          opacity: 0.7; 
-          transition: opacity 0.2s ease;
+          opacity: 0.6; 
+        }
+        .header-icon-btn img {
+          object-fit: contain;
         }
       `}</style>
     </>
