@@ -9,23 +9,13 @@ export default function HeroVideo({ videos = [] }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [isVisible, setIsVisible] = useState(false);
-  const [textPhase, setTextPhase] = useState('entering'); // 'entering' | 'visible' | 'exiting'
+  const [textPhase, setTextPhase] = useState('entering');
 
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const autoplayIntervalRef = useRef(null);
 
   const videoDuration = 8000;
-
-  // Show section with animation
-  useEffect(() => {
-    if (videos.length > 0) {
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => setIsVisible(true));
-      });
-    }
-  }, [videos]);
 
   // Load video
   useEffect(() => {
@@ -128,36 +118,17 @@ export default function HeroVideo({ videos = [] }) {
         position: 'relative',
         width: '100%',
         background: '#000',
-        overflow: 'hidden',
-        opacity: isVisible ? 1 : 0,
-        transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-        transition: 'opacity 0.8s ease, transform 0.8s ease'
+        overflow: 'hidden'
       }}
     >
-      {/* Loading */}
-      {!isLoaded && (
-        <div style={{
-          position: 'absolute', inset: 0, background: '#000',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 5
-        }}>
-          <div style={{
-            width: 40, height: 40, border: '2px solid rgba(255,255,255,0.2)',
-            borderTopColor: '#fff', borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite'
-          }} />
-        </div>
-      )}
-
       {/* Poster */}
-      {currentVideo?.poster && (
+      {currentVideo?.poster && !isLoaded && (
         <img
           src={currentVideo.poster}
           alt=""
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
-            objectFit: 'cover', zIndex: 0,
-            opacity: isLoaded ? 0 : 1,
-            transition: 'opacity 0.5s ease'
+            objectFit: 'cover', zIndex: 0
           }}
         />
       )}
@@ -178,7 +149,9 @@ export default function HeroVideo({ videos = [] }) {
           style={{
             position: 'absolute', inset: 0, width: '100%', height: '100%',
             objectFit: 'cover', pointerEvents: 'none',
-            filter: 'brightness(0.85)'
+            filter: 'brightness(0.85)',
+            opacity: isLoaded ? 1 : 0,
+            transition: 'opacity 0.5s ease'
           }}
         />
 
@@ -234,17 +207,69 @@ export default function HeroVideo({ videos = [] }) {
           )}
 
           {showCTA && (
-            <a href={currentVideo.cta_link} style={{
-              display: 'inline-flex', alignItems: 'center',
-              color: '#fff', fontSize: 12, fontWeight: 600,
-              letterSpacing: '0.15em', textTransform: 'uppercase',
-              textDecoration: 'none', padding: '0 0 4px',
-              borderBottom: '2px solid rgba(255,255,255,0.6)',
-              opacity: textPhase === 'visible' ? 1 : 0,
-              transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(12px)',
-              transition: textPhase === 'exiting' ? 'all 0.4s ease' : 'all 0.8s ease'
-            }}>
-              {currentVideo.cta_title}
+            <a 
+              href={currentVideo.cta_link} 
+              className="cta-bubble"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 12,
+                fontWeight: 600,
+                letterSpacing: '0.15em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                padding: '14px 36px',
+                borderRadius: '100px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                position: 'relative',
+                overflow: 'hidden',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                opacity: textPhase === 'visible' ? 1 : 0,
+                transform: textPhase === 'visible' ? 'translateY(0) scale(1)' : textPhase === 'exiting' ? 'translateY(-20px) scale(0.95)' : 'translateY(12px) scale(0.95)',
+                boxShadow: '0 4px 24px rgba(0, 0, 0, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.2)';
+              }}
+            >
+              {/* Liquid effect overlay */}
+              <span style={{
+                position: 'absolute',
+                inset: 0,
+                background: 'radial-gradient(circle at 50% 0%, rgba(255,255,255,0.15) 0%, transparent 70%)',
+                borderRadius: '100px',
+                pointerEvents: 'none'
+              }} />
+              
+              {/* Shine effect */}
+              <span style={{
+                position: 'absolute',
+                top: '-50%',
+                left: '-50%',
+                width: '200%',
+                height: '200%',
+                background: 'linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%)',
+                animation: 'shine 3s infinite',
+                pointerEvents: 'none'
+              }} />
+              
+              <span style={{ position: 'relative', zIndex: 1 }}>
+                {currentVideo.cta_title}
+              </span>
             </a>
           )}
         </div>
@@ -306,6 +331,26 @@ export default function HeroVideo({ videos = [] }) {
       </div>
 
       <style jsx>{`
+        @keyframes shine {
+          0% { transform: translateX(-100%) rotate(45deg); }
+          100% { transform: translateX(100%) rotate(45deg); }
+        }
+        
+        @keyframes liquidPulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.8; }
+        }
+        
+        .cta-bubble::before {
+          content: '';
+          position: absolute;
+          inset: -1px;
+          background: linear-gradient(135deg, rgba(255,255,255,0.4), rgba(255,255,255,0.1), rgba(255,255,255,0.4));
+          border-radius: 100px;
+          z-index: -1;
+          animation: liquidPulse 2s ease-in-out infinite;
+        }
+        
         @media (max-width: 1024px) {
           h2 { font-size: 40px !important; }
         }
@@ -313,13 +358,12 @@ export default function HeroVideo({ videos = [] }) {
           h2 { font-size: 32px !important; margin-bottom: 12px !important; }
           p { font-size: 12px !important; }
           span { font-size: 10px !important; }
+          .cta-bubble { padding: 12px 28px !important; font-size: 11px !important; }
         }
         @media (max-width: 480px) {
           h2 { font-size: 26px !important; }
           p { font-size: 11px !important; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+          .cta-bubble { padding: 10px 24px !important; font-size: 10px !important; }
         }
       `}</style>
     </section>
