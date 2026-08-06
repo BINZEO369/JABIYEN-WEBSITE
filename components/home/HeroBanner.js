@@ -52,16 +52,15 @@ export default function HeroBanner({ slides = [] }) {
     return fallbacks[type] || fallbacks.body;
   };
 
-  // Preload next slide image
+  // Preload all images
   useEffect(() => {
     if (!slides.length) return;
-    const nextIndex = (currentSlide + 1) % totalSlides;
-    const nextSlide = slides[nextIndex];
-    if (nextSlide?.img) {
+    slides.forEach((slide, index) => {
       const img = new Image();
-      img.src = nextSlide.img;
-    }
-  }, [currentSlide, slides, totalSlides]);
+      img.onload = () => setLoadedImages(prev => new Set([...prev, index]));
+      img.src = slide.img;
+    });
+  }, [slides]);
 
   // Auto slide
   useEffect(() => {
@@ -116,7 +115,6 @@ export default function HeroBanner({ slides = [] }) {
   if (!slides.length) return null;
 
   const current = slides[currentSlide];
-  const isCDN = (url) => url?.includes('imagekit') || url?.includes('cloudinary') || url?.includes('imgix');
 
   return (
     <>
@@ -142,7 +140,7 @@ export default function HeroBanner({ slides = [] }) {
               position: 'absolute', inset: 0,
               opacity: index === currentSlide ? 1 : 0,
               transition: 'opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-              visibility: index === currentSlide || index === (currentSlide + 1) % totalSlides || index === (currentSlide - 1 + totalSlides) % totalSlides ? 'visible' : 'hidden',
+              visibility: 'visible',
               pointerEvents: index === currentSlide ? 'auto' : 'none'
             }}
           >
@@ -155,18 +153,18 @@ export default function HeroBanner({ slides = [] }) {
                 loading={index === 0 ? undefined : "lazy"}
                 sizes="100vw"
                 quality={85}
-                unoptimized={isCDN(slide.img)}
                 style={{
                   objectFit: 'cover',
                   animation: index === currentSlide ? 'heroZoom 20s ease-in-out infinite alternate' : 'none'
                 }}
                 className="hero-slide-image"
-                fetchPriority={index === 0 ? "high" : index <= 1 ? "auto" : "low"}
+                unoptimized={slide.img.includes('imagekit') || slide.img.includes('cloudinary')}
+                fetchPriority={index === 0 ? "high" : "low"}
               />
             ) : (
               <div style={{
-                position: 'absolute', inset: 0,
-                background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)'
+                width: '100%', height: '100%',
+                background: '#0a0a0a'
               }} />
             )}
           </div>
@@ -336,6 +334,9 @@ export default function HeroBanner({ slides = [] }) {
         }
         .hero-cta-liquid:hover .liquid-shine {
           left: 100% !important;
+        }
+        .hero-slide-image {
+          background: #0a0a0a;
         }
         @keyframes heroZoom {
           from { transform: scale(1); }
