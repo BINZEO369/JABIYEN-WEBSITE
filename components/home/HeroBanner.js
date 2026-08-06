@@ -161,24 +161,24 @@ export default function HeroBanner({ slides = [] }) {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 30%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.7) 90%, rgba(0,0,0,0.85) 100%)'
         }} />
 
-        {/* Content - Center Position */}
+        {/* Content - Center Position for Title & Subtitle */}
         <div style={{
-          position: 'absolute', top: '50%', left: '50%',
+          position: 'absolute', top: '45%', left: '50%',
           transform: 'translate(-50%, -50%)', zIndex: 2, textAlign: 'center',
           width: '88%', maxWidth: 800, padding: '0 16px',
           display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
-          {/* Title - Larger */}
+          {/* Title */}
           <h1 style={{
             fontFamily: getFont('heading'),
             fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 700,
             lineHeight: 1.1, color: '#fff', margin: 0,
-            letterSpacing: '-0.5px', order: 1
+            letterSpacing: '-0.5px'
           }}>
             {current?.title}
           </h1>
 
-          {/* Subtitle - Slightly Larger */}
+          {/* Subtitle */}
           {current?.subtitle && (
             <p style={{
               fontFamily: getFont('body'),
@@ -186,71 +186,72 @@ export default function HeroBanner({ slides = [] }) {
               letterSpacing: '0.3em', textTransform: 'uppercase',
               color: 'rgba(255,255,255,0.6)',
               marginTop: 'clamp(10px, 1.5vh, 16px)', marginBottom: 0,
-              lineHeight: 1.2, order: 2
+              lineHeight: 1.2
             }}>
               {current.subtitle}
             </p>
           )}
-
-          {/* CTA - Liquid Bubble Design */}
-          {current?.cta_text && current?.cta_link && (
-            <div style={{
-              marginTop: 'clamp(16px, 2.5vh, 28px)', order: 3
-            }}>
-              <Link
-                href={current.cta_link}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#fff',
-                  fontSize: 'clamp(11px, 1.3vw, 14px)',
-                  fontWeight: 600,
-                  letterSpacing: '0.15em',
-                  textTransform: 'uppercase',
-                  textDecoration: 'none',
-                  padding: 'clamp(12px, 1.8vw, 16px) clamp(32px, 4vw, 44px)',
-                  borderRadius: '100px',
-                  background: 'rgba(255, 255, 255, 0.08)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
-                  transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  fontFamily: getFont('body')
-                }}
-                className="hero-cta-liquid"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
-                }}
-              >
-                {/* Liquid shine effect */}
-                <span style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: '-100%',
-                  width: '100%',
-                  height: '100%',
-                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-                  transition: 'left 0.6s ease'
-                }}
-                className="liquid-shine"
-                />
-                {current.cta_text}
-              </Link>
-            </div>
-          )}
         </div>
+
+        {/* CTA - Bottom Position, Smaller */}
+        {current?.cta_text && current?.cta_link && (
+          <div style={{
+            position: 'absolute', bottom: 'clamp(80px, 12vh, 120px)', left: '50%',
+            transform: 'translateX(-50%)', zIndex: 2
+          }}>
+            <Link
+              href={current.cta_link}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 'clamp(9px, 1vw, 11px)',
+                fontWeight: 600,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                padding: 'clamp(8px, 1.2vw, 10px) clamp(22px, 3vw, 28px)',
+                borderRadius: '100px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
+                fontFamily: getFont('body')
+              }}
+              className="hero-cta-liquid"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
+                e.currentTarget.style.transform = 'translateX(-50%) translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.transform = 'translateX(-50%) translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              {/* Liquid shine effect */}
+              <span style={{
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                transition: 'left 0.6s ease'
+              }}
+              className="liquid-shine"
+              />
+              {current.cta_text}
+            </Link>
+          </div>
+        )}
 
         {/* Navigation Arrows */}
         {totalSlides > 1 && (
