@@ -6,10 +6,11 @@ import Link from 'next/link';
 export default function CategoryShowcase() {
   const [data, setData] = useState({ header: null, menCategories: [], womenCategories: [] });
   const [currentGender, setCurrentGender] = useState('women');
+  const [previousGender, setPreviousGender] = useState('women');
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [slideDirection, setSlideDirection] = useState(null);
-  const [previousCategories, setPreviousCategories] = useState([]);
+  const [animationPhase, setAnimationPhase] = useState('idle'); // 'idle' | 'exiting' | 'entering'
 
   const apiEndpoint = '/api/home-showcase/complete';
 
@@ -43,36 +44,32 @@ export default function CategoryShowcase() {
   const switchGender = (gender) => {
     if (isAnimating || currentGender === gender) return;
     
-    const currentCats = getCategories();
-    setPreviousCategories(currentCats);
+    setPreviousGender(currentGender);
     setSlideDirection(gender === 'men' ? 'right' : 'left');
     setIsAnimating(true);
-    
+    setAnimationPhase('exiting');
+
     setTimeout(() => {
       setCurrentGender(gender);
+      setAnimationPhase('entering');
+      
       setTimeout(() => {
+        setAnimationPhase('idle');
         setIsAnimating(false);
-        setPreviousCategories([]);
-      }, 50);
-    }, 600);
+      }, 600);
+    }, 500);
   };
 
-  const getCategories = () => {
-    const cats = currentGender === 'men' ? data.menCategories : data.womenCategories;
+  const getCategories = (gender) => {
+    const cats = gender === 'men' ? data.menCategories : data.womenCategories;
     return [...cats].sort((a, b) => (a.sort_order || 999) - (b.sort_order || 999));
   };
 
-  const categories = getCategories();
+  const currentCategories = getCategories(currentGender);
+  const previousCategories = getCategories(previousGender);
 
   if (!isLoaded) return null;
   if (!hasData) return null;
-
-  const displayCategories = isAnimating ? previousCategories : categories;
-  const animationClass = isAnimating 
-    ? slideDirection === 'right' 
-      ? 'slide-out-left' 
-      : 'slide-out-right'
-    : 'slide-in';
 
   return (
     <>
@@ -116,12 +113,10 @@ export default function CategoryShowcase() {
               background: 'none', border: 'none',
               fontSize: 15, fontWeight: currentGender === gender ? 500 : 400,
               color: currentGender === gender ? '#1d1d1f' : '#86868b',
-              cursor: isAnimating ? 'default' : 'pointer',
-              padding: '8px 4px', position: 'relative',
+              cursor: 'pointer', padding: '8px 4px', position: 'relative',
               fontFamily: "'Inter', -apple-system, sans-serif",
               letterSpacing: '-0.01em', outline: 'none',
-              transition: 'color 0.35s ease',
-              pointerEvents: isAnimating ? 'none' : 'auto'
+              transition: 'color 0.35s ease'
             }}
           >
             {gender.charAt(0).toUpperCase() + gender.slice(1)}
@@ -136,23 +131,91 @@ export default function CategoryShowcase() {
         ))}
       </div>
 
-      {/* Grid Container with Perspective */}
+      {/* Grid Container with Animation */}
       <div style={{ 
         overflow: 'hidden', 
         position: 'relative', 
         background: '#fff',
-        perspective: '1000px'
+        minHeight: '200px'
       }}>
+        {/* Previous Grid (Exiting) */}
+        {isAnimating && animationPhase === 'exiting' && (
+          <div
+            style={{
+              display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 2, background: '#f5f5f7',
+              position: 'absolute', top: 0, left: 0, right: 0,
+              animation: `${slideDirection === 'right' ? 'slideOutLeft' : 'slideOutRight'} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards`
+            }}
+          >
+            {previousCategories.map((item, index) => {
+              const cat = item.categories;
+              if (!cat) return null;
+              const catName = cat.name || 'Category';
+              const catSlug = cat.slug || createSlug(catName);
+              const imgSrc = cat.image_url || cat.image || '';
+
+              return (
+                <Link
+                  key={`prev-${item.id || index}`}
+                  href={`/${catSlug}`}
+                  style={{
+                    position: 'relative', display: 'flex', flexDirection: 'column',
+                    textDecoration: 'none', background: '#fff', cursor: 'pointer',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <div style={{
+                    position: 'relative', width: '100%', aspectRatio: '3/4',
+                    overflow: 'hidden', background: '#f5f5f7'
+                  }}>
+                    {imgSrc ? (
+                      <img
+                        src={imgSrc}
+                        alt={catName}
+                        loading="lazy"
+                        style={{
+                          position: 'absolute', inset: 0, width: '100%', height: '100%',
+                          objectFit: 'cover'
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        background: 'linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%)'
+                      }} />
+                    )}
+                  </div>
+                  <div style={{
+                    padding: '20px 16px 28px', textAlign: 'center', background: '#fff'
+                  }}>
+                    <h3 style={{
+                      fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
+                      margin: 0, color: '#1d1d1f',
+                      fontFamily: "'Sora', -apple-system, sans-serif",
+                      fontWeight: 500, letterSpacing: '-0.01em'
+                    }}>
+                      {catName}
+                    </h3>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Current/New Grid */}
         <div
-          className={`showcase-grid ${animationClass}`}
           style={{
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 2, 
-            background: '#f5f5f7'
+            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 2, background: '#f5f5f7',
+            animation: isAnimating && animationPhase === 'entering'
+              ? `${slideDirection === 'right' ? 'slideInRight' : 'slideInLeft'} 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards`
+              : 'none',
+            opacity: isAnimating && animationPhase === 'exiting' ? 0 : 1
           }}
         >
-          {displayCategories.map((item, index) => {
+          {currentCategories.map((item, index) => {
             const cat = item.categories;
             if (!cat) return null;
             const catName = cat.name || 'Category';
@@ -169,11 +232,6 @@ export default function CategoryShowcase() {
                   overflow: 'hidden'
                 }}
                 className="showcase-category-card"
-                onClick={(e) => {
-                  if (isAnimating) {
-                    e.preventDefault();
-                  }
-                }}
               >
                 {/* Image */}
                 <div style={{
@@ -232,9 +290,8 @@ export default function CategoryShowcase() {
         </div>
       </div>
 
-      {/* Styles including world-class animations */}
+      {/* Hover Styles */}
       <style jsx>{`
-        /* Card Hover Effects */
         .showcase-category-card:hover .card-image-hover {
           transform: scale(1.03);
         }
@@ -250,128 +307,59 @@ export default function CategoryShowcase() {
           transition: transform 0.2s ease;
         }
 
-        /* World-Class Slide Animations */
-        .showcase-grid {
-          transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
-                      opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        /* Slide Out Left (Women -> Men) */
-        .slide-out-left {
-          animation: slideOutLeft 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-
         @keyframes slideOutLeft {
           0% {
-            transform: translateX(0) scale(1);
+            transform: translateX(0);
             opacity: 1;
-            filter: blur(0);
-          }
-          30% {
-            transform: translateX(-5%) scale(0.98);
-            opacity: 0.8;
-            filter: blur(1px);
           }
           100% {
-            transform: translateX(-110%) scale(0.95);
+            transform: translateX(-100%);
             opacity: 0;
-            filter: blur(4px);
           }
-        }
-
-        /* Slide Out Right (Men -> Women) */
-        .slide-out-right {
-          animation: slideOutRight 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
 
         @keyframes slideOutRight {
           0% {
-            transform: translateX(0) scale(1);
+            transform: translateX(0);
             opacity: 1;
-            filter: blur(0);
-          }
-          30% {
-            transform: translateX(5%) scale(0.98);
-            opacity: 0.8;
-            filter: blur(1px);
           }
           100% {
-            transform: translateX(110%) scale(0.95);
+            transform: translateX(100%);
             opacity: 0;
-            filter: blur(4px);
           }
         }
 
-        /* Slide In (New Content) */
-        .slide-in {
-          animation: slideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
-        }
-
-        @keyframes slideIn {
+        @keyframes slideInLeft {
           0% {
-            transform: translateY(30px) scale(0.97);
+            transform: translateX(-100%);
             opacity: 0;
-            filter: blur(2px);
           }
-          60% {
-            transform: translateY(-3px) scale(1.01);
-            opacity: 0.9;
-            filter: blur(0.5px);
+          40% {
+            opacity: 0;
           }
           100% {
-            transform: translateY(0) scale(1);
+            transform: translateX(0);
             opacity: 1;
-            filter: blur(0);
           }
         }
 
-        /* Stagger children animation */
-        .slide-in > :nth-child(1) { animation: fadeInUp 0.5s 0.05s ease both; }
-        .slide-in > :nth-child(2) { animation: fadeInUp 0.5s 0.1s ease both; }
-        .slide-in > :nth-child(3) { animation: fadeInUp 0.5s 0.15s ease both; }
-        .slide-in > :nth-child(4) { animation: fadeInUp 0.5s 0.2s ease both; }
-        .slide-in > :nth-child(5) { animation: fadeInUp 0.5s 0.25s ease both; }
-        .slide-in > :nth-child(6) { animation: fadeInUp 0.5s 0.3s ease both; }
-        .slide-in > :nth-child(7) { animation: fadeInUp 0.5s 0.35s ease both; }
-        .slide-in > :nth-child(8) { animation: fadeInUp 0.5s 0.4s ease both; }
-
-        @keyframes fadeInUp {
-          from {
+        @keyframes slideInRight {
+          0% {
+            transform: translateX(100%);
             opacity: 0;
-            transform: translateY(20px);
           }
-          to {
+          40% {
+            opacity: 0;
+          }
+          100% {
+            transform: translateX(0);
             opacity: 1;
-            transform: translateY(0);
           }
         }
 
-        /* Mobile Responsive */
         @media (max-width: 767px) {
           .showcase-category-card h3 {
             font-size: 14px !important;
-          }
-          
-          @keyframes slideOutLeft {
-            0% {
-              transform: translateX(0) scale(1);
-              opacity: 1;
-            }
-            100% {
-              transform: translateX(-105%) scale(0.97);
-              opacity: 0;
-            }
-          }
-
-          @keyframes slideOutRight {
-            0% {
-              transform: translateX(0) scale(1);
-              opacity: 1;
-            }
-            100% {
-              transform: translateX(105%) scale(0.97);
-              opacity: 0;
-            }
           }
         }
       `}</style>
