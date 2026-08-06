@@ -9,6 +9,7 @@ export default function CategoryShowcase() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [slideDirection, setSlideDirection] = useState(null);
+  const [previousCategories, setPreviousCategories] = useState([]);
 
   const apiEndpoint = '/api/home-showcase/complete';
 
@@ -41,12 +42,19 @@ export default function CategoryShowcase() {
 
   const switchGender = (gender) => {
     if (isAnimating || currentGender === gender) return;
+    
+    const currentCats = getCategories();
+    setPreviousCategories(currentCats);
     setSlideDirection(gender === 'men' ? 'right' : 'left');
     setIsAnimating(true);
+    
     setTimeout(() => {
       setCurrentGender(gender);
-      setTimeout(() => setIsAnimating(false), 50);
-    }, 400);
+      setTimeout(() => {
+        setIsAnimating(false);
+        setPreviousCategories([]);
+      }, 50);
+    }, 600);
   };
 
   const getCategories = () => {
@@ -58,6 +66,13 @@ export default function CategoryShowcase() {
 
   if (!isLoaded) return null;
   if (!hasData) return null;
+
+  const displayCategories = isAnimating ? previousCategories : categories;
+  const animationClass = isAnimating 
+    ? slideDirection === 'right' 
+      ? 'slide-out-left' 
+      : 'slide-out-right'
+    : 'slide-in';
 
   return (
     <>
@@ -101,10 +116,12 @@ export default function CategoryShowcase() {
               background: 'none', border: 'none',
               fontSize: 15, fontWeight: currentGender === gender ? 500 : 400,
               color: currentGender === gender ? '#1d1d1f' : '#86868b',
-              cursor: 'pointer', padding: '8px 4px', position: 'relative',
+              cursor: isAnimating ? 'default' : 'pointer',
+              padding: '8px 4px', position: 'relative',
               fontFamily: "'Inter', -apple-system, sans-serif",
               letterSpacing: '-0.01em', outline: 'none',
-              transition: 'color 0.35s ease'
+              transition: 'color 0.35s ease',
+              pointerEvents: isAnimating ? 'none' : 'auto'
             }}
           >
             {gender.charAt(0).toUpperCase() + gender.slice(1)}
@@ -119,20 +136,23 @@ export default function CategoryShowcase() {
         ))}
       </div>
 
-      {/* Grid */}
-      <div style={{ overflow: 'hidden', position: 'relative', background: '#fff' }}>
+      {/* Grid Container with Perspective */}
+      <div style={{ 
+        overflow: 'hidden', 
+        position: 'relative', 
+        background: '#fff',
+        perspective: '1000px'
+      }}>
         <div
+          className={`showcase-grid ${animationClass}`}
           style={{
-            display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
-            gap: 2, background: '#f5f5f7',
-            transform: isAnimating
-              ? `translateX(${slideDirection === 'right' ? '-' : ''}40px)`
-              : 'translateX(0)',
-            opacity: isAnimating ? 0 : 1,
-            transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.5s ease-out'
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 2, 
+            background: '#f5f5f7'
           }}
         >
-          {categories.map((item, index) => {
+          {displayCategories.map((item, index) => {
             const cat = item.categories;
             if (!cat) return null;
             const catName = cat.name || 'Category';
@@ -149,6 +169,11 @@ export default function CategoryShowcase() {
                   overflow: 'hidden'
                 }}
                 className="showcase-category-card"
+                onClick={(e) => {
+                  if (isAnimating) {
+                    e.preventDefault();
+                  }
+                }}
               >
                 {/* Image */}
                 <div style={{
@@ -207,8 +232,9 @@ export default function CategoryShowcase() {
         </div>
       </div>
 
-      {/* Hover Styles */}
+      {/* Styles including world-class animations */}
       <style jsx>{`
+        /* Card Hover Effects */
         .showcase-category-card:hover .card-image-hover {
           transform: scale(1.03);
         }
@@ -223,9 +249,129 @@ export default function CategoryShowcase() {
           transform: scale(0.98);
           transition: transform 0.2s ease;
         }
+
+        /* World-Class Slide Animations */
+        .showcase-grid {
+          transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), 
+                      opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        /* Slide Out Left (Women -> Men) */
+        .slide-out-left {
+          animation: slideOutLeft 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes slideOutLeft {
+          0% {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+            filter: blur(0);
+          }
+          30% {
+            transform: translateX(-5%) scale(0.98);
+            opacity: 0.8;
+            filter: blur(1px);
+          }
+          100% {
+            transform: translateX(-110%) scale(0.95);
+            opacity: 0;
+            filter: blur(4px);
+          }
+        }
+
+        /* Slide Out Right (Men -> Women) */
+        .slide-out-right {
+          animation: slideOutRight 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes slideOutRight {
+          0% {
+            transform: translateX(0) scale(1);
+            opacity: 1;
+            filter: blur(0);
+          }
+          30% {
+            transform: translateX(5%) scale(0.98);
+            opacity: 0.8;
+            filter: blur(1px);
+          }
+          100% {
+            transform: translateX(110%) scale(0.95);
+            opacity: 0;
+            filter: blur(4px);
+          }
+        }
+
+        /* Slide In (New Content) */
+        .slide-in {
+          animation: slideIn 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        @keyframes slideIn {
+          0% {
+            transform: translateY(30px) scale(0.97);
+            opacity: 0;
+            filter: blur(2px);
+          }
+          60% {
+            transform: translateY(-3px) scale(1.01);
+            opacity: 0.9;
+            filter: blur(0.5px);
+          }
+          100% {
+            transform: translateY(0) scale(1);
+            opacity: 1;
+            filter: blur(0);
+          }
+        }
+
+        /* Stagger children animation */
+        .slide-in > :nth-child(1) { animation: fadeInUp 0.5s 0.05s ease both; }
+        .slide-in > :nth-child(2) { animation: fadeInUp 0.5s 0.1s ease both; }
+        .slide-in > :nth-child(3) { animation: fadeInUp 0.5s 0.15s ease both; }
+        .slide-in > :nth-child(4) { animation: fadeInUp 0.5s 0.2s ease both; }
+        .slide-in > :nth-child(5) { animation: fadeInUp 0.5s 0.25s ease both; }
+        .slide-in > :nth-child(6) { animation: fadeInUp 0.5s 0.3s ease both; }
+        .slide-in > :nth-child(7) { animation: fadeInUp 0.5s 0.35s ease both; }
+        .slide-in > :nth-child(8) { animation: fadeInUp 0.5s 0.4s ease both; }
+
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        /* Mobile Responsive */
         @media (max-width: 767px) {
           .showcase-category-card h3 {
             font-size: 14px !important;
+          }
+          
+          @keyframes slideOutLeft {
+            0% {
+              transform: translateX(0) scale(1);
+              opacity: 1;
+            }
+            100% {
+              transform: translateX(-105%) scale(0.97);
+              opacity: 0;
+            }
+          }
+
+          @keyframes slideOutRight {
+            0% {
+              transform: translateX(0) scale(1);
+              opacity: 1;
+            }
+            100% {
+              transform: translateX(105%) scale(0.97);
+              opacity: 0;
+            }
           }
         }
       `}</style>
