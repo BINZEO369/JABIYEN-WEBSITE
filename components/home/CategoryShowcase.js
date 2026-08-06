@@ -272,7 +272,7 @@ export default function CategoryShowcase() {
                     )}
                   </div>
                   <div style={{
-                    padding: '20px 16px 28px', textAlign: 'center', background: '#fff'
+                    padding: '12px 16px', textAlign: 'center', background: '#fff'
                   }}>
                     <h3 style={{
                       fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
@@ -369,9 +369,9 @@ export default function CategoryShowcase() {
                   }} className="card-overlay-hover" />
                 </div>
 
-                {/* Content */}
+                {/* Content - Compact */}
                 <div style={{
-                  padding: '20px 16px 28px', textAlign: 'center', background: '#fff'
+                  padding: '12px 16px', textAlign: 'center', background: '#fff'
                 }}>
                   <h3 style={{
                     fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
@@ -381,16 +381,6 @@ export default function CategoryShowcase() {
                   }}>
                     {catName}
                   </h3>
-                  <span style={{
-                    display: 'inline-block', marginTop: 8, fontSize: 11,
-                    fontFamily: "'Inter', -apple-system, sans-serif",
-                    color: '#86868b', letterSpacing: '0.02em',
-                    textTransform: 'uppercase', opacity: 0,
-                    transform: 'translateY(5px)',
-                    transition: 'opacity 0.4s ease, transform 0.4s ease'
-                  }} className="explore-hover">
-                    Explore
-                  </span>
                 </div>
               </Link>
             );
@@ -405,10 +395,6 @@ export default function CategoryShowcase() {
         }
         .showcase-category-card:hover .card-overlay-hover {
           background: rgba(0,0,0,0.03);
-        }
-        .showcase-category-card:hover .explore-hover {
-          opacity: 1;
-          transform: translateY(0);
         }
         .showcase-category-card:active .card-image-hover {
           transform: scale(0.98);
