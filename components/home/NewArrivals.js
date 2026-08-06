@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function NewArrivals({ products = [] }) {
   const [arrivals, setArrivals] = useState([]);
@@ -77,7 +78,7 @@ export default function NewArrivals({ products = [] }) {
     return (
       <section style={{ padding: '32px 0', maxWidth: '100%', margin: '0 auto', background: '#fff' }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>New Arrivals</h2>
+          <div style={{ width: 180, height: 28, margin: '0 auto', background: '#f0f0f5', borderRadius: 4, animation: 'shimmer 1.8s infinite linear' }} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
           {[...Array(4)].map((_, i) => (
@@ -98,7 +99,7 @@ export default function NewArrivals({ products = [] }) {
     return (
       <section style={{ padding: '32px 0', background: '#fff' }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>New Arrivals</h2>
+          <Image src="/newarrivalicon.png" alt="New Arrivals" width={140} height={28} style={{ objectFit: 'contain' }} />
         </div>
         <div style={{ textAlign: 'center', padding: '60px 20px', maxWidth: 400, margin: '0 auto' }}>
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.4 }}>
@@ -114,12 +115,14 @@ export default function NewArrivals({ products = [] }) {
   return (
     <section style={{ padding: '32px 0', maxWidth: 1400, margin: '0 auto', background: '#fff' }}>
       <div style={{ textAlign: 'center', marginBottom: 20, padding: '0 8px' }}>
-        <h2 style={{
-          fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f',
-          letterSpacing: '-0.3px'
-        }}>
-          New Arrivals
-        </h2>
+        <Image 
+          src="/newarrivalicon.png" 
+          alt="New Arrivals" 
+          width={180} 
+          height={32} 
+          style={{ objectFit: 'contain' }}
+          priority
+        />
       </div>
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1, width: '100%'
