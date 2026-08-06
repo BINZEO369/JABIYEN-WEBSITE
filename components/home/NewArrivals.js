@@ -78,7 +78,14 @@ export default function NewArrivals({ products = [] }) {
     return (
       <section style={{ padding: '32px 0', maxWidth: '100%', margin: '0 auto', background: '#fff' }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <div style={{ width: 180, height: 28, margin: '0 auto', background: '#f0f0f5', borderRadius: 4, animation: 'shimmer 1.8s infinite linear' }} />
+          <Image 
+            src="/newarrivalicon.png" 
+            alt="New Arrivals" 
+            width={180} 
+            height={40}
+            style={{ objectFit: 'contain' }}
+            priority
+          />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
           {[...Array(4)].map((_, i) => (
@@ -99,7 +106,14 @@ export default function NewArrivals({ products = [] }) {
     return (
       <section style={{ padding: '32px 0', background: '#fff' }}>
         <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <Image src="/newarrivalicon.png" alt="New Arrivals" width={140} height={28} style={{ objectFit: 'contain' }} />
+          <Image 
+            src="/newarrivalicon.png" 
+            alt="New Arrivals" 
+            width={180} 
+            height={40}
+            style={{ objectFit: 'contain' }}
+            priority
+          />
         </div>
         <div style={{ textAlign: 'center', padding: '60px 20px', maxWidth: 400, margin: '0 auto' }}>
           <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.4 }}>
@@ -118,8 +132,8 @@ export default function NewArrivals({ products = [] }) {
         <Image 
           src="/newarrivalicon.png" 
           alt="New Arrivals" 
-          width={180} 
-          height={32} 
+          width={200} 
+          height={45}
           style={{ objectFit: 'contain' }}
           priority
         />
