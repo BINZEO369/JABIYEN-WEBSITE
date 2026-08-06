@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 
 export default function HeroBanner({ slides = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -144,29 +143,15 @@ export default function HeroBanner({ slides = [] }) {
               pointerEvents: index === currentSlide ? 'auto' : 'none'
             }}
           >
-            {slide.img ? (
-              <Image
-                src={slide.img}
-                alt={slide.title || 'JAYENWARE Hero'}
-                fill
-                priority={index === 0}
-                loading={index === 0 ? undefined : "lazy"}
-                sizes="100vw"
-                quality={85}
-                style={{
-                  objectFit: 'cover',
-                  animation: index === currentSlide ? 'heroZoom 20s ease-in-out infinite alternate' : 'none'
-                }}
-                className="hero-slide-image"
-                unoptimized={slide.img.includes('imagekit') || slide.img.includes('cloudinary')}
-                fetchPriority={index === 0 ? "high" : "low"}
-              />
-            ) : (
-              <div style={{
-                width: '100%', height: '100%',
+            <img
+              src={slide.img}
+              alt={slide.title || 'JAYENWARE Hero'}
+              style={{
+                width: '100%', height: '100%', objectFit: 'cover',
+                animation: index === currentSlide ? 'heroZoom 20s ease-in-out infinite alternate' : 'none',
                 background: '#0a0a0a'
-              }} />
-            )}
+              }}
+            />
           </div>
         ))}
 
@@ -335,9 +320,6 @@ export default function HeroBanner({ slides = [] }) {
         .hero-cta-liquid:hover .liquid-shine {
           left: 100% !important;
         }
-        .hero-slide-image {
-          background: #0a0a0a;
-        }
         @keyframes heroZoom {
           from { transform: scale(1); }
           to { transform: scale(1.05); }
@@ -353,3 +335,4 @@ export default function HeroBanner({ slides = [] }) {
     </>
   );
 }
+
