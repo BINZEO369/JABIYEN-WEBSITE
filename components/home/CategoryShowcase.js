@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function CategoryShowcase() {
   const [data, setData] = useState({ header: null, menCategories: [], womenCategories: [] });
@@ -10,12 +11,15 @@ export default function CategoryShowcase() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [slideDirection, setSlideDirection] = useState(null);
-  const [animationPhase, setAnimationPhase] = useState('idle'); // 'idle' | 'exiting' | 'entering'
+  const [animationPhase, setAnimationPhase] = useState('idle');
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
   const womenRef = useRef(null);
   const menRef = useRef(null);
   const tabContainerRef = useRef(null);
+  const gridContainerRef = useRef(null);
+  const observerRef = useRef(null);
+  const [visibleImages, setVisibleImages] = useState(new Set());
 
   const apiEndpoint = '/api/home-showcase/complete';
 
@@ -24,11 +28,20 @@ export default function CategoryShowcase() {
     return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
   };
 
-  // Fetch data
+  // Fetch data with priority
   useEffect(() => {
     async function fetchData() {
       try {
-        const response = await fetch(apiEndpoint);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        const response = await fetch(apiEndpoint, {
+          signal: controller.signal,
+          headers: { 'Cache-Control': 'max-age=3600' }
+        });
+        
+        clearTimeout(timeoutId);
+        
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const result = await response.json();
         setData({
@@ -43,6 +56,34 @@ export default function CategoryShowcase() {
     }
     fetchData();
   }, []);
+
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    if (!gridContainerRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const imgId = entry.target.getAttribute('data-img-id');
+            if (imgId) {
+              setVisibleImages(prev => new Set([...prev, imgId]));
+            }
+          }
+        });
+      },
+      {
+        rootMargin: '200px 0px',
+        threshold: 0.01
+      }
+    );
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [currentGender, currentCategories]);
 
   // Update underline position
   useEffect(() => {
@@ -67,7 +108,6 @@ export default function CategoryShowcase() {
     setIsAnimating(true);
     setAnimationPhase('exiting');
 
-    // Ultra-fast switch timing
     setTimeout(() => {
       setCurrentGender(gender);
       setAnimationPhase('entering');
@@ -87,11 +127,148 @@ export default function CategoryShowcase() {
   const currentCategories = getCategories(currentGender);
   const previousCategories = getCategories(previousGender);
 
+  // Image loader with optimization
+  const imageLoader = ({ src, width, quality = 85 }) => {
+    if (src.includes('cdn') || src.includes('cloudinary') || src.includes('imgix')) {
+      return `${src}?w=${width}&q=${quality}&format=webp&fit=crop`;
+    }
+    return `${src}?w=${width}&q=${quality}`;
+  };
+
+  // Get optimized image URL
+  const getOptimizedImageUrl = (url) => {
+    if (!url) return '';
+    if (url.includes('unsplash.com')) return `${url}&w=800&q=80&fm=webp&fit=crop`;
+    if (url.includes('cloudinary.com')) return url.replace('/upload/', '/upload/w_800,q_80,f_webp,c_fill/');
+    return url;
+  };
+
+  const renderCategoryCard = (item, index, isPriority = false) => {
+    const cat = item.categories;
+    if (!cat) return null;
+    const catName = cat.name || 'Category';
+    const catSlug = cat.slug || createSlug(catName);
+    const imgSrc = cat.image_url || cat.image || '';
+    const imgId = `${catSlug}-${index}`;
+    const shouldLoad = isPriority || index < 2 || visibleImages.has(imgId);
+
+    return (
+      <Link
+        key={item.id || index}
+        href={`/${catSlug}`}
+        prefetch={false}
+        style={{
+          position: 'relative', display: 'flex', flexDirection: 'column',
+          textDecoration: 'none', background: '#fff', cursor: 'pointer',
+          overflow: 'hidden', transform: 'translateZ(0)'
+        }}
+        className="showcase-category-card"
+      >
+        {/* Image Container with Next.js Image Optimization */}
+        <div 
+          ref={shouldLoad ? null : (el) => {
+            if (el && observerRef.current) {
+              el.setAttribute('data-img-id', imgId);
+              observerRef.current.observe(el);
+            }
+          }}
+          style={{
+            position: 'relative', width: '100%', aspectRatio: '3/4',
+            overflow: 'hidden', background: '#f5f5f7',
+            transform: 'translateZ(0)'
+          }}
+        >
+          {imgSrc && shouldLoad ? (
+            <Image
+              src={getOptimizedImageUrl(imgSrc)}
+              alt={catName}
+              fill
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              priority={isPriority && index < 2}
+              loading={isPriority || index < 2 ? 'eager' : 'lazy'}
+              quality={80}
+              style={{
+                objectFit: 'cover',
+                transition: 'transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)'
+              }}
+              className="card-image-hover"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div style={{
+              position: 'absolute', inset: 0,
+              background: 'linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%)',
+              transform: 'translateZ(0)'
+            }}>
+              {!imgSrc && (
+                <div style={{
+                  position: 'absolute', inset: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#86868b', fontSize: 12
+                }}>
+                  {catName}
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(0,0,0,0)', transition: 'background 0.5s ease',
+            transform: 'translateZ(0)'
+          }} className="card-overlay-hover" />
+        </div>
+
+        {/* Content */}
+        <div style={{
+          padding: '20px 16px 28px', textAlign: 'center', background: '#fff'
+        }}>
+          <h3 style={{
+            fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
+            margin: 0, color: '#1d1d1f',
+            fontFamily: "'Sora', -apple-system, sans-serif",
+            fontWeight: 500, letterSpacing: '-0.01em'
+          }}>
+            {catName}
+          </h3>
+          <span style={{
+            display: 'inline-block', marginTop: 8, fontSize: 11,
+            fontFamily: "'Inter', -apple-system, sans-serif",
+            color: '#86868b', letterSpacing: '0.02em',
+            textTransform: 'uppercase', opacity: 0,
+            transform: 'translateY(5px)',
+            transition: 'opacity 0.4s ease, transform 0.4s ease'
+          }} className="explore-hover">
+            Explore
+          </span>
+        </div>
+      </Link>
+    );
+  };
+
   if (!isLoaded) return null;
   if (!hasData) return null;
 
   return (
     <>
+      {/* Preload critical images */}
+      <Head>
+        {currentCategories.slice(0, 2).map((item, index) => {
+          const cat = item.categories;
+          if (!cat?.image_url) return null;
+          return (
+            <link
+              key={`preload-${index}`}
+              rel="preload"
+              as="image"
+              href={getOptimizedImageUrl(cat.image_url)}
+              imagesrcset={`${getOptimizedImageUrl(cat.image_url)}&w=400 400w, ${getOptimizedImageUrl(cat.image_url)}&w=800 800w`}
+            />
+          );
+        })}
+      </Head>
+
       {/* Header */}
       {data.header && (
         <div style={{
@@ -161,12 +338,17 @@ export default function CategoryShowcase() {
       </div>
 
       {/* Grid Container with Animation */}
-      <div style={{ 
-        overflow: 'hidden', 
-        position: 'relative', 
-        background: '#fff',
-        minHeight: '200px'
-      }}>
+      <div 
+        ref={gridContainerRef}
+        style={{ 
+          overflow: 'hidden', 
+          position: 'relative', 
+          background: '#fff',
+          minHeight: '200px',
+          transform: 'translateZ(0)',
+          willChange: 'transform'
+        }}
+      >
         {/* Previous Grid (Exiting) */}
         {isAnimating && animationPhase === 'exiting' && (
           <div
@@ -174,62 +356,11 @@ export default function CategoryShowcase() {
               display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)',
               gap: 2, background: '#f5f5f7',
               position: 'absolute', top: 0, left: 0, right: 0,
-              animation: `${slideDirection === 'right' ? 'slideOutLeft' : 'slideOutRight'} 0.25s cubic-bezier(0.4, 0, 0.6, 1) forwards`
+              animation: `${slideDirection === 'right' ? 'slideOutLeft' : 'slideOutRight'} 0.25s cubic-bezier(0.4, 0, 0.6, 1) forwards`,
+              willChange: 'transform, opacity'
             }}
           >
-            {previousCategories.map((item, index) => {
-              const cat = item.categories;
-              if (!cat) return null;
-              const catName = cat.name || 'Category';
-              const catSlug = cat.slug || createSlug(catName);
-              const imgSrc = cat.image_url || cat.image || '';
-
-              return (
-                <Link
-                  key={`prev-${item.id || index}`}
-                  href={`/${catSlug}`}
-                  style={{
-                    position: 'relative', display: 'flex', flexDirection: 'column',
-                    textDecoration: 'none', background: '#fff', cursor: 'pointer',
-                    overflow: 'hidden'
-                  }}
-                >
-                  <div style={{
-                    position: 'relative', width: '100%', aspectRatio: '3/4',
-                    overflow: 'hidden', background: '#f5f5f7'
-                  }}>
-                    {imgSrc ? (
-                      <img
-                        src={imgSrc}
-                        alt={catName}
-                        loading="lazy"
-                        style={{
-                          position: 'absolute', inset: 0, width: '100%', height: '100%',
-                          objectFit: 'cover'
-                        }}
-                      />
-                    ) : (
-                      <div style={{
-                        position: 'absolute', inset: 0,
-                        background: 'linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%)'
-                      }} />
-                    )}
-                  </div>
-                  <div style={{
-                    padding: '20px 16px 28px', textAlign: 'center', background: '#fff'
-                  }}>
-                    <h3 style={{
-                      fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
-                      margin: 0, color: '#1d1d1f',
-                      fontFamily: "'Sora', -apple-system, sans-serif",
-                      fontWeight: 500, letterSpacing: '-0.01em'
-                    }}>
-                      {catName}
-                    </h3>
-                  </div>
-                </Link>
-              );
-            })}
+            {previousCategories.map((item, index) => renderCategoryCard(item, index, false))}
           </div>
         )}
 
@@ -241,88 +372,18 @@ export default function CategoryShowcase() {
             animation: isAnimating && animationPhase === 'entering'
               ? `${slideDirection === 'right' ? 'slideInRight' : 'slideInLeft'} 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards`
               : 'none',
-            opacity: isAnimating && animationPhase === 'exiting' ? 0 : 1
+            opacity: isAnimating && animationPhase === 'exiting' ? 0 : 1,
+            willChange: 'transform, opacity'
           }}
         >
-          {currentCategories.map((item, index) => {
-            const cat = item.categories;
-            if (!cat) return null;
-            const catName = cat.name || 'Category';
-            const catSlug = cat.slug || createSlug(catName);
-            const imgSrc = cat.image_url || cat.image || '';
-
-            return (
-              <Link
-                key={item.id || index}
-                href={`/${catSlug}`}
-                style={{
-                  position: 'relative', display: 'flex', flexDirection: 'column',
-                  textDecoration: 'none', background: '#fff', cursor: 'pointer',
-                  overflow: 'hidden'
-                }}
-                className="showcase-category-card"
-              >
-                {/* Image */}
-                <div style={{
-                  position: 'relative', width: '100%', aspectRatio: '3/4',
-                  overflow: 'hidden', background: '#f5f5f7'
-                }}>
-                  {imgSrc ? (
-                    <img
-                      src={imgSrc}
-                      alt={catName}
-                      loading={index < 4 ? 'eager' : 'lazy'}
-                      style={{
-                        position: 'absolute', inset: 0, width: '100%', height: '100%',
-                        objectFit: 'cover', transition: 'transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)'
-                      }}
-                      className="card-image-hover"
-                    />
-                  ) : (
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      background: 'linear-gradient(135deg, #f5f5f7 0%, #e8e8ed 100%)'
-                    }} />
-                  )}
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    background: 'rgba(0,0,0,0)', transition: 'background 0.5s ease'
-                  }} className="card-overlay-hover" />
-                </div>
-
-                {/* Content */}
-                <div style={{
-                  padding: '20px 16px 28px', textAlign: 'center', background: '#fff'
-                }}>
-                  <h3 style={{
-                    fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
-                    margin: 0, color: '#1d1d1f',
-                    fontFamily: "'Sora', -apple-system, sans-serif",
-                    fontWeight: 500, letterSpacing: '-0.01em'
-                  }}>
-                    {catName}
-                  </h3>
-                  <span style={{
-                    display: 'inline-block', marginTop: 8, fontSize: 11,
-                    fontFamily: "'Inter', -apple-system, sans-serif",
-                    color: '#86868b', letterSpacing: '0.02em',
-                    textTransform: 'uppercase', opacity: 0,
-                    transform: 'translateY(5px)',
-                    transition: 'opacity 0.4s ease, transform 0.4s ease'
-                  }} className="explore-hover">
-                    Explore
-                  </span>
-                </div>
-              </Link>
-            );
-          })}
+          {currentCategories.map((item, index) => renderCategoryCard(item, index, true))}
         </div>
       </div>
 
       {/* Hover Styles */}
       <style jsx>{`
         .showcase-category-card:hover .card-image-hover {
-          transform: scale(1.03);
+          transform: scale(1.03) translateZ(0);
         }
         .showcase-category-card:hover .card-overlay-hover {
           background: rgba(0,0,0,0.03);
@@ -332,50 +393,50 @@ export default function CategoryShowcase() {
           transform: translateY(0);
         }
         .showcase-category-card:active .card-image-hover {
-          transform: scale(0.98);
+          transform: scale(0.98) translateZ(0);
           transition: transform 0.2s ease;
         }
 
         @keyframes slideOutLeft {
           0% {
-            transform: translateX(0);
+            transform: translateX(0) translateZ(0);
             opacity: 1;
           }
           100% {
-            transform: translateX(-100%);
+            transform: translateX(-100%) translateZ(0);
             opacity: 0;
           }
         }
 
         @keyframes slideOutRight {
           0% {
-            transform: translateX(0);
+            transform: translateX(0) translateZ(0);
             opacity: 1;
           }
           100% {
-            transform: translateX(100%);
+            transform: translateX(100%) translateZ(0);
             opacity: 0;
           }
         }
 
         @keyframes slideInLeft {
           0% {
-            transform: translateX(-100%);
+            transform: translateX(-100%) translateZ(0);
             opacity: 0;
           }
           100% {
-            transform: translateX(0);
+            transform: translateX(0) translateZ(0);
             opacity: 1;
           }
         }
 
         @keyframes slideInRight {
           0% {
-            transform: translateX(100%);
+            transform: translateX(100%) translateZ(0);
             opacity: 0;
           }
           100% {
-            transform: translateX(0);
+            transform: translateX(0) translateZ(0);
             opacity: 1;
           }
         }
