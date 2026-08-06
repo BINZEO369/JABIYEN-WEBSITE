@@ -154,25 +154,59 @@ export default function HeroBanner({ slides = [] }) {
             </p>
           )}
 
-          {/* CTA */}
+          {/* CTA - Liquid Bubble Design */}
           {current?.cta_text && current?.cta_link && (
             <div style={{
-              marginTop: 'clamp(8px, 1.5vh, 16px)', order: 3
+              marginTop: 'clamp(12px, 2vh, 20px)', order: 3
             }}>
               <Link
                 href={current.cta_link}
                 style={{
-                  display: 'inline-flex', alignItems: 'center',
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 'clamp(7px, 0.85vw, 9px)', fontWeight: 500,
-                  letterSpacing: '0.2em', textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.75)', textDecoration: 'none',
-                  padding: '0 0 3px 0',
-                  borderBottom: '1px solid rgba(255,255,255,0.25)',
-                  transition: 'all 0.4s ease'
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: 'clamp(9px, 1.1vw, 12px)',
+                  fontWeight: 600,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  textDecoration: 'none',
+                  padding: 'clamp(10px, 1.5vw, 14px) clamp(28px, 3.5vw, 36px)',
+                  borderRadius: '100px',
+                  background: 'rgba(255, 255, 255, 0.08)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}
-                className="hero-cta-link"
+                className="hero-cta-liquid"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
+                {/* Liquid shine effect */}
+                <span style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: '-100%',
+                  width: '100%',
+                  height: '100%',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                  transition: 'left 0.6s ease'
+                }}
+                className="liquid-shine"
+                />
                 {current.cta_text}
               </Link>
             </div>
@@ -242,10 +276,8 @@ export default function HeroBanner({ slides = [] }) {
         .hero-container:hover .hero-arrow {
           opacity: 1 !important;
         }
-        .hero-cta-link:hover {
-          color: #fff !important;
-          border-bottom-color: rgba(255,255,255,0.8) !important;
-          padding-right: 16px !important;
+        .hero-cta-liquid:hover .liquid-shine {
+          left: 100% !important;
         }
         @keyframes heroZoom {
           from { transform: scale(1); }
