@@ -13,6 +13,7 @@ export default function CategoryShowcase() {
   const [slideDirection, setSlideDirection] = useState(null);
   const [animationPhase, setAnimationPhase] = useState('idle');
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
+  const [fontsLoaded, setFontsLoaded] = useState(false);
 
   const womenRef = useRef(null);
   const menRef = useRef(null);
@@ -27,6 +28,28 @@ export default function CategoryShowcase() {
     if (!text) return '';
     return text.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
   };
+
+  // Load fonts from window.JABIYEN_FONTS
+  useEffect(() => {
+    const loadFonts = () => {
+      if (window.JABIYEN_FONTS) {
+        const { families } = window.JABIYEN_FONTS;
+        const root = document.documentElement;
+        
+        // Apply CSS variables
+        root.style.setProperty('--font-heading', families.heading);
+        root.style.setProperty('--font-subtitle', families.subtitle);
+        root.style.setProperty('--font-body', families.body);
+        
+        setFontsLoaded(true);
+      } else {
+        // Retry if fonts not loaded yet
+        setTimeout(loadFonts, 100);
+      }
+    };
+    
+    loadFonts();
+  }, []);
 
   // Fetch data
   useEffect(() => {
@@ -138,6 +161,23 @@ export default function CategoryShowcase() {
   const currentCategories = getCategories(currentGender);
   const previousCategories = getCategories(previousGender);
 
+  // Get font families from global config
+  const getFont = (type) => {
+    if (window.JABIYEN_FONTS?.families) {
+      return window.JABIYEN_FONTS.families[type] || getFallbackFont(type);
+    }
+    return getFallbackFont(type);
+  };
+
+  const getFallbackFont = (type) => {
+    const fallbacks = {
+      heading: "'Manrope', sans-serif",
+      subtitle: "'Sora', sans-serif",
+      body: "'Inter', sans-serif"
+    };
+    return fallbacks[type] || fallbacks.body;
+  };
+
   if (!isLoaded) return null;
   if (!hasData) return null;
 
@@ -153,7 +193,8 @@ export default function CategoryShowcase() {
             <h2 style={{
               fontSize: 'clamp(14px, 2vw, 16px)', fontWeight: 500,
               color: '#1d1d1f', margin: '0 0 6px 0',
-              fontFamily: "'Manrope', sans-serif", letterSpacing: '-0.02em'
+              fontFamily: getFont('heading'),
+              letterSpacing: '-0.02em'
             }}>
               {data.header.title}
             </h2>
@@ -161,7 +202,8 @@ export default function CategoryShowcase() {
           {data.header.subtitle && (
             <p style={{
               fontSize: 'clamp(10px, 1.2vw, 11px)', color: '#86868b',
-              margin: 0, lineHeight: 1.4, fontFamily: "'Inter', sans-serif"
+              margin: 0, lineHeight: 1.4,
+              fontFamily: getFont('body')
             }}>
               {data.header.subtitle}
             </p>
@@ -188,7 +230,7 @@ export default function CategoryShowcase() {
               fontSize: 15, fontWeight: currentGender === gender ? 500 : 400,
               color: currentGender === gender ? '#1d1d1f' : '#86868b',
               cursor: 'pointer', padding: '8px 4px', position: 'relative',
-              fontFamily: "'Inter', -apple-system, sans-serif",
+              fontFamily: getFont('body'),
               letterSpacing: '-0.01em', outline: 'none',
               transition: 'color 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
@@ -277,7 +319,7 @@ export default function CategoryShowcase() {
                     <h3 style={{
                       fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
                       margin: 0, color: '#1d1d1f',
-                      fontFamily: "'Sora', -apple-system, sans-serif",
+                      fontFamily: getFont('subtitle'),
                       fontWeight: 500, letterSpacing: '-0.01em'
                     }}>
                       {catName}
@@ -376,7 +418,7 @@ export default function CategoryShowcase() {
                   <h3 style={{
                     fontSize: 'clamp(15px, 2vw, 17px)', lineHeight: 1.2,
                     margin: 0, color: '#1d1d1f',
-                    fontFamily: "'Sora', -apple-system, sans-serif",
+                    fontFamily: getFont('subtitle'),
                     fontWeight: 500, letterSpacing: '-0.01em'
                   }}>
                     {catName}
