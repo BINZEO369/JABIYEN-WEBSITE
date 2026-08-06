@@ -11,12 +11,15 @@ export default function CategoryShowcase() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   const [slideDirection, setSlideDirection] = useState(null);
-  const [animationPhase, setAnimationPhase] = useState('idle'); // 'idle' | 'exiting' | 'entering'
+  const [animationPhase, setAnimationPhase] = useState('idle');
   const [underlineStyle, setUnderlineStyle] = useState({ left: 0, width: 0 });
 
   const womenRef = useRef(null);
   const menRef = useRef(null);
   const tabContainerRef = useRef(null);
+  const containerRef = useRef(null);
+  const observerRef = useRef(null);
+  const [visibleImages, setVisibleImages] = useState(new Set());
 
   const apiEndpoint = '/api/home-showcase/complete';
 
@@ -45,6 +48,53 @@ export default function CategoryShowcase() {
     fetchData();
   }, []);
 
+  // Intersection Observer for lazy loading
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = parseInt(entry.target.dataset.index);
+            const gender = entry.target.dataset.gender;
+            setVisibleImages(prev => new Set([...prev, `${gender}-${index}`]));
+          }
+        });
+      },
+      {
+        rootMargin: '200px 0px',
+        threshold: 0.01
+      }
+    );
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [currentGender]);
+
+  // Preload next gender images
+  useEffect(() => {
+    const nextGender = currentGender === 'women' ? 'men' : 'women';
+    const nextCategories = getCategories(nextGender);
+    
+    nextCategories.slice(0, 4).forEach((item, index) => {
+      const cat = item.categories;
+      if (!cat) return;
+      const imgSrc = cat.image_url || cat.image || '';
+      if (imgSrc) {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.as = 'image';
+        link.href = imgSrc;
+        link.imageSrcset = imgSrc;
+        document.head.appendChild(link);
+      }
+    });
+  }, [currentGender, data]);
+
   // Update underline position
   useEffect(() => {
     const activeRef = currentGender === 'women' ? womenRef.current : menRef.current;
@@ -67,8 +117,8 @@ export default function CategoryShowcase() {
     setSlideDirection(gender === 'men' ? 'right' : 'left');
     setIsAnimating(true);
     setAnimationPhase('exiting');
+    setVisibleImages(new Set());
 
-    // Ultra-fast switch timing
     setTimeout(() => {
       setCurrentGender(gender);
       setAnimationPhase('entering');
@@ -162,12 +212,15 @@ export default function CategoryShowcase() {
       </div>
 
       {/* Grid Container with Animation */}
-      <div style={{ 
-        overflow: 'hidden', 
-        position: 'relative', 
-        background: '#fff',
-        minHeight: '200px'
-      }}>
+      <div 
+        ref={containerRef}
+        style={{ 
+          overflow: 'hidden', 
+          position: 'relative', 
+          background: '#fff',
+          minHeight: '200px'
+        }}
+      >
         {/* Previous Grid (Exiting) */}
         {isAnimating && animationPhase === 'exiting' && (
           <div
@@ -207,10 +260,9 @@ export default function CategoryShowcase() {
                         sizes="50vw"
                         priority={false}
                         loading="lazy"
-                        style={{
-                          objectFit: 'cover'
-                        }}
-                        quality={85}
+                        style={{ objectFit: 'cover' }}
+                        quality={80}
+                        unoptimized={imgSrc.includes('imagekit') || imgSrc.includes('cloudinary')}
                       />
                     ) : (
                       <div style={{
@@ -254,6 +306,7 @@ export default function CategoryShowcase() {
             const catName = cat.name || 'Category';
             const catSlug = cat.slug || createSlug(catName);
             const imgSrc = cat.image_url || cat.image || '';
+            const shouldLoad = index < 4 || visibleImages.has(`${currentGender}-${index}`);
 
             return (
               <Link
@@ -267,27 +320,43 @@ export default function CategoryShowcase() {
                 className="showcase-category-card"
               >
                 {/* Optimized Image */}
-                <div style={{
-                  position: 'relative', width: '100%', aspectRatio: '3/4',
-                  overflow: 'hidden', background: '#f5f5f7'
-                }}>
+                <div 
+                  style={{
+                    position: 'relative', width: '100%', aspectRatio: '3/4',
+                    overflow: 'hidden', background: '#f5f5f7'
+                  }}
+                  data-index={index}
+                  data-gender={currentGender}
+                  ref={(el) => {
+                    if (el && observerRef.current) {
+                      observerRef.current.observe(el);
+                    }
+                  }}
+                >
                   {imgSrc ? (
-                    <Image
-                      src={imgSrc}
-                      alt={catName}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 50vw"
-                      priority={index < 2}
-                      loading={index < 2 ? undefined : "lazy"}
-                      style={{
-                        objectFit: 'cover',
-                        transition: 'transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)'
-                      }}
-                      className="card-image-hover"
-                      quality={90}
-                      placeholder="blur"
-                      blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwC/AA//2Q=="
-                    />
+                    shouldLoad ? (
+                      <Image
+                        src={imgSrc}
+                        alt={catName}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        priority={index < 2}
+                        loading={index < 2 ? undefined : "lazy"}
+                        style={{
+                          objectFit: 'cover',
+                          transition: 'transform 0.7s cubic-bezier(0.22, 0.61, 0.36, 1)'
+                        }}
+                        className="card-image-hover"
+                        quality={80}
+                        unoptimized={imgSrc.includes('imagekit') || imgSrc.includes('cloudinary')}
+                        fetchPriority={index < 2 ? "high" : "low"}
+                      />
+                    ) : (
+                      <div style={{
+                        position: 'absolute', inset: 0,
+                        background: '#f5f5f7'
+                      }} />
+                    )
                   ) : (
                     <div style={{
                       position: 'absolute', inset: 0,
