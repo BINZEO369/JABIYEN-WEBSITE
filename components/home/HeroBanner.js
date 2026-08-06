@@ -7,11 +7,49 @@ export default function HeroBanner({ slides = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [loadedImages, setLoadedImages] = useState(new Set());
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const slideIntervalRef = useRef(null);
   const containerRef = useRef(null);
   const touchStartX = useRef(0);
 
   const totalSlides = slides.length;
+
+  // Load fonts from window.JABIYEN_FONTS
+  useEffect(() => {
+    const loadFonts = () => {
+      if (window.JABIYEN_FONTS) {
+        const { families } = window.JABIYEN_FONTS;
+        const root = document.documentElement;
+        
+        root.style.setProperty('--font-heading', families.heading);
+        root.style.setProperty('--font-subtitle', families.subtitle);
+        root.style.setProperty('--font-body', families.body);
+        
+        setFontsLoaded(true);
+      } else {
+        setTimeout(loadFonts, 100);
+      }
+    };
+    
+    loadFonts();
+  }, []);
+
+  // Get font families from global config
+  const getFont = (type) => {
+    if (typeof window !== 'undefined' && window.JABIYEN_FONTS?.families) {
+      return window.JABIYEN_FONTS.families[type] || getFallbackFont(type);
+    }
+    return getFallbackFont(type);
+  };
+
+  const getFallbackFont = (type) => {
+    const fallbacks = {
+      heading: "'Manrope', sans-serif",
+      subtitle: "'Sora', sans-serif",
+      body: "'Inter', sans-serif"
+    };
+    return fallbacks[type] || fallbacks.body;
+  };
 
   // Preload all images
   useEffect(() => {
@@ -123,32 +161,32 @@ export default function HeroBanner({ slides = [] }) {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 30%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.7) 90%, rgba(0,0,0,0.85) 100%)'
         }} />
 
-        {/* Content */}
+        {/* Content - Center Position */}
         <div style={{
-          position: 'absolute', bottom: 'clamp(30px, 8vh, 70px)', left: '50%',
-          transform: 'translateX(-50%)', zIndex: 2, textAlign: 'center',
-          width: '88%', maxWidth: 680, padding: '0 16px',
+          position: 'absolute', top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)', zIndex: 2, textAlign: 'center',
+          width: '88%', maxWidth: 800, padding: '0 16px',
           display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
-          {/* Title */}
+          {/* Title - Larger */}
           <h1 style={{
-            fontFamily: "'Manrope', sans-serif",
-            fontSize: 'clamp(18px, 3.5vw, 48px)', fontWeight: 700,
+            fontFamily: getFont('heading'),
+            fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 700,
             lineHeight: 1.1, color: '#fff', margin: 0,
-            letterSpacing: '-0.3px', order: 1
+            letterSpacing: '-0.5px', order: 1
           }}>
             {current?.title}
           </h1>
 
-          {/* Subtitle */}
+          {/* Subtitle - Slightly Larger */}
           {current?.subtitle && (
             <p style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 'clamp(6px, 0.85vw, 8px)', fontWeight: 400,
-              letterSpacing: '0.35em', textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.5)',
-              marginTop: 'clamp(6px, 1vh, 10px)', marginBottom: 0,
-              lineHeight: 1, order: 2
+              fontFamily: getFont('body'),
+              fontSize: 'clamp(10px, 1.2vw, 14px)', fontWeight: 400,
+              letterSpacing: '0.3em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.6)',
+              marginTop: 'clamp(10px, 1.5vh, 16px)', marginBottom: 0,
+              lineHeight: 1.2, order: 2
             }}>
               {current.subtitle}
             </p>
@@ -157,7 +195,7 @@ export default function HeroBanner({ slides = [] }) {
           {/* CTA - Liquid Bubble Design */}
           {current?.cta_text && current?.cta_link && (
             <div style={{
-              marginTop: 'clamp(12px, 2vh, 20px)', order: 3
+              marginTop: 'clamp(16px, 2.5vh, 28px)', order: 3
             }}>
               <Link
                 href={current.cta_link}
@@ -166,12 +204,12 @@ export default function HeroBanner({ slides = [] }) {
                   alignItems: 'center',
                   justifyContent: 'center',
                   color: '#fff',
-                  fontSize: 'clamp(9px, 1.1vw, 12px)',
+                  fontSize: 'clamp(11px, 1.3vw, 14px)',
                   fontWeight: 600,
                   letterSpacing: '0.15em',
                   textTransform: 'uppercase',
                   textDecoration: 'none',
-                  padding: 'clamp(10px, 1.5vw, 14px) clamp(28px, 3.5vw, 36px)',
+                  padding: 'clamp(12px, 1.8vw, 16px) clamp(32px, 4vw, 44px)',
                   borderRadius: '100px',
                   background: 'rgba(255, 255, 255, 0.08)',
                   backdropFilter: 'blur(20px)',
@@ -179,7 +217,8 @@ export default function HeroBanner({ slides = [] }) {
                   border: '1px solid rgba(255, 255, 255, 0.15)',
                   transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
                   position: 'relative',
-                  overflow: 'hidden'
+                  overflow: 'hidden',
+                  fontFamily: getFont('body')
                 }}
                 className="hero-cta-liquid"
                 onMouseEnter={(e) => {
