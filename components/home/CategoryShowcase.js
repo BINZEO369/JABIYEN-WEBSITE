@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 export default function CategoryShowcase() {
@@ -11,9 +11,6 @@ export default function CategoryShowcase() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [slideDirection, setSlideDirection] = useState(null);
   const [animationPhase, setAnimationPhase] = useState('idle'); // 'idle' | 'exiting' | 'entering'
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
-  const womenTabRef = useRef(null);
-  const menTabRef = useRef(null);
 
   const apiEndpoint = '/api/home-showcase/complete';
 
@@ -41,29 +38,6 @@ export default function CategoryShowcase() {
     }
     fetchData();
   }, []);
-
-  // Update indicator position when gender changes
-  useEffect(() => {
-    const activeTab = currentGender === 'women' ? womenTabRef.current : menTabRef.current;
-    if (activeTab) {
-      const { offsetLeft, offsetWidth } = activeTab;
-      setIndicatorStyle({
-        left: offsetLeft,
-        width: offsetWidth
-      });
-    }
-  }, [currentGender, isLoaded]);
-
-  // Initial indicator position
-  useEffect(() => {
-    if (isLoaded && womenTabRef.current) {
-      const { offsetLeft, offsetWidth } = womenTabRef.current;
-      setIndicatorStyle({
-        left: offsetLeft,
-        width: offsetWidth
-      });
-    }
-  }, [isLoaded]);
 
   const hasData = data.menCategories.length > 0 || data.womenCategories.length > 0;
 
@@ -126,57 +100,71 @@ export default function CategoryShowcase() {
         </div>
       )}
 
-      {/* Tabs with Animated Underline */}
+      {/* Tabs with Elegant Underline Animation */}
       <div style={{
-        display: 'flex', justifyContent: 'center', gap: 40,
-        padding: '10px 0 25px', borderBottom: '1px solid rgba(0,0,0,0.08)',
+        display: 'flex', justifyContent: 'center', gap: 0,
+        padding: '10px 0 25px', borderBottom: '1px solid rgba(0,0,0,0.06)',
         margin: '0 20px', position: 'relative'
       }}>
-        {/* Animated Underline Indicator */}
+        {/* Animated Underline Background */}
         <div style={{
           position: 'absolute',
           bottom: -1,
-          left: `${indicatorStyle.left}px`,
-          width: `${indicatorStyle.width}px`,
+          left: '50%',
           height: 2,
           background: '#1d1d1f',
-          borderRadius: '2px 2px 0 0',
-          transition: 'left 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), width 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
-          pointerEvents: 'none'
+          borderRadius: 1,
+          transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
+          transform: `translateX(${currentGender === 'women' ? '-50%' : '50%'})`,
+          width: currentGender === 'women' ? 'calc(50% - 20px)' : 'calc(50% - 20px)',
+          marginLeft: currentGender === 'women' ? '-20px' : '20px'
         }} />
-
-        {/* Glow Effect Underline */}
-        <div style={{
-          position: 'absolute',
-          bottom: -2,
-          left: `${indicatorStyle.left}px`,
-          width: `${indicatorStyle.width}px`,
-          height: 4,
-          background: 'rgba(29, 29, 31, 0.15)',
-          filter: 'blur(4px)',
-          borderRadius: '50%',
-          transition: 'left 0.5s cubic-bezier(0.25, 0.1, 0.25, 1), width 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
-          pointerEvents: 'none',
-          opacity: 0.7
-        }} />
-
+        
         {['women', 'men'].map(gender => (
           <button
             key={gender}
-            ref={gender === 'women' ? womenTabRef : menTabRef}
             onClick={() => switchGender(gender)}
             style={{
-              background: 'none', border: 'none',
-              fontSize: 15, fontWeight: currentGender === gender ? 500 : 400,
+              background: 'none', 
+              border: 'none',
+              fontSize: 15, 
+              fontWeight: currentGender === gender ? 500 : 400,
               color: currentGender === gender ? '#1d1d1f' : '#86868b',
-              cursor: 'pointer', padding: '8px 4px', position: 'relative',
+              cursor: 'pointer', 
+              padding: '12px 24px', 
+              position: 'relative',
               fontFamily: "'Inter', -apple-system, sans-serif",
-              letterSpacing: '-0.01em', outline: 'none',
-              transition: 'color 0.3s ease, font-weight 0.3s ease',
-              transform: currentGender === gender ? 'scale(1.02)' : 'scale(1)',
+              letterSpacing: '-0.01em', 
+              outline: 'none',
+              transition: 'all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
+              transform: currentGender === gender ? 'translateY(0)' : 'translateY(0)',
+              opacity: currentGender === gender ? 1 : 0.7,
+              zIndex: 1,
+              flex: '0 0 auto',
+              minWidth: '100px',
+              textAlign: 'center'
+            }}
+            onMouseEnter={(e) => {
+              if (currentGender !== gender) {
+                e.currentTarget.style.opacity = '0.9';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (currentGender !== gender) {
+                e.currentTarget.style.opacity = '0.7';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }
             }}
           >
-            {gender.charAt(0).toUpperCase() + gender.slice(1)}
+            <span style={{
+              position: 'relative',
+              display: 'inline-block',
+              transition: 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
+              transform: currentGender === gender ? 'scale(1.02)' : 'scale(1)'
+            }}>
+              {gender.charAt(0).toUpperCase() + gender.slice(1)}
+            </span>
           </button>
         ))}
       </div>
