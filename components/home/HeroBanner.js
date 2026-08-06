@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function HeroBanner({ slides = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -51,15 +52,16 @@ export default function HeroBanner({ slides = [] }) {
     return fallbacks[type] || fallbacks.body;
   };
 
-  // Preload all images
+  // Preload next slide image
   useEffect(() => {
     if (!slides.length) return;
-    slides.forEach((slide, index) => {
+    const nextIndex = (currentSlide + 1) % totalSlides;
+    const nextSlide = slides[nextIndex];
+    if (nextSlide?.img) {
       const img = new Image();
-      img.onload = () => setLoadedImages(prev => new Set([...prev, index]));
-      img.src = slide.img;
-    });
-  }, [slides]);
+      img.src = nextSlide.img;
+    }
+  }, [currentSlide, slides, totalSlides]);
 
   // Auto slide
   useEffect(() => {
@@ -114,6 +116,7 @@ export default function HeroBanner({ slides = [] }) {
   if (!slides.length) return null;
 
   const current = slides[currentSlide];
+  const isCDN = (url) => url?.includes('imagekit') || url?.includes('cloudinary') || url?.includes('imgix');
 
   return (
     <>
@@ -139,19 +142,33 @@ export default function HeroBanner({ slides = [] }) {
               position: 'absolute', inset: 0,
               opacity: index === currentSlide ? 1 : 0,
               transition: 'opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-              visibility: 'visible',
+              visibility: index === currentSlide || index === (currentSlide + 1) % totalSlides || index === (currentSlide - 1 + totalSlides) % totalSlides ? 'visible' : 'hidden',
               pointerEvents: index === currentSlide ? 'auto' : 'none'
             }}
           >
-            <img
-              src={slide.img}
-              alt={slide.title || 'JAYENWARE Hero'}
-              style={{
-                width: '100%', height: '100%', objectFit: 'cover',
-                animation: index === currentSlide ? 'heroZoom 20s ease-in-out infinite alternate' : 'none',
-                background: '#0a0a0a'
-              }}
-            />
+            {slide.img ? (
+              <Image
+                src={slide.img}
+                alt={slide.title || 'JAYENWARE Hero'}
+                fill
+                priority={index === 0}
+                loading={index === 0 ? undefined : "lazy"}
+                sizes="100vw"
+                quality={85}
+                unoptimized={isCDN(slide.img)}
+                style={{
+                  objectFit: 'cover',
+                  animation: index === currentSlide ? 'heroZoom 20s ease-in-out infinite alternate' : 'none'
+                }}
+                className="hero-slide-image"
+                fetchPriority={index === 0 ? "high" : index <= 1 ? "auto" : "low"}
+              />
+            ) : (
+              <div style={{
+                position: 'absolute', inset: 0,
+                background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%)'
+              }} />
+            )}
           </div>
         ))}
 
