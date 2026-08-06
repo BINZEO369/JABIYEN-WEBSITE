@@ -10,14 +10,69 @@ export default function HeroVideo({ videos = [] }) {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [progress, setProgress] = useState(0);
   const [textPhase, setTextPhase] = useState('entering');
+  const [isInViewport, setIsInViewport] = useState(true);
+  const [wasManuallyUnmuted, setWasManuallyUnmuted] = useState(false);
 
   const playerRef = useRef(null);
   const progressIntervalRef = useRef(null);
   const autoplayIntervalRef = useRef(null);
   const isMutedRef = useRef(true);
   const preloadedVideos = useRef({});
+  const sectionRef = useRef(null);
+  const observerRef = useRef(null);
 
   const videoDuration = 20000; // 20 seconds per video
+
+  // Intersection Observer for viewport detection
+  useEffect(() => {
+    if (!sectionRef.current) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          setIsInViewport(entry.isIntersecting);
+          
+          if (!entry.isIntersecting && playerRef.current) {
+            // Auto mute when scrolling away from video
+            playerRef.current.muted = true;
+            setIsMuted(true);
+            isMutedRef.current = true;
+            setWasManuallyUnmuted(false);
+          } else if (entry.isIntersecting && wasManuallyUnmuted && playerRef.current) {
+            // Restore unmuted state if user had manually unmuted
+            playerRef.current.muted = false;
+            setIsMuted(false);
+            isMutedRef.current = false;
+          }
+        });
+      },
+      {
+        threshold: [0, 0.1, 0.5],
+        rootMargin: '-10% 0px -10% 0px'
+      }
+    );
+
+    observerRef.current.observe(sectionRef.current);
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [wasManuallyUnmuted]);
+
+  // Handle scroll-based visibility for video playback
+  useEffect(() => {
+    if (!playerRef.current || !isLoaded) return;
+
+    if (!isInViewport && !isPaused) {
+      // Pause video when not in viewport (saves resources)
+      playerRef.current.pause();
+    } else if (isInViewport && !isPaused && isLoaded) {
+      // Resume playback when back in viewport
+      playerRef.current.play().catch(() => {});
+    }
+  }, [isInViewport, isPaused, isLoaded]);
 
   // Preload all videos for faster switching
   useEffect(() => {
@@ -70,14 +125,14 @@ export default function HeroVideo({ videos = [] }) {
     setIsTransitioning(false);
     setTextPhase('visible');
     
-    if (!isPaused && playerRef.current) {
+    if (!isPaused && playerRef.current && isInViewport) {
       playerRef.current.play().catch(() => {});
     }
-  }, [isPaused]);
+  }, [isPaused, isInViewport]);
 
   // Progress tracking
   useEffect(() => {
-    if (!isLoaded || isPaused || isTransitioning) {
+    if (!isLoaded || isPaused || isTransitioning || !isInViewport) {
       clearInterval(progressIntervalRef.current);
       return;
     }
@@ -94,11 +149,11 @@ export default function HeroVideo({ videos = [] }) {
     }, interval);
 
     return () => clearInterval(progressIntervalRef.current);
-  }, [isLoaded, isPaused, isTransitioning, videoDuration]);
+  }, [isLoaded, isPaused, isTransitioning, videoDuration, isInViewport]);
 
   // Autoplay
   useEffect(() => {
-    if (videos.length <= 1 || isPaused) {
+    if (videos.length <= 1 || isPaused || !isInViewport) {
       clearInterval(autoplayIntervalRef.current);
       return;
     }
@@ -110,13 +165,16 @@ export default function HeroVideo({ videos = [] }) {
     }, videoDuration);
 
     return () => clearInterval(autoplayIntervalRef.current);
-  }, [videos.length, isPaused, isTransitioning, isLoaded, videoDuration]);
+  }, [videos.length, isPaused, isTransitioning, isLoaded, videoDuration, isInViewport]);
 
   // Cleanup
   useEffect(() => {
     return () => {
       clearInterval(progressIntervalRef.current);
       clearInterval(autoplayIntervalRef.current);
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
     };
   }, []);
 
@@ -127,6 +185,13 @@ export default function HeroVideo({ videos = [] }) {
       playerRef.current.muted = newMutedState;
       setIsMuted(newMutedState);
       isMutedRef.current = newMutedState;
+      
+      // Track if user manually unmuted
+      if (!newMutedState) {
+        setWasManuallyUnmuted(true);
+      } else {
+        setWasManuallyUnmuted(false);
+      }
     }
   };
 
@@ -135,7 +200,9 @@ export default function HeroVideo({ videos = [] }) {
     if (!playerRef.current) return;
 
     if (isPaused) {
-      playerRef.current.play().catch(() => {});
+      if (isInViewport) {
+        playerRef.current.play().catch(() => {});
+      }
       setIsPaused(false);
     } else {
       playerRef.current.pause();
@@ -158,6 +225,7 @@ export default function HeroVideo({ videos = [] }) {
 
   return (
     <section 
+      ref={sectionRef}
       className="hero-video-section"
       style={{
         position: 'relative',
