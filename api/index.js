@@ -1448,6 +1448,10 @@ app.get('/api/footer/complete', async (req, res) => {
 // AUTH API (Updated with new fields)
 // ============================================
 
+// ============================================
+// AUTH API (Final Clean Version)
+// ============================================
+
 // SIGNUP
 app.post('/api/auth/signup', async (req, res) => {
     try {
@@ -1525,8 +1529,8 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// GET PROFILE
-app.get('/api/user/profile', async (req, res) => {
+// GET + UPDATE PROFILE (Single endpoint)
+app.all('/api/user/profile', async (req, res) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) throw new Error('Token required');
@@ -1534,56 +1538,43 @@ app.get('/api/user/profile', async (req, res) => {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) throw new Error('Invalid token');
 
-        const { data: profile, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
+        // ========== GET: Fetch Profile ==========
+        if (req.method === 'GET') {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
 
-        res.json({
-            success: true,
-            user,
-            profile
-        });
+            return res.json({
+                success: true,
+                user,
+                profile
+            });
+        }
 
-    } catch (err) {
-        res.status(401).json({
-            success: false,
-            error: err.message
-        });
-    }
-});
-
-// UPDATE PROFILE
-app.put('/api/user/profile', async (req, res) => {
-    try {
-        const token = req.headers.authorization?.replace('Bearer ', '');
-        if (!token) throw new Error('Token required');
-
-        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-        if (authError || !user) throw new Error('Invalid token');
-
+        // ========== PUT/POST: Update Profile ==========
         const {
             first_name, last_name, phone,
             address_line1, address_line2,
             city, state, postal_code, country
         } = req.body;
 
+        const updateData = { id: user.id, updated_at: new Date() };
+        
+        if (first_name !== undefined) updateData.first_name = first_name;
+        if (last_name !== undefined) updateData.last_name = last_name;
+        if (phone !== undefined) updateData.phone = phone;
+        if (address_line1 !== undefined) updateData.address_line1 = address_line1;
+        if (address_line2 !== undefined) updateData.address_line2 = address_line2;
+        if (city !== undefined) updateData.city = city;
+        if (state !== undefined) updateData.state = state;
+        if (postal_code !== undefined) updateData.postal_code = postal_code;
+        if (country !== undefined) updateData.country = country;
+
         const { data: profile, error } = await supabase
             .from('profiles')
-            .upsert({
-                id: user.id,
-                first_name,
-                last_name,
-                phone,
-                address_line1,
-                address_line2,
-                city,
-                state,
-                postal_code,
-                country,
-                updated_at: new Date()
-            })
+            .upsert(updateData)
             .select()
             .single();
 
@@ -1595,9 +1586,10 @@ app.put('/api/user/profile', async (req, res) => {
         });
 
     } catch (err) {
-        res.status(400).json({
+        const status = ['Token required', 'Invalid token'].includes(err.message) ? 401 : 400;
+        res.status(status).json({
             success: false,
-            error: err.message
+            error: err.message || 'Profile request failed'
         });
     }
 });
@@ -1611,8 +1603,6 @@ app.post('/api/auth/logout', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
-
-
 // ============================================
 // PAGE ROUTES
 // ============================================
