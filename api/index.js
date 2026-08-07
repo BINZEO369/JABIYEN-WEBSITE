@@ -1,4 +1,3 @@
-
 // server.js - Complete API Server
 // Supabase Integrated | Production Ready
 // Auth & OneID Removed | Products & UI APIs Only
@@ -1448,10 +1447,6 @@ app.get('/api/footer/complete', async (req, res) => {
 // AUTH API (Updated with new fields)
 // ============================================
 
-// ============================================
-// AUTH API (Final Clean Version)
-// ============================================
-
 // SIGNUP
 app.post('/api/auth/signup', async (req, res) => {
     try {
@@ -1529,8 +1524,8 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// GET + UPDATE PROFILE (Single endpoint)
-app.all('/api/user/profile', async (req, res) => {
+// GET PROFILE
+app.get('/api/user/profile', async (req, res) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) throw new Error('Token required');
@@ -1538,22 +1533,84 @@ app.all('/api/user/profile', async (req, res) => {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) throw new Error('Invalid token');
 
-        // ========== GET: Fetch Profile ==========
-        if (req.method === 'GET') {
-            const { data: profile, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', user.id)
-                .single();
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-            return res.json({
-                success: true,
-                user,
-                profile
-            });
-        }
+        res.json({
+            success: true,
+            user,
+            profile
+        });
 
-        // ========== PUT/POST: Update Profile ==========
+    } catch (err) {
+        res.status(401).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
+
+// UPDATE PROFILE
+app.put('/api/user/profile', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) throw new Error('Token required');
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) throw new Error('Invalid token');
+
+        const {
+            first_name, last_name, phone,
+            address_line1, address_line2,
+            city, state, postal_code, country
+        } = req.body;
+
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .upsert({
+                id: user.id,
+                first_name,
+                last_name,
+                phone,
+                address_line1,
+                address_line2,
+                city,
+                state,
+                postal_code,
+                country,
+                updated_at: new Date()
+            })
+            .select()
+            .single();
+
+        if (error) throw error;
+
+        res.json({
+            success: true,
+            profile
+        });
+
+    } catch (err) {
+        res.status(400).json({
+            success: false,
+            error: err.message
+        });
+    }
+});
+
+
+// UPDATE PROFILE via POST (Vercel compatible)
+app.post('/api/user/profile', async (req, res) => {
+    try {
+        const token = req.headers.authorization?.replace('Bearer ', '');
+        if (!token) throw new Error('Token required');
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+        if (authError || !user) throw new Error('Invalid token');
+
         const {
             first_name, last_name, phone,
             address_line1, address_line2,
@@ -1561,7 +1618,6 @@ app.all('/api/user/profile', async (req, res) => {
         } = req.body;
 
         const updateData = { id: user.id, updated_at: new Date() };
-        
         if (first_name !== undefined) updateData.first_name = first_name;
         if (last_name !== undefined) updateData.last_name = last_name;
         if (phone !== undefined) updateData.phone = phone;
@@ -1580,19 +1636,17 @@ app.all('/api/user/profile', async (req, res) => {
 
         if (error) throw error;
 
-        res.json({
-            success: true,
-            profile
-        });
+        res.json({ success: true, profile });
 
     } catch (err) {
-        const status = ['Token required', 'Invalid token'].includes(err.message) ? 401 : 400;
-        res.status(status).json({
-            success: false,
-            error: err.message || 'Profile request failed'
-        });
+        res.status(400).json({ success: false, error: err.message });
     }
 });
+
+// LOGOUT
+
+
+
 
 // LOGOUT
 app.post('/api/auth/logout', async (req, res) => {
@@ -1603,6 +1657,8 @@ app.post('/api/auth/logout', async (req, res) => {
         res.status(400).json({ error: err.message });
     }
 });
+
+
 // ============================================
 // PAGE ROUTES
 // ============================================
