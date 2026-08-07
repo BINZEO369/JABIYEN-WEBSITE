@@ -12,13 +12,6 @@ const inputStyle = {
   outline: 'none', transition: 'border-color 0.2s ease'
 };
 
-function escapeHTML(str) {
-  if (!str) return '';
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
 function formatDate(dateString) {
   if (!dateString) return '—';
   try {
@@ -45,10 +38,34 @@ export default function Account() {
 
   const getToken = () => {
     try {
+      // Check localStorage first (email/password login)
       const stored = localStorage.getItem('jayenware_session');
       if (stored) {
         const parsed = JSON.parse(stored);
         return parsed.access_token || null;
+      }
+      
+      // Check URL hash for Google OAuth token (Supabase redirect)
+      if (typeof window !== 'undefined') {
+        const hash = window.location.hash;
+        if (hash && hash.includes('access_token')) {
+          const params = new URLSearchParams(hash.substring(1));
+          const accessToken = params.get('access_token');
+          const refreshToken = params.get('refresh_token');
+          const expiresAt = params.get('expires_at');
+          
+          if (accessToken) {
+            // Save to localStorage
+            localStorage.setItem('jayenware_session', JSON.stringify({
+              access_token: accessToken,
+              refresh_token: refreshToken,
+              expires_at: expiresAt
+            }));
+            // Clean URL
+            window.history.replaceState(null, '', window.location.pathname);
+            return accessToken;
+          }
+        }
       }
     } catch (e) {}
     return null;
@@ -81,17 +98,23 @@ export default function Account() {
       const profile = result.profile || {};
       const user = result.user || {};
 
+      // Merge Google OAuth metadata with profile data
+      const metadata = user.user_metadata || {};
+      const appMetadata = user.app_metadata || {};
+
       setUserData({
         email: user.email || profile.email || '',
-        first_name: profile.first_name || user.user_metadata?.first_name || '',
-        last_name: profile.last_name || user.user_metadata?.last_name || '',
-        phone: profile.phone || user.user_metadata?.phone || '',
-        address_line1: profile.address_line1 || user.user_metadata?.address_line1 || '',
-        address_line2: profile.address_line2 || user.user_metadata?.address_line2 || '',
-        city: profile.city || user.user_metadata?.city || '',
-        state: profile.state || user.user_metadata?.state || '',
-        postal_code: profile.postal_code || user.user_metadata?.postal_code || '',
-        country: profile.country || user.user_metadata?.country || '',
+        first_name: profile.first_name || metadata.first_name || metadata.full_name?.split(' ')[0] || '',
+        last_name: profile.last_name || metadata.last_name || metadata.full_name?.split(' ').slice(1).join(' ') || '',
+        phone: profile.phone || metadata.phone || '',
+        avatar_url: metadata.avatar_url || metadata.picture || '',
+        provider: appMetadata.provider || 'email',
+        address_line1: profile.address_line1 || metadata.address_line1 || '',
+        address_line2: profile.address_line2 || metadata.address_line2 || '',
+        city: profile.city || metadata.city || '',
+        state: profile.state || metadata.state || '',
+        postal_code: profile.postal_code || metadata.postal_code || '',
+        country: profile.country || metadata.country || '',
         created_at: profile.created_at || user.created_at || '',
         updated_at: profile.updated_at || user.updated_at || ''
       });
@@ -183,8 +206,18 @@ export default function Account() {
     );
   }
 
-  const initials = ((userData.first_name?.charAt(0) || '') + (userData.last_name?.charAt(0) || '')).toUpperCase() || 'U';
-  const fullName = `${userData.first_name} ${userData.last_name}`.trim() || 'User';
+  // Get initials from name or email
+  const getInitials = () => {
+    const f = userData.first_name?.charAt(0) || '';
+    const l = userData.last_name?.charAt(0) || '';
+    const initials = (f + l).toUpperCase();
+    if (initials) return initials;
+    return userData.email?.charAt(0).toUpperCase() || 'U';
+  };
+
+  const fullName = `${userData.first_name} ${userData.last_name}`.trim() || userData.email?.split('@')[0] || 'User';
+  const isGoogleUser = userData.provider === 'google' || userData.avatar_url;
+  const loginMethod = isGoogleUser ? 'Google' : 'Email & Password';
 
   return (
     <>
@@ -236,9 +269,23 @@ export default function Account() {
               <div>
                 {/* Avatar Card */}
                 <div style={{ background: '#fff', borderRadius: 16, padding: '32px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', textAlign: 'center', marginBottom: 20 }}>
-                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #007aff, #005bb5)', color: '#fff', fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontFamily: "'Manrope', sans-serif" }}>{initials}</div>
+                  {/* Avatar */}
+                  {userData.avatar_url ? (
+                    <img src={userData.avatar_url} alt={fullName} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 16px', border: '3px solid #f0f0f0' }} />
+                  ) : (
+                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #007aff, #005bb5)', color: '#fff', fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontFamily: "'Manrope', sans-serif" }}>{getInitials()}</div>
+                  )}
                   <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{fullName}</h3>
                   <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>{userData.email}</p>
+                  {/* Login Method Badge */}
+                  <div style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: isGoogleUser ? '#e8f0fe' : '#f5f5f7', padding: '4px 12px', borderRadius: 50, fontSize: 11, fontWeight: 600, color: '#86868b' }}>
+                    {isGoogleUser ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    ) : (
+                      <i className="fa-solid fa-envelope" style={{ fontSize: 11 }}></i>
+                    )}
+                    Signed in with {loginMethod}
+                  </div>
                 </div>
 
                 {/* Personal Info */}
@@ -279,6 +326,7 @@ export default function Account() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 24px' }}>
                     <InfoField label="Member Since"><span>{formatDate(userData.created_at)}</span></InfoField>
                     <InfoField label="Last Updated"><span>{formatDate(userData.updated_at)}</span></InfoField>
+                    <InfoField label="Login Method"><span>{loginMethod}</span></InfoField>
                   </div>
                 </div>
               </div>
