@@ -1603,13 +1603,21 @@ app.put('/api/user/profile', async (req, res) => {
 
 
 // UPDATE PROFILE via POST (Vercel compatible)
+
+// UPDATE PROFILE via POST
 app.post('/api/user/profile', async (req, res) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '');
         if (!token) throw new Error('Token required');
 
+        // Token verify
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) throw new Error('Invalid token');
+
+        // User token দিয়ে Supabase client re-create
+        const authSupabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+        });
 
         const {
             first_name, last_name, phone,
@@ -1628,7 +1636,8 @@ app.post('/api/user/profile', async (req, res) => {
         if (postal_code !== undefined) updateData.postal_code = postal_code;
         if (country !== undefined) updateData.country = country;
 
-        const { data: profile, error } = await supabase
+        // Auth user-এর identity দিয়ে update
+        const { data: profile, error } = await authSupabase
             .from('profiles')
             .upsert(updateData)
             .select()
@@ -1642,10 +1651,6 @@ app.post('/api/user/profile', async (req, res) => {
         res.status(400).json({ success: false, error: err.message });
     }
 });
-
-// LOGOUT
-
-
 
 
 // LOGOUT
