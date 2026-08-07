@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { supabase } from '../../lib/supabase';
 
 const inputStyle = {
   width: '100%', padding: '12px 16px',
@@ -106,15 +105,10 @@ export default function SignUp() {
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/account`
-        }
-      });
-      if (error) throw error;
+      const SUPABASE_URL = 'https://eiueitoxxqzkolsouuzy.supabase.co';
+      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/account')}`;
     } catch (err) {
-      showToast(err.message || 'Google sign in failed', 'error');
+      showToast('Failed to connect Google Sign-In', 'error');
       setGoogleLoading(false);
     }
   };
@@ -135,7 +129,7 @@ export default function SignUp() {
       <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
         <div style={{ width: '100%', maxWidth: 520, background: '#fff', borderRadius: 24, padding: '40px 36px', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)' }}>
           
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+          <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <img src="/logo.png" alt="JAYENWARE" style={{ width: 48, height: 48, borderRadius: 12, margin: '0 auto 12px' }} />
             <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 24, fontWeight: 800, color: '#1d1d1f', margin: '0 0 4px' }}>Create Account</h1>
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Join us and start your journey</p>
@@ -146,7 +140,7 @@ export default function SignUp() {
             width: '100%', padding: '12px 24px',
             background: '#fff', color: '#1d1d1f',
             border: '1.5px solid #e5e5ea', borderRadius: 12,
-            fontSize: 15, fontWeight: 600, cursor: 'pointer',
+            fontSize: 15, fontWeight: 500, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             fontFamily: "'Inter', sans-serif", marginBottom: 24,
             transition: 'all 0.2s ease'
@@ -169,7 +163,7 @@ export default function SignUp() {
           {/* Divider */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
             <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
-            <span style={{ fontSize: 12, color: '#86868b', fontWeight: 500, textTransform: 'uppercase' }}>or</span>
+            <span style={{ fontSize: 11, color: '#86868b', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>or sign up with email</span>
             <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
           </div>
 
@@ -213,14 +207,10 @@ export default function SignUp() {
             </button>
           </form>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '24px 0' }}>
-            <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
-            <span style={{ fontSize: 12, color: '#86868b', fontWeight: 500, textTransform: 'uppercase' }}>Already have an account?</span>
-            <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
-          </div>
-
-          <div style={{ textAlign: 'center', marginTop: 20 }}>
-            <Link href="/auth/signin" style={{ fontSize: 14, color: '#007aff', textDecoration: 'none', fontWeight: 600 }}>Sign in to your account</Link>
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>
+              Already have an account? <Link href="/auth/signin" style={{ color: '#007aff', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
+            </p>
           </div>
         </div>
       </div>
