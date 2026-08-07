@@ -88,7 +88,7 @@ export default function SignUp() {
     setErrors(newErrors);
 
     if (hasError) {
-      showToast('Please fill in all required fields correctly', 'error');
+      showToast('Please fig in all required fields correctly', 'error');
       return;
     }
 
