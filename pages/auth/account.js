@@ -93,6 +93,7 @@ export default function Account() {
       const result = await res.json();
       const profile = result.profile || {};
       const user = result.user || {};
+
       const metadata = user.user_metadata || {};
       const appMetadata = user.app_metadata || {};
 
@@ -102,7 +103,7 @@ export default function Account() {
         last_name: profile.last_name || metadata.last_name || metadata.full_name?.split(' ').slice(1).join(' ') || '',
         phone: profile.phone || metadata.phone || '',
         avatar_url: metadata.avatar_url || metadata.picture || '',
-        provider: appMetadata.provider || profile.provider || 'email',
+        provider: profile.provider || appMetadata.provider || 'email',
         address_line1: profile.address_line1 || metadata.address_line1 || '',
         address_line2: profile.address_line2 || metadata.address_line2 || '',
         city: profile.city || metadata.city || '',
@@ -209,8 +210,8 @@ export default function Account() {
   };
 
   const fullName = `${userData.first_name} ${userData.last_name}`.trim() || userData.email?.split('@')[0] || 'User';
-  const isGoogleUser = userData.provider === 'google' || userData.avatar_url;
-  const loginMethod = isGoogleUser ? 'Google' : 'Email & Password';
+  const isGoogleUser = userData.provider === 'google' || (userData.provider !== 'email' && userData.avatar_url);
+  const loginMethod = userData.provider === 'google' ? 'Google' : userData.provider === 'azure' ? 'Microsoft' : userData.provider !== 'email' ? userData.provider?.charAt(0).toUpperCase() + userData.provider?.slice(1) : 'Email & Password';
 
   return (
     <>
@@ -384,4 +385,8 @@ export default function Account() {
 function InfoField({ label, children }) {
   return (
     <div>
-      <
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#86868b', marginBottom: 6 }}>{label}</label>
+      <div style={{ fontSize: 15, color: '#1d1d1f', fontWeight: 500, minHeight: 22 }}>{children}</div>
+    </div>
+  );
+}
