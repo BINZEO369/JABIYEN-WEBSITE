@@ -12,8 +12,6 @@ const inputStyle = {
   transition: 'all 0.25s ease'
 };
 
-const SUPABASE_URL = 'https://eiueitoxxqzkolsouuzy.supabase.co';
-
 export default function SignUp() {
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', email: '', phone: '',
@@ -23,7 +21,7 @@ export default function SignUp() {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
-  const [socialLoading, setSocialLoading] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
   const fields = [
@@ -104,10 +102,15 @@ export default function SignUp() {
     }
   };
 
-  const handleSocialSignIn = (provider) => {
-    setSocialLoading(provider);
-    const redirectTo = encodeURIComponent(window.location.origin + '/auth/account');
-    window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const SUPABASE_URL = 'https://eiueitoxxqzkolsouuzy.supabase.co';
+      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/account')}`;
+    } catch (err) {
+      showToast('Failed to connect Google Sign-In', 'error');
+      setGoogleLoading(false);
+    }
   };
 
   const getBorderColor = (id) => {
@@ -132,17 +135,17 @@ export default function SignUp() {
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Join us and start your journey</p>
           </div>
 
-          {/* Google Button */}
-          <button onClick={() => handleSocialSignIn('google')} disabled={socialLoading === 'google'} style={{
+          {/* Google Sign-In Button */}
+          <button onClick={handleGoogleSignIn} disabled={googleLoading} style={{
             width: '100%', padding: '12px 24px',
             background: '#fff', color: '#1d1d1f',
             border: '1.5px solid #e5e5ea', borderRadius: 12,
             fontSize: 15, fontWeight: 500, cursor: 'pointer',
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            fontFamily: "'Inter', sans-serif", marginBottom: 12,
+            fontFamily: "'Inter', sans-serif", marginBottom: 24,
             transition: 'all 0.2s ease'
           }}>
-            {socialLoading === 'google' ? (
+            {googleLoading ? (
               <span style={{ width: 20, height: 20, border: '2px solid #e5e5ea', borderTopColor: '#1d1d1f', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
             ) : (
               <>
@@ -153,26 +156,6 @@ export default function SignUp() {
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                 </svg>
                 Continue with Google
-              </>
-            )}
-          </button>
-
-          {/* Facebook Button */}
-          <button onClick={() => handleSocialSignIn('facebook')} disabled={socialLoading === 'facebook'} style={{
-            width: '100%', padding: '12px 24px',
-            background: '#1877F2', color: '#fff',
-            border: 'none', borderRadius: 12,
-            fontSize: 15, fontWeight: 500, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            fontFamily: "'Inter', sans-serif", marginBottom: 24,
-            transition: 'all 0.2s ease'
-          }}>
-            {socialLoading === 'facebook' ? (
-              <span style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-            ) : (
-              <>
-                <i className="fa-brands fa-facebook-f" style={{ fontSize: 18 }}></i>
-                Continue with Facebook
               </>
             )}
           </button>
