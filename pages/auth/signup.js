@@ -1,278 +1,134 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
 const inputStyle = {
   width: '100%', padding: '16px 20px',
-  border: '2px solid #e5e5ea',
+  border: '2px solid rgba(255,255,255,0.2)',
   borderRadius: 16, fontSize: 17, fontFamily: "'Inter', sans-serif",
-  color: '#1d1d1f', background: '#f9f9fb', outline: 'none',
-  transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-  letterSpacing: '-0.01em'
+  color: '#fff', background: 'rgba(255,255,255,0.08)',
+  outline: 'none', backdropFilter: 'blur(10px)',
+  transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+  boxShadow: '0 4px 24px rgba(0,0,0,0.1)'
 };
 
 const steps = [
-  {
-    id: 'welcome',
-    title: 'Welcome to JABIYEN',
-    subtitle: "Let's create something beautiful together",
-    icon: 'fa-solid fa-sparkles',
-    description: "We're thrilled to have you here. Let's set up your account in just a few moments."
-  },
-  {
-    id: 'first_name',
-    field: 'first_name',
-    label: "First, what's your name?",
-    subtitle: 'Start with your first name',
-    icon: 'fa-solid fa-user',
-    placeholder: 'Your first name',
-    type: 'text',
-    required: true,
-    errorMsg: 'Please tell us your first name'
-  },
-  {
-    id: 'last_name',
-    field: 'last_name',
-    label: 'And your last name?',
-    subtitle: 'So we know who you are',
-    icon: 'fa-solid fa-user-group',
-    placeholder: 'Your last name',
-    type: 'text',
-    required: true,
-    errorMsg: 'Last name is required'
-  },
-  {
-    id: 'email',
-    field: 'email',
-    label: 'Where can we reach you?',
-    subtitle: "We'll keep your email safe and secure",
-    icon: 'fa-solid fa-envelope',
-    placeholder: 'you@example.com',
-    type: 'email',
-    required: true,
-    errorMsg: 'Please enter a valid email address'
-  },
-  {
-    id: 'phone',
-    field: 'phone',
-    label: 'Your phone number?',
-    subtitle: 'For account security and updates',
-    icon: 'fa-solid fa-mobile-screen',
-    placeholder: '+8801XXXXXXXXX',
-    type: 'tel',
-    required: true,
-    errorMsg: 'Valid phone number is required'
-  },
-  {
-    id: 'address_intro',
-    title: "Where are you based?",
-    subtitle: "We'll use this for shipping and localization",
-    icon: 'fa-solid fa-map-pin',
-    description: "Let's add your address details"
-  },
-  {
-    id: 'address_line1',
-    field: 'address_line1',
-    label: 'Your street address',
-    subtitle: 'House number and street name',
-    icon: 'fa-solid fa-house',
-    placeholder: 'House 42, Road 15',
-    type: 'text',
-    required: true,
-    errorMsg: 'Address is required'
-  },
-  {
-    id: 'address_line2',
-    field: 'address_line2',
-    label: 'Any additional details?',
-    subtitle: 'Apartment, landmark, or area (optional)',
-    icon: 'fa-solid fa-location-dot',
-    placeholder: 'Near Gulshan Park',
-    type: 'text',
-    required: false
-  },
-  {
-    id: 'city',
-    field: 'city',
-    label: 'Which city?',
-    subtitle: 'Your primary city',
-    icon: 'fa-solid fa-city',
-    placeholder: 'Dhaka',
-    type: 'text',
-    required: true,
-    errorMsg: 'City is required'
-  },
-  {
-    id: 'state',
-    field: 'state',
-    label: 'State or division?',
-    subtitle: 'Your region',
-    icon: 'fa-solid fa-map',
-    placeholder: 'Dhaka Division',
-    type: 'text',
-    required: true,
-    errorMsg: 'State is required'
-  },
-  {
-    id: 'postal_code',
-    field: 'postal_code',
-    label: 'Postal code?',
-    subtitle: 'For accurate delivery',
-    icon: 'fa-solid fa-hashtag',
-    placeholder: '1205',
-    type: 'text',
-    required: true,
-    errorMsg: 'Postal code is required'
-  },
-  {
-    id: 'country',
-    field: 'country',
-    label: 'And your country?',
-    subtitle: 'Almost done!',
-    icon: 'fa-solid fa-earth-americas',
-    type: 'select',
-    required: true,
-    errorMsg: 'Please select your country'
-  },
-  {
-    id: 'password_intro',
-    title: 'Create a password',
-    subtitle: 'Your key to the kingdom',
-    icon: 'fa-solid fa-shield-halved',
-    description: 'Choose a strong password to keep your account secure'
-  },
-  {
-    id: 'password',
-    field: 'password',
-    label: 'Set your password',
-    subtitle: 'At least 8 characters with a mix of letters and numbers',
-    icon: 'fa-solid fa-lock',
-    placeholder: '••••••••',
-    type: 'password',
-    required: true,
-    minLength: 8,
-    errorMsg: 'Password must be at least 8 characters'
-  },
-  {
-    id: 'complete',
-    title: "You're all set!",
-    subtitle: 'Review and create your account',
-    icon: 'fa-solid fa-rocket',
-    description: 'Your JABIYEN ID is ready to be created'
-  }
+  { key: 'greeting', title: 'Welcome to JABIYEN', subtitle: "Let's create something beautiful together" },
+  { key: 'first_name', field: 'first_name', label: 'First, what should we call you?', placeholder: 'Your first name', type: 'text', subtitle: 'Your journey begins with your name' },
+  { key: 'last_name', field: 'last_name', label: 'And your family name?', placeholder: 'Your last name', type: 'text', subtitle: 'Almost there, just a few more details' },
+  { key: 'email', field: 'email', label: 'Where can we reach you?', placeholder: 'you@example.com', type: 'email', subtitle: "We'll send you a warm welcome" },
+  { key: 'phone', field: 'phone', label: 'Your phone number?', placeholder: '+8801XXXXXXXXX', type: 'tel', subtitle: 'For account security and updates' },
+  { key: 'password', field: 'password', label: 'Create a strong password', placeholder: 'At least 8 characters', type: 'password', subtitle: 'Mix letters, numbers, and symbols for strength', guide: true },
+  { key: 'address_line1', field: 'address_line1', label: 'Where do you live?', placeholder: 'House/Flat, Street', type: 'text', subtitle: "We'll use this for shipping" },
+  { key: 'address_line2', field: 'address_line2', label: 'Any landmarks nearby?', placeholder: 'Landmark, Area (optional)', type: 'text', subtitle: 'Help us find you easier', optional: true },
+  { key: 'city', field: 'city', label: 'Which city do you call home?', placeholder: 'Dhaka', type: 'text', subtitle: 'Your vibrant city awaits' },
+  { key: 'state', field: 'state', label: 'Your state or division?', placeholder: 'Dhaka Division', type: 'text', subtitle: 'Almost at the finish line' },
+  { key: 'postal_code', field: 'postal_code', label: 'What\'s your postal code?', placeholder: '1205', type: 'text', subtitle: 'Just two more steps' },
+  { key: 'country', field: 'country', label: 'And your country?', placeholder: 'Select your country', type: 'select', subtitle: 'The final piece of the puzzle', options: ['Bangladesh', 'India', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Japan', 'Other'] },
 ];
 
-const countries = ['Bangladesh', 'India', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Japan', 'Other'];
-
 export default function SignUp() {
+  const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', email: '', phone: '',
     password: '', address_line1: '', address_line2: '',
     city: '', state: '', postal_code: '', country: ''
   });
-  const [errors, setErrors] = useState({});
-  const [currentStep, setCurrentStep] = useState(0);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [showEmailForm, setShowEmailForm] = useState(false);
   const [toast, setToast] = useState(null);
-  const [direction, setDirection] = useState('forward');
-  const [isAnimating, setIsAnimating] = useState(false);
-  const inputRef = useRef(null);
-
-  // Filter steps that are actual form fields (skip intro/complete steps)
-  const fieldSteps = steps.filter(s => s.field);
-  const currentStepData = steps[currentStep];
-
-  useEffect(() => {
-    if (inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 400);
-    }
-  }, [currentStep]);
+  const [showForm, setShowForm] = useState(false);
+  const [animState, setAnimState] = useState('entering');
+  const [passwordStrength, setPasswordStrength] = useState(0);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  const validateField = (id, value) => {
-    const step = steps.find(s => s.field === id);
-    if (!step) return null;
-    if (step.required && !value.trim()) return step.errorMsg;
-    if (step.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return step.errorMsg;
-    if (step.minLength && value.length < step.minLength) return step.errorMsg;
-    if (id === 'phone' && value && !/^\+?[\d\s\-()]{7,20}$/.test(value)) return step.errorMsg;
-    return null;
+  const getPasswordStrength = (pass) => {
+    let score = 0;
+    if (pass.length >= 8) score++;
+    if (pass.length >= 12) score++;
+    if (/[A-Z]/.test(pass)) score++;
+    if (/[0-9]/.test(pass)) score++;
+    if (/[^A-Za-z0-9]/.test(pass)) score++;
+    return Math.min(score, 5);
   };
 
-  const handleInputChange = (e) => {
+  const handleStartForm = () => {
+    setShowForm(true);
+    setCurrentStep(1);
+    setAnimState('entering');
+  };
+
+  const handleNext = () => {
+    const step = steps[currentStep];
+    
+    // Validate current step if it has a field
+    if (step.field) {
+      const value = formData[step.field];
+      if (!step.optional && !value.trim()) {
+        setError('This field is required');
+        return;
+      }
+      if (step.field === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+      if (step.field === 'phone' && value && !/^\+?[\d\s\-()]{7,20}$/.test(value)) {
+        setError('Please enter a valid phone number');
+        return;
+      }
+      if (step.field === 'password' && value && value.length < 8) {
+        setError('Password must be at least 8 characters');
+        return;
+      }
+    }
+
+    setError(null);
+    setAnimState('exiting');
+    
+    setTimeout(() => {
+      if (currentStep < steps.length - 1) {
+        setCurrentStep(prev => prev + 1);
+        setAnimState('entering');
+      }
+    }, 400);
+  };
+
+  const handlePrev = () => {
+    setError(null);
+    setAnimState('exiting');
+    
+    setTimeout(() => {
+      if (currentStep > 1) {
+        setCurrentStep(prev => prev - 1);
+        setAnimState('entering');
+      }
+    }, 400);
+  };
+
+  const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
-    setErrors(prev => ({ ...prev, [id]: null }));
+    setError(null);
+    
+    if (id === 'password') {
+      setPasswordStrength(getPasswordStrength(value));
+    }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      goToNextStep();
+      handleNext();
     }
-  };
-
-  const goToNextStep = () => {
-    if (isAnimating) return;
-
-    // If current step has a field, validate it
-    if (currentStepData.field) {
-      const error = validateField(currentStepData.field, formData[currentStepData.field]);
-      if (error) {
-        setErrors(prev => ({ ...prev, [currentStepData.field]: error }));
-        showToast(error, 'error');
-        // Shake animation
-        if (inputRef.current) {
-          inputRef.current.style.animation = 'none';
-          inputRef.current.offsetHeight;
-          inputRef.current.style.animation = 'shake 0.5s cubic-bezier(.36,.07,.19,.97)';
-        }
-        return;
-      }
-    }
-
-    if (currentStep < steps.length - 1) {
-      setDirection('forward');
-      setIsAnimating(true);
-      setTimeout(() => {
-        setCurrentStep(prev => prev + 1);
-        setIsAnimating(false);
-      }, 150);
-    }
-  };
-
-  const goToPrevStep = () => {
-    if (isAnimating || currentStep === 0) return;
-    setDirection('backward');
-    setIsAnimating(true);
-    setTimeout(() => {
-      setCurrentStep(prev => prev - 1);
-      setIsAnimating(false);
-    }, 150);
   };
 
   const handleSubmit = async () => {
-    // Validate all required fields
-    let hasError = false;
-    const newErrors = {};
-    fieldSteps.forEach(step => {
-      const err = validateField(step.field, formData[step.field]);
-      if (err) { newErrors[step.field] = err; hasError = true; }
-    });
-    setErrors(newErrors);
-
-    if (hasError) {
-      showToast('Please fill in all required fields correctly', 'error');
-      return;
-    }
-
     setLoading(true);
     try {
       const res = await fetch('/api/auth/signup', {
@@ -282,8 +138,13 @@ export default function SignUp() {
       });
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || result.error || 'Signup failed');
-      showToast('Account created successfully! Redirecting...', 'success');
-      setTimeout(() => window.location.href = '/auth/signin', 2000);
+      
+      // Final animation before redirect
+      setCurrentStep('complete');
+      setTimeout(() => {
+        showToast('Account created successfully! Redirecting...', 'success');
+        setTimeout(() => window.location.href = '/auth/signin', 2000);
+      }, 1500);
     } catch (err) {
       showToast(err.message || 'Something went wrong', 'error');
     } finally {
@@ -297,68 +158,193 @@ export default function SignUp() {
     window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
   };
 
-  const progressPercentage = Math.round((currentStep / (steps.length - 1)) * 100);
+  const getStrengthColor = () => {
+    const colors = ['#ff3b30', '#ff9500', '#ffcc00', '#34c759', '#30d158'];
+    return colors[passwordStrength - 1] || '#ff3b30';
+  };
 
-  const renderFieldInput = () => {
-    if (!currentStepData.field) return null;
+  const getStrengthLabel = () => {
+    const labels = ['Very Weak', 'Weak', 'Fair', 'Strong', 'Very Strong'];
+    return labels[passwordStrength - 1] || 'Very Weak';
+  };
 
-    if (currentStepData.field === 'country') {
+  const renderStep = () => {
+    // Greeting step
+    if (currentStep === 0) {
       return (
-        <div style={{ position: 'relative' }}>
-          <select
-            id="country"
-            value={formData.country}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            ref={inputRef}
-            style={{
-              ...inputStyle,
-              paddingRight: 48,
-              cursor: 'pointer',
-              appearance: 'none',
-              WebkitAppearance: 'none',
-              MozAppearance: 'none',
-              borderColor: errors.country ? '#ff3b30' : '#e5e5ea',
-              background: errors.country ? '#fff5f5' : '#f9f9fb'
-            }}
-          >
-            <option value="">Select your country</option>
-            {countries.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-          <i className="fa-solid fa-chevron-down" style={{
-            position: 'absolute', right: 18, top: '50%',
-            transform: 'translateY(-50%)', color: '#86868b',
-            pointerEvents: 'none', fontSize: 15
-          }}></i>
+        <div className={`step-content ${animState}`} style={{ textAlign: 'center' }}>
+          <div className="greeting-icon">
+            <div className="icon-circle">
+              <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="24" fill="url(#gradient1)"/>
+                <path d="M16 32V20L24 14L32 20V32H16Z" fill="white" fillOpacity="0.9"/>
+                <circle cx="24" cy="22" r="4" fill="white"/>
+                <defs>
+                  <linearGradient id="gradient1" x1="0" y1="0" x2="48" y2="48">
+                    <stop offset="0%" stopColor="#007aff"/>
+                    <stop offset="100%" stopColor="#5856d6"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </div>
+          <h1 className="step-title">Welcome to <span className="brand">JABIYEN</span></h1>
+          <p className="step-subtitle">Your journey to premium tech starts here</p>
+          <p className="step-description">One account unlocks everything — exclusive deals, faster checkout, and personalized recommendations.</p>
+          
+          <div className="social-buttons" style={{ marginTop: 32 }}>
+            <button onClick={() => handleSocialSignIn('google')} className="social-btn">
+              <svg width="22" height="22" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              Continue with Google
+            </button>
+            <button onClick={() => handleSocialSignIn('azure')} className="social-btn">
+              <svg width="22" height="22" viewBox="0 0 21 21">
+                <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+              </svg>
+              Continue with Microsoft
+            </button>
+          </div>
+
+          <div className="divider" style={{ margin: '28px 0' }}>
+            <span>or</span>
+          </div>
+
+          <button onClick={handleStartForm} className="email-start-btn">
+            <span className="btn-icon">✨</span>
+            Create account with email
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" style={{ marginLeft: 8 }}>
+              <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+
+          <p className="signin-footer">
+            Already have an account? <Link href="/auth/signin" className="link">Sign in</Link>
+          </p>
         </div>
       );
     }
 
+    // Completion step
+    if (currentStep === 'complete') {
+      return (
+        <div className="step-content entering" style={{ textAlign: 'center' }}>
+          <div className="complete-animation">
+            <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+              <circle cx="40" cy="40" r="38" stroke="url(#gradient2)" strokeWidth="3" className="circle-draw"/>
+              <path d="M24 40L35 51L56 29" stroke="url(#gradient2)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" className="check-draw"/>
+              <defs>
+                <linearGradient id="gradient2" x1="0" y1="0" x2="80" y2="80">
+                  <stop offset="0%" stopColor="#34c759"/>
+                  <stop offset="100%" stopColor="#30d158"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <h2 className="complete-title">You're all set, {formData.first_name}! 🎉</h2>
+          <p className="complete-subtitle">Welcome to the JABIYEN family. Redirecting you to sign in...</p>
+        </div>
+      );
+    }
+
+    // Form steps
+    const step = steps[currentStep];
     return (
-      <input
-        id={currentStepData.field}
-        type={currentStepData.type || 'text'}
-        value={formData[currentStepData.field] || ''}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        ref={inputRef}
-        placeholder={currentStepData.placeholder}
-        autoComplete="off"
-        style={{
-          ...inputStyle,
-          borderColor: errors[currentStepData.field] ? '#ff3b30' : '#e5e5ea',
-          background: errors[currentStepData.field] ? '#fff5f5' : '#f9f9fb',
-          fontSize: currentStepData.type === 'password' ? 22 : 17,
-          letterSpacing: currentStepData.type === 'password' ? '0.15em' : '-0.01em'
-        }}
-      />
+      <div className={`step-content ${animState}`}>
+        {/* Progress indicator */}
+        <div className="progress-bar">
+          <div className="progress-fill" style={{ width: `${((currentStep) / (steps.length - 1)) * 100}%` }} />
+        </div>
+
+        <div className="form-step-inner">
+          <span className="step-number">Step {currentStep} of {steps.length - 1}</span>
+          <h2 className="step-question">{step.label}</h2>
+          <p className="step-hint">{step.subtitle}</p>
+
+          {step.field === 'password' && step.guide && (
+            <div className="password-guide">
+              <div className="strength-bar">
+                <div className="strength-fill" style={{ width: `${(passwordStrength / 5) * 100}%`, background: getStrengthColor() }} />
+              </div>
+              <span className="strength-label" style={{ color: getStrengthColor() }}>{getStrengthLabel()}</span>
+            </div>
+          )}
+
+          <div className="input-container">
+            {step.type === 'select' ? (
+              <div className="select-wrapper">
+                <select
+                  id={step.field}
+                  value={formData[step.field]}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  style={inputStyle}
+                  autoFocus
+                >
+                  <option value="">{step.placeholder}</option>
+                  {step.options.map(opt => (
+                    <option key={opt} value={opt} style={{ color: '#1d1d1f' }}>{opt}</option>
+                  ))}
+                </select>
+                <svg className="select-arrow" width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M5 7.5L10 12.5L15 7.5" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+            ) : (
+              <input
+                id={step.field}
+                type={step.type}
+                value={formData[step.field]}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                placeholder={step.placeholder}
+                style={inputStyle}
+                autoFocus
+                autoComplete={step.field === 'password' ? 'new-password' : 'on'}
+              />
+            )}
+            {error && <p className="field-error">{error}</p>}
+          </div>
+
+          <div className="step-actions">
+            {currentStep > 1 && (
+              <button onClick={handlePrev} className="back-btn">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                  <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Back
+              </button>
+            )}
+            <button 
+              onClick={currentStep === steps.length - 1 ? handleSubmit : handleNext} 
+              className="next-btn"
+              disabled={loading}
+            >
+              {loading ? (
+                <span className="spinner" />
+              ) : currentStep === steps.length - 1 ? (
+                'Create Account'
+              ) : (
+                <>
+                  Continue
+                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <path d="M7.5 15L12.5 10L7.5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </div>
     );
   };
-
-  // Intro/outro steps render
-  if (!currentStepData.field) {
-    // Welcome or complete or intro steps
-  }
 
   return (
     <>
@@ -367,551 +353,536 @@ export default function SignUp() {
         <meta name="description" content="Create your JAYENWARE account" />
       </Head>
 
-      <div style={{
-        minHeight: 'calc(100vh - 180px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '40px 16px',
-        background: 'linear-gradient(180deg, #f9f9fb 0%, #ffffff 100%)'
-      }}>
-        <div style={{
-          width: '100%',
-          maxWidth: 520,
-          background: '#fff',
-          borderRadius: 28,
-          padding: '48px 40px',
-          boxShadow: '0 1px 2px rgba(0,0,0,0.03), 0 12px 48px rgba(0,0,0,0.08)',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
+      <div className="page-wrapper">
+        {/* Animated background */}
+        <div className="bg-gradient" />
+        <div className="bg-orb orb-1" />
+        <div className="bg-orb orb-2" />
 
-          {/* Background glow */}
-          <div style={{
-            position: 'absolute',
-            top: -100, left: '50%',
-            transform: 'translateX(-50%)',
-            width: 300, height: 300,
-            background: 'radial-gradient(circle, rgba(0,122,255,0.06) 0%, transparent 70%)',
-            pointerEvents: 'none'
-          }} />
-
-          {/* Progress Bar */}
-          {showEmailForm && (
-            <div style={{ marginBottom: 40, position: 'relative', zIndex: 1 }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: 10
-              }}>
-                <button
-                  onClick={goToPrevStep}
-                  disabled={currentStep === 0 || isAnimating}
-                  style={{
-                    background: 'none', border: 'none',
-                    cursor: currentStep === 0 ? 'default' : 'pointer',
-                    color: currentStep === 0 ? '#d1d1d6' : '#007aff',
-                    fontSize: 14, fontWeight: 500,
-                    padding: '8px 12px', borderRadius: 8,
-                    transition: 'all 0.2s ease',
-                    fontFamily: "'Inter', sans-serif",
-                    opacity: currentStep === 0 ? 0.5 : 1
-                  }}
-                >
-                  <i className="fa-solid fa-arrow-left" style={{ marginRight: 6 }}></i>
-                  Back
-                </button>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#86868b', letterSpacing: '0.02em' }}>
-                  Step {currentStep + 1} of {steps.length}
-                </span>
-              </div>
-              <div style={{
-                width: '100%', height: 4,
-                background: '#f0f0f5',
-                borderRadius: 10,
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  width: `${progressPercentage}%`,
-                  height: '100%',
-                  background: 'linear-gradient(135deg, #007aff, #5856d6)',
-                  borderRadius: 10,
-                  transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-                }} />
-              </div>
-            </div>
-          )}
-
+        <div className="card-container">
           {/* Logo */}
-          <div style={{
-            textAlign: 'center',
-            marginBottom: showEmailForm ? 0 : 36,
-            position: 'relative',
-            zIndex: 1,
-            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-          }}>
-            <img
-              src="/logo.png"
-              alt="JAYENWARE"
-              style={{
-                width: showEmailForm ? 40 : 56,
-                height: showEmailForm ? 40 : 56,
-                borderRadius: 14,
-                margin: '0 auto 14px',
-                transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-              }}
-            />
-            {!showEmailForm && (
-              <>
-                <h1 style={{
-                  fontFamily: "var(--font-heading), 'Manrope', sans-serif",
-                  fontSize: 28,
-                  fontWeight: 800,
-                  color: '#1d1d1f',
-                  margin: '0 0 6px',
-                  letterSpacing: '-0.03em'
-                }}>
-                  Create your JABIYEN ID
-                </h1>
-                <p style={{ fontSize: 15, color: '#86868b', margin: 0, lineHeight: 1.5 }}>
-                  One account for everything JABIYEN
-                </p>
-              </>
-            )}
+          <div className="logo-area">
+            <img src="/logo.png" alt="JAYENWARE" className="logo-img" />
           </div>
 
-          {/* Social Sign-In Buttons */}
-          {!showEmailForm && (
-            <div style={{
-              display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24,
-              position: 'relative', zIndex: 1
-            }}>
-              {/* Google */}
-              <SocialButton
-                onClick={() => handleSocialSignIn('google')}
-                icon={
-                  <svg width="20" height="20" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                }
-                label="Continue with Google"
-              />
-
-              {/* Microsoft */}
-              <SocialButton
-                onClick={() => handleSocialSignIn('azure')}
-                icon={
-                  <svg width="20" height="20" viewBox="0 0 21 21">
-                    <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
-                    <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
-                    <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
-                    <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
-                  </svg>
-                }
-                label="Continue with Microsoft"
-              />
-
-              {/* Email Button */}
-              <button
-                onClick={() => setShowEmailForm(!showEmailForm)}
-                style={{
-                  width: '100%', padding: '14px 20px',
-                  background: showEmailForm ? '#1d1d1f' : '#fff',
-                  color: showEmailForm ? '#fff' : '#1d1d1f',
-                  border: showEmailForm ? '2px solid #1d1d1f' : '2px solid #e0e0e0',
-                  borderRadius: 16,
-                  fontSize: 16, fontWeight: 500, cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-                  fontFamily: "'Inter', sans-serif",
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                  boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
-                }}
-                onMouseEnter={(e) => {
-                  if (!showEmailForm) {
-                    e.target.style.borderColor = '#1d1d1f';
-                    e.target.style.transform = 'translateY(-1px)';
-                    e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!showEmailForm) {
-                    e.target.style.borderColor = '#e0e0e0';
-                    e.target.style.transform = 'translateY(0)';
-                    e.target.style.boxShadow = '0 1px 2px rgba(0,0,0,0.04)';
-                  }
-                }}
-              >
-                <i className="fa-regular fa-envelope" style={{ fontSize: 18 }}></i>
-                <span>{showEmailForm ? 'Hide Sign Up Form' : 'Continue with Email'}</span>
-              </button>
-            </div>
-          )}
-
-          {/* Cinematic Step-by-Step Form */}
-          {showEmailForm && (
-            <div style={{ position: 'relative', zIndex: 1, minHeight: 320 }}>
-              <div
-                key={currentStep}
-                style={{
-                  animation: direction === 'forward'
-                    ? 'slideInRight 0.45s cubic-bezier(0.16, 1, 0.3, 1)'
-                    : 'slideInLeft 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
-                  opacity: isAnimating ? 0 : 1
-                }}
-              >
-                {/* Step Icon */}
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  marginBottom: 20
-                }}>
-                  <div style={{
-                    width: 72, height: 72,
-                    borderRadius: 24,
-                    background: 'linear-gradient(135deg, #007aff15, #5856d615)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: 28,
-                    color: '#007aff',
-                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-                  }}>
-                    <i className={currentStepData.icon}></i>
-                  </div>
-                </div>
-
-                {/* Title */}
-                <div style={{ textAlign: 'center', marginBottom: 8 }}>
-                  <h2 style={{
-                    fontFamily: "var(--font-heading), 'Manrope', sans-serif",
-                    fontSize: 24,
-                    fontWeight: 700,
-                    color: '#1d1d1f',
-                    margin: '0 0 6px',
-                    letterSpacing: '-0.02em'
-                  }}>
-                    {currentStepData.title || currentStepData.label}
-                  </h2>
-                  {currentStepData.subtitle && (
-                    <p style={{
-                      fontSize: 15,
-                      color: '#86868b',
-                      margin: 0,
-                      lineHeight: 1.5
-                    }}>
-                      {currentStepData.subtitle}
-                    </p>
-                  )}
-                </div>
-
-                {/* Description for intro/outro steps */}
-                {currentStepData.description && !currentStepData.field && (
-                  <p style={{
-                    textAlign: 'center',
-                    fontSize: 15,
-                    color: '#515154',
-                    lineHeight: 1.6,
-                    margin: '16px 0 24px'
-                  }}>
-                    {currentStepData.description}
-                  </p>
-                )}
-
-                {/* Input Field */}
-                {currentStepData.field && (
-                  <div style={{ marginTop: 28, marginBottom: 24 }}>
-                    <div style={{
-                      marginBottom: 8,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8
-                    }}>
-                      {currentStepData.required && (
-                        <span style={{
-                          fontSize: 11,
-                          fontWeight: 600,
-                          color: '#ff3b30',
-                          background: '#ff3b3010',
-                          padding: '3px 8px',
-                          borderRadius: 20,
-                          letterSpacing: '0.02em'
-                        }}>
-                          REQUIRED
-                        </span>
-                      )}
-                      {!currentStepData.required && (
-                        <span style={{
-                          fontSize: 11,
-                          fontWeight: 500,
-                          color: '#86868b',
-                          background: '#f5f5f7',
-                          padding: '3px 8px',
-                          borderRadius: 20,
-                          letterSpacing: '0.02em'
-                        }}>
-                          OPTIONAL
-                        </span>
-                      )}
-                    </div>
-                    {renderFieldInput()}
-                    {errors[currentStepData.field] && (
-                      <div style={{
-                        display: 'flex', alignItems: 'center', gap: 6,
-                        fontSize: 13, color: '#ff3b30', marginTop: 8,
-                        fontWeight: 500
-                      }}>
-                        <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 12 }}></i>
-                        <span>{errors[currentStepData.field]}</span>
-                      </div>
-                    )}
-
-                    {/* Password strength indicator */}
-                    {currentStepData.field === 'password' && formData.password && (
-                      <div style={{ marginTop: 12 }}>
-                        <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                          {[1, 2, 3, 4].map(i => {
-                            let strength = 0;
-                            const pwd = formData.password;
-                            if (pwd.length >= 8) strength++;
-                            if (/[A-Z]/.test(pwd)) strength++;
-                            if (/[0-9]/.test(pwd)) strength++;
-                            if (/[^A-Za-z0-9]/.test(pwd)) strength++;
-                            const active = i <= strength;
-                            return (
-                              <div key={i} style={{
-                                flex: 1, height: 4,
-                                borderRadius: 10,
-                                background: active
-                                  ? strength <= 2 ? '#ff9500' : strength === 3 ? '#ffcc00' : '#34c759'
-                                  : '#e5e5ea',
-                                transition: 'all 0.3s ease'
-                              }} />
-                            );
-                          })}
-                        </div>
-                        <p style={{ fontSize: 12, color: '#86868b', margin: 0 }}>
-                          <i className="fa-solid fa-lightbulb" style={{ marginRight: 4 }}></i>
-                          Mix uppercase, numbers, and symbols for a stronger password
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Navigation Buttons */}
-                <div style={{
-                  display: 'flex',
-                  gap: 12,
-                  marginTop: currentStepData.field ? 8 : 24
-                }}>
-                  {currentStep > 0 && (
-                    <button
-                      onClick={goToPrevStep}
-                      disabled={isAnimating}
-                      style={{
-                        flex: 1,
-                        padding: '14px 24px',
-                        background: '#f5f5f7',
-                        color: '#1d1d1f',
-                        border: '2px solid transparent',
-                        borderRadius: 16,
-                        fontSize: 15,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontFamily: "'Inter', sans-serif",
-                        transition: 'all 0.25s ease'
-                      }}
-                    >
-                      <i className="fa-solid fa-arrow-left" style={{ marginRight: 8 }}></i>
-                      Back
-                    </button>
-                  )}
-                  {currentStep < steps.length - 1 ? (
-                    <button
-                      onClick={goToNextStep}
-                      disabled={isAnimating}
-                      style={{
-                        flex: 2,
-                        padding: '14px 24px',
-                        background: '#007aff',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 16,
-                        fontSize: 15,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        fontFamily: "'Inter', sans-serif",
-                        transition: 'all 0.25s ease',
-                        boxShadow: '0 4px 16px rgba(0,122,255,0.3)'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.target.style.transform = 'translateY(-1px)';
-                        e.target.style.boxShadow = '0 6px 20px rgba(0,122,255,0.4)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.target.style.transform = 'translateY(0)';
-                        e.target.style.boxShadow = '0 4px 16px rgba(0,122,255,0.3)';
-                      }}
-                    >
-                      {currentStep === 0 ? "Let's go" : 'Continue'}
-                      <i className="fa-solid fa-arrow-right" style={{ marginLeft: 8 }}></i>
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleSubmit}
-                      disabled={loading}
-                      style={{
-                        flex: 2,
-                        padding: '14px 24px',
-                        background: loading ? '#a1a1a6' : 'linear-gradient(135deg, #007aff, #5856d6)',
-                        color: '#fff',
-                        border: 'none',
-                        borderRadius: 16,
-                        fontSize: 16,
-                        fontWeight: 600,
-                        cursor: loading ? 'not-allowed' : 'pointer',
-                        fontFamily: "'Inter', sans-serif",
-                        transition: 'all 0.25s ease',
-                        boxShadow: '0 4px 20px rgba(88,86,214,0.35)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 8
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!loading) {
-                          e.target.style.transform = 'translateY(-2px)';
-                          e.target.style.boxShadow = '0 8px 28px rgba(88,86,214,0.45)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!loading) {
-                          e.target.style.transform = 'translateY(0)';
-                          e.target.style.boxShadow = '0 4px 20px rgba(88,86,214,0.35)';
-                        }
-                      }}
-                    >
-                      {loading ? (
-                        <>
-                          <span style={{
-                            width: 20, height: 20,
-                            border: '2px solid rgba(255,255,255,0.3)',
-                            borderTopColor: '#fff',
-                            borderRadius: '50%',
-                            animation: 'spin 0.7s linear infinite'
-                          }} />
-                          Creating...
-                        </>
-                      ) : (
-                        <>
-                          <i className="fa-solid fa-rocket"></i>
-                          Create Account
-                        </>
-                      )}
-                    </button>
-                  )}
-                </div>
-
-                {/* Skip button for optional fields */}
-                {!currentStepData.required && currentStepData.field && currentStep < steps.length - 1 && (
-                  <button
-                    onClick={goToNextStep}
-                    style={{
-                      width: '100%', marginTop: 12,
-                      background: 'none', border: 'none',
-                      color: '#86868b', fontSize: 14,
-                      cursor: 'pointer', padding: '8px',
-                      fontFamily: "'Inter', sans-serif",
-                      textDecoration: 'underline',
-                      textUnderlineOffset: 3
-                    }}
-                  >
-                    Skip for now
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Footer */}
-          <div style={{
-            textAlign: 'center',
-            marginTop: showEmailForm ? 32 : 24,
-            position: 'relative',
-            zIndex: 1
-          }}>
-            <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>
-              Already have an account?{' '}
-              <Link
-                href="/auth/signin"
-                style={{
-                  color: '#007aff',
-                  textDecoration: 'none',
-                  fontWeight: 600
-                }}
-              >
-                Sign in
-              </Link>
-            </p>
-          </div>
-
-          {/* Decorative subtle pattern */}
-          <div style={{
-            position: 'absolute',
-            bottom: 0, left: 0, right: 0,
-            height: 4,
-            background: 'linear-gradient(90deg, #007aff, #5856d6, #af52de, #ff2d55, #ff9500, #ffcc00, #34c759)',
-            opacity: 0.15
-          }} />
+          {renderStep()}
         </div>
+
+        {/* Toast */}
+        {toast && (
+          <div className={`toast ${toast.type}`}>
+            <span className="toast-icon">{toast.type === 'error' ? '⚠️' : '✅'}</span>
+            {toast.message}
+          </div>
+        )}
       </div>
 
-      {/* Toast Notification */}
-      {toast && (
-        <div style={{
-          position: 'fixed',
-          top: 24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f',
-          color: '#fff',
-          padding: '14px 24px',
-          borderRadius: 50,
-          fontSize: 14,
-          fontWeight: 500,
-          zIndex: 999,
-          boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          animation: 'toastSlideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}>
-          <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
-          <span>{toast.message}</span>
-        </div>
-      )}
-
       <style jsx>{`
-        @keyframes spin { 
-          to { transform: rotate(360deg); } 
+        .page-wrapper {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          position: relative;
+          overflow: hidden;
+          background: #0a0a0a;
         }
-        @keyframes slideInRight {
-          from { opacity: 0; transform: translateX(40px); }
-          to { opacity: 1; transform: translateX(0); }
+
+        .bg-gradient {
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at 50% 0%, rgba(0,122,255,0.15) 0%, transparent 60%),
+                      radial-gradient(ellipse at 80% 100%, rgba(88,86,214,0.1) 0%, transparent 50%);
         }
-        @keyframes slideInLeft {
-          from { opacity: 0; transform: translateX(-40px); }
-          to { opacity: 1; transform: translateX(0); }
+
+        .bg-orb {
+          position: absolute;
+          border-radius: 50%;
+          filter: blur(80px);
+          opacity: 0.15;
+          animation: float 20s ease-in-out infinite;
         }
-        @keyframes shake {
-          10%, 90% { transform: translateX(-1px); }
-          20%, 80% { transform: translateX(2px); }
-          30%, 50%, 70% { transform: translateX(-4px); }
-          40%, 60% { transform: translateX(4px); }
+
+        .orb-1 {
+          width: 400px;
+          height: 400px;
+          background: #007aff;
+          top: -100px;
+          right: -100px;
         }
-        @keyframes toastSlideDown {
-          from { opacity:
+
+        .orb-2 {
+          width: 300px;
+          height: 300px;
+          background: #5856d6;
+          bottom: -80px;
+          left: -80px;
+          animation-delay: -10s;
+        }
+
+        @keyframes float {
+          0%, 100% { transform: translate(0, 0) scale(1); }
+          33% { transform: translate(30px, -50px) scale(1.1); }
+          66% { transform: translate(-20px, 20px) scale(0.9); }
+        }
+
+        .card-container {
+          width: 100%;
+          max-width: 460px;
+          background: rgba(28, 28, 30, 0.85);
+          backdrop-filter: blur(40px);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 28px;
+          padding: 40px 32px;
+          position: relative;
+          z-index: 1;
+          box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), 
+                      0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+          min-height: 500px;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .logo-area {
+          text-align: center;
+          margin-bottom: 8px;
+        }
+
+        .logo-img {
+          width: 48px;
+          height: 48px;
+          border-radius: 14px;
+          box-shadow: 0 4px 20px rgba(0, 122, 255, 0.3);
+        }
+
+        /* Step Content */
+        .step-content {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          animation-duration: 0.5s;
+          animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+          animation-fill-mode: both;
+        }
+
+        .step-content.entering {
+          animation-name: slideUpIn;
+        }
+
+        .step-content.exiting {
+          animation-name: slideDownOut;
+        }
+
+        @keyframes slideUpIn {
+          from { opacity: 0; transform: translateY(24px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes slideDownOut {
+          from { opacity: 1; transform: translateY(0) scale(1); }
+          to { opacity: 0; transform: translateY(-24px) scale(0.97); }
+        }
+
+        /* Greeting */
+        .greeting-icon {
+          margin-bottom: 20px;
+        }
+
+        .icon-circle {
+          display: inline-block;
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+
+        .step-title {
+          font-family: 'Manrope', sans-serif;
+          font-size: 28px;
+          font-weight: 800;
+          color: #fff;
+          margin: 0 0 8px;
+          letter-spacing: -0.03em;
+        }
+
+        .brand {
+          background: linear-gradient(135deg, #007aff, #5856d6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .step-subtitle {
+          font-size: 15px;
+          color: rgba(255, 255, 255, 0.6);
+          margin: 0 0 8px;
+        }
+
+        .step-description {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.4);
+          margin: 0;
+          line-height: 1.6;
+        }
+
+        .social-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .social-btn {
+          width: 100%;
+          padding: 14px 20px;
+          background: rgba(255, 255, 255, 0.06);
+          color: #fff;
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          border-radius: 14px;
+          font-size: 15px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s ease;
+        }
+
+        .social-btn:hover {
+          background: rgba(255, 255, 255, 0.1);
+          border-color: rgba(255, 255, 255, 0.2);
+          transform: translateY(-1px);
+        }
+
+        .divider {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          color: rgba(255, 255, 255, 0.2);
+          font-size: 13px;
+        }
+
+        .divider::before,
+        .divider::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: rgba(255, 255, 255, 0.1);
+        }
+
+        .email-start-btn {
+          width: 100%;
+          padding: 16px 24px;
+          background: linear-gradient(135deg, #007aff, #5856d6);
+          color: #fff;
+          border: none;
+          border-radius: 16px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s ease;
+          box-shadow: 0 8px 32px rgba(0, 122, 255, 0.3);
+        }
+
+        .email-start-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 12px 40px rgba(0, 122, 255, 0.4);
+        }
+
+        .btn-icon {
+          font-size: 20px;
+        }
+
+        .signin-footer {
+          margin-top: 24px;
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.4);
+        }
+
+        .link {
+          color: #007aff;
+          text-decoration: none;
+          font-weight: 600;
+        }
+
+        .link:hover {
+          text-decoration: underline;
+        }
+
+        /* Progress */
+        .progress-bar {
+          width: 100%;
+          height: 3px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 2px;
+          margin-bottom: 32px;
+          overflow: hidden;
+        }
+
+        .progress-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #007aff, #5856d6);
+          border-radius: 2px;
+          transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .form-step-inner {
+          flex: 1;
+        }
+
+        .step-number {
+          font-size: 12px;
+          font-weight: 600;
+          color: rgba(255, 255, 255, 0.3);
+          text-transform: uppercase;
+          letter-spacing: 0.08em;
+        }
+
+        .step-question {
+          font-family: 'Manrope', sans-serif;
+          font-size: 24px;
+          font-weight: 700;
+          color: #fff;
+          margin: 8px 0 6px;
+          letter-spacing: -0.02em;
+        }
+
+        .step-hint {
+          font-size: 14px;
+          color: rgba(255, 255, 255, 0.45);
+          margin: 0 0 24px;
+        }
+
+        .password-guide {
+          margin-bottom: 16px;
+        }
+
+        .strength-bar {
+          height: 4px;
+          background: rgba(255, 255, 255, 0.08);
+          border-radius: 2px;
+          overflow: hidden;
+          margin-bottom: 6px;
+        }
+
+        .strength-fill {
+          height: 100%;
+          border-radius: 2px;
+          transition: all 0.4s ease;
+        }
+
+        .strength-label {
+          font-size: 12px;
+          font-weight: 600;
+        }
+
+        .input-container {
+          margin-bottom: 28px;
+        }
+
+        .select-wrapper {
+          position: relative;
+        }
+
+        .select-wrapper select {
+          appearance: none;
+          -webkit-appearance: none;
+          padding-right: 48px;
+        }
+
+        .select-wrapper select option {
+          background: #1c1c1e;
+          color: #fff;
+        }
+
+        .select-arrow {
+          position: absolute;
+          right: 16px;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+        }
+
+        input:focus, select:focus {
+          border-color: rgba(0, 122, 255, 0.6) !important;
+          background: rgba(255, 255, 255, 0.12) !important;
+          box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
+        }
+
+        .field-error {
+          font-size: 13px;
+          color: #ff453a;
+          margin: 8px 0 0;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .step-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .back-btn {
+          padding: 12px 20px;
+          background: transparent;
+          color: rgba(255, 255, 255, 0.6);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 500;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+          color: #fff;
+          border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .next-btn {
+          flex: 1;
+          padding: 14px 24px;
+          background: #fff;
+          color: #0a0a0a;
+          border: none;
+          border-radius: 14px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s ease;
+        }
+
+        .next-btn:hover {
+          background: #f0f0f0;
+          transform: translateY(-1px);
+        }
+
+        .next-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .spinner {
+          width: 20px;
+          height: 20px;
+          border: 2px solid rgba(0,0,0,0.2);
+          border-top-color: #0a0a0a;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* Completion */
+        .complete-animation {
+          margin-bottom: 24px;
+        }
+
+        .circle-draw {
+          stroke-dasharray: 240;
+          stroke-dashoffset: 240;
+          animation: drawCircle 0.8s 0.2s ease forwards;
+        }
+
+        .check-draw {
+          stroke-dasharray: 40;
+          stroke-dashoffset: 40;
+          animation: drawCheck 0.4s 0.7s ease forwards;
+        }
+
+        @keyframes drawCircle {
+          to { stroke-dashoffset: 0; }
+        }
+
+        @keyframes drawCheck {
+          to { stroke-dashoffset: 0; }
+        }
+
+        .complete-title {
+          font-family: 'Manrope', sans-serif;
+          font-size: 26px;
+          font-weight: 700;
+          color: #fff;
+          margin: 0 0 8px;
+        }
+
+        .complete-subtitle {
+          font-size: 15px;
+          color: rgba(255, 255, 255, 0.5);
+          margin: 0;
+        }
+
+        /* Toast */
+        .toast {
+          position: fixed;
+          top: 24px;
+          left: 50%;
+          transform: translateX(-50%);
+          padding: 14px 24px;
+          border-radius: 50px;
+          font-size: 14px;
+          font-weight: 500;
+          z-index: 999;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+          animation: toastIn 0.4s ease;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .toast.success {
+          background: #30d158;
+          color: #fff;
+        }
+
+        .toast.error {
+          background: #ff453a;
+          color: #fff;
+        }
+
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+          to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        @media (max-width: 480px) {
+          .card-container {
+            padding: 32px 20px;
+            border-radius: 24px;
+          }
+          .step-title {
+            font-size: 24px;
+          }
+          .step-question {
+            font-size: 20px;
+          }
+        }
+      `}</style>
+    </>
+  );
+}
