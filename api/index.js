@@ -1525,6 +1525,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // GET PROFILE
+// GET PROFILE
 app.get('/api/user/profile', async (req, res) => {
     try {
         const token = req.headers.authorization?.replace('Bearer ', '');
@@ -1533,26 +1534,22 @@ app.get('/api/user/profile', async (req, res) => {
         const { data: { user }, error: authError } = await supabase.auth.getUser(token);
         if (authError || !user) throw new Error('Invalid token');
 
-        const { data: profile, error } = await supabase
+        const authSupabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+            global: { headers: { Authorization: `Bearer ${token}` } }
+        });
+
+        const { data: profile, error } = await authSupabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
 
-        res.json({
-            success: true,
-            user,
-            profile
-        });
+        res.json({ success: true, user, profile });
 
     } catch (err) {
-        res.status(401).json({
-            success: false,
-            error: err.message
-        });
+        res.status(401).json({ success: false, error: err.message });
     }
 });
-
 // UPDATE PROFILE
 app.put('/api/user/profile', async (req, res) => {
     try {
