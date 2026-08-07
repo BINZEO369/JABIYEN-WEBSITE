@@ -1660,7 +1660,17 @@ app.post('/api/auth/logout', async (req, res) => {
     }
 });
 
-
+// ============================================
+// GOOGLE AUTH PROXY
+// ============================================
+app.get('/api/auth/google', (req, res) => {
+    const SUPABASE_URL = 'https://eiueitoxxqzkolsouuzy.supabase.co';
+    const redirectTo = encodeURIComponent('https://jabiyen-website.vercel.app/auth/account');
+    
+    const supabaseAuthURL = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${redirectTo}`;
+    
+    res.redirect(supabaseAuthURL);
+});
 // ============================================
 // PAGE ROUTES
 // ============================================
