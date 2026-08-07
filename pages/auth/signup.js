@@ -173,7 +173,7 @@ export default function SignUp() {
               <span>Continue with Microsoft</span>
             </button>
 
-            {/* JABIYEN ID Button */}
+            {/* Continue with Email Button */}
             <button onClick={() => setShowEmailForm(!showEmailForm)} style={{
               width: '100%', padding: '13px 20px',
               background: showEmailForm ? '#1d1d1f' : '#fff',
@@ -186,8 +186,8 @@ export default function SignUp() {
               transition: 'all 0.25s ease',
               boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
             }}>
-              <img src="/logo.png" alt="" style={{ width: 20, height: 20, borderRadius: 4 }} />
-              <span>{showEmailForm ? 'Hide Sign Up Form' : 'Sign Up with JABIYEN ID'}</span>
+              <i className="fa-regular fa-envelope" style={{ fontSize: 18 }}></i>
+              <span>{showEmailForm ? 'Hide Sign Up Form' : 'Continue with Email'}</span>
             </button>
           </div>
 
