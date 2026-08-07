@@ -18,13 +18,13 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [alert, setAlert] = useState(null);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
   useEffect(() => {
-    // Check URL params for messages
     const urlParams = new URLSearchParams(window.location.search);
     const msg = urlParams.get('message');
     if (msg === 'signup_success') showToast('Account created successfully! Please sign in.', 'success');
@@ -85,7 +85,6 @@ export default function SignIn() {
     e.preventDefault();
     setAlert(null);
 
-    // Validate
     const emailErr = validateEmail(email);
     const passErr = validatePassword(password);
     setTouched({ email: true, password: true });
@@ -107,15 +106,13 @@ export default function SignIn() {
 
       const result = await res.json();
 
-      if (!res.ok) {
-        throw new Error(result.error || result.message || 'Invalid email or password');
-      }
+      if (!res.ok) throw new Error(result.error || result.message || 'Invalid email or password');
 
       if (result.session) saveSession(result.session);
 
       showToast('Signed in successfully! Redirecting...', 'success');
       setTimeout(() => {
-        window.location.href = result.redirect || '/account';
+        window.location.href = result.redirect || '/auth/account';
       }, 1000);
     } catch (err) {
       const msg = err.message || 'Something went wrong';
@@ -130,6 +127,17 @@ export default function SignIn() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
+    try {
+      const SUPABASE_URL = 'https://eiueitoxxqzkolsouuzy.supabase.co';
+      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/account')}`;
+    } catch (err) {
+      showToast('Failed to connect Google Sign-In', 'error');
+      setGoogleLoading(false);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -140,11 +148,42 @@ export default function SignIn() {
       <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
         <div style={{ width: '100%', maxWidth: 440, background: '#fff', borderRadius: 24, padding: '40px 36px', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)', animation: 'cardSlideUp 0.7s cubic-bezier(0.22, 0.61, 0.36, 1) forwards' }}>
           
-          {/* Branding */}
           <div style={{ textAlign: 'center', marginBottom: 32 }}>
             <img src="/logo.png" alt="JAYENWARE" style={{ width: 48, height: 48, borderRadius: 12, margin: '0 auto 12px' }} />
             <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 24, fontWeight: 800, color: '#1d1d1f', margin: '0 0 4px' }}>Welcome Back</h1>
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Sign in to continue your journey</p>
+          </div>
+
+          {/* Google Sign-In Button */}
+          <button onClick={handleGoogleSignIn} disabled={googleLoading} style={{
+            width: '100%', padding: '12px 24px',
+            background: '#fff', color: '#1d1d1f',
+            border: '1.5px solid #e5e5ea', borderRadius: 12,
+            fontSize: 15, fontWeight: 500, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+            fontFamily: "'Inter', sans-serif", marginBottom: 24,
+            transition: 'all 0.2s ease'
+          }}>
+            {googleLoading ? (
+              <span style={{ width: 20, height: 20, border: '2px solid #e5e5ea', borderTopColor: '#1d1d1f', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+            ) : (
+              <>
+                <svg width="20" height="20" viewBox="0 0 24 24">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Continue with Google
+              </>
+            )}
+          </button>
+
+          {/* Divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
+            <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
+            <span style={{ fontSize: 11, color: '#86868b', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em' }}>or sign in with email</span>
+            <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
           </div>
 
           {/* Alert Error */}
@@ -157,7 +196,6 @@ export default function SignIn() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} noValidate>
-            {/* Email */}
             <div style={{ marginBottom: 18 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1d1d1f', marginBottom: 6 }} htmlFor="email">
                 Email Address <span style={{ color: '#ff3b30' }}>*</span>
@@ -171,7 +209,6 @@ export default function SignIn() {
               )}
             </div>
 
-            {/* Password */}
             <div style={{ marginBottom: 18 }}>
               <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1d1d1f', marginBottom: 6 }} htmlFor="password">
                 Password <span style={{ color: '#ff3b30' }}>*</span>
@@ -190,38 +227,28 @@ export default function SignIn() {
               )}
             </div>
 
-            {/* Forgot Password */}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 20, marginTop: -8 }}>
               <Link href="/forgot-password" style={{ fontSize: 13, color: '#007aff', textDecoration: 'none', fontWeight: 500 }}>Forgot password?</Link>
             </div>
 
-            {/* Remember Me */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
               <input type="checkbox" id="remember" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 18, height: 18, accentColor: '#007aff', cursor: 'pointer' }} />
               <label htmlFor="remember" style={{ fontSize: 13, color: '#86868b', fontWeight: 500, cursor: 'pointer' }}>Remember me for 30 days</label>
             </div>
 
-            {/* Submit */}
             <button type="submit" disabled={loading} style={{ width: '100%', padding: '14px 24px', background: loading ? '#a1a1a6' : '#1d1d1f', color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, border: 'none', borderRadius: 12, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
               {loading ? <span style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> : 'Sign In'}
             </button>
           </form>
 
-          {/* Divider */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16, margin: '24px 0' }}>
-            <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
-            <span style={{ fontSize: 12, color: '#86868b', fontWeight: 500, textTransform: 'uppercase' }}>New to JAYENWARE?</span>
-            <span style={{ flex: 1, height: 1, background: '#e5e5ea' }} />
-          </div>
-
-          {/* Footer Link */}
-          <div style={{ textAlign: 'center', marginTop: 20 }}>
-            <Link href="/auth/signup" style={{ fontSize: 14, color: '#007aff', textDecoration: 'none', fontWeight: 600 }}>Create a new account</Link>
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>
+              New to JAYENWARE? <Link href="/auth/signup" style={{ color: '#007aff', textDecoration: 'none', fontWeight: 600 }}>Create a new account</Link>
+            </p>
           </div>
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
