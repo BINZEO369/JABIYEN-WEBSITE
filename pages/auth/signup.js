@@ -1,127 +1,89 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
 const inputStyle = {
-  width: '100%',
-  padding: '16px 20px',
-  border: '2px solid rgba(255,255,255,0.15)',
-  borderRadius: 16,
-  fontSize: 17,
-  fontFamily: "'Inter', sans-serif",
-  color: '#fff',
-  background: 'rgba(255,255,255,0.06)',
-  outline: 'none',
-  transition: 'all 0.3s ease',
-  backdropFilter: 'blur(10px)'
+  width: '100%', padding: '12px 16px',
+  border: '1.5px solid #e5e5ea',
+  borderRadius: 12, fontSize: 15, fontFamily: "'Inter', sans-serif",
+  color: '#1d1d1f', background: '#fff', outline: 'none',
+  transition: 'all 0.25s ease'
 };
 
 export default function SignUp() {
-  const [step, setStep] = useState(0);
-  const [animationState, setAnimationState] = useState('entering');
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', email: '', phone: '',
     password: '', address_line1: '', address_line2: '',
     city: '', state: '', postal_code: '', country: ''
   });
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [loading, setLoading] = useState(false);
+  const [showEmailForm, setShowEmailForm] = useState(false);
   const [toast, setToast] = useState(null);
-  const [typedText, setTypedText] = useState('');
-  const inputRef = useRef(null);
 
-  const fullGreeting = "Let's create your JABIYEN ID";
-  const steps = [
-    { id: 'greeting', title: '', field: null, subtitle: 'A beautiful journey begins' },
-    { id: 'first_name', title: 'Hello! What should we call you?', field: 'first_name', placeholder: 'Your first name', type: 'text', icon: 'fa-user' },
-    { id: 'last_name', title: 'And your last name?', field: 'last_name', placeholder: 'Your last name', type: 'text', icon: 'fa-user' },
-    { id: 'email', title: 'Where can we reach you?', field: 'email', placeholder: 'you@example.com', type: 'email', icon: 'fa-envelope' },
-    { id: 'phone', title: 'Your phone number?', field: 'phone', placeholder: '+8801XXXXXXXXX', type: 'tel', icon: 'fa-phone' },
-    { id: 'password', title: 'Create a secure password', field: 'password', placeholder: 'At least 8 characters', type: 'password', icon: 'fa-lock', hint: 'Use 8+ characters with letters, numbers & symbols' },
-    { id: 'address_line1', title: 'What\'s your address?', field: 'address_line1', placeholder: 'House/Flat, Street', type: 'text', icon: 'fa-location-dot' },
-    { id: 'city', title: 'Which city do you live in?', field: 'city', placeholder: 'Dhaka', type: 'text', icon: 'fa-city' },
-    { id: 'state', title: 'State or Division?', field: 'state', placeholder: 'Dhaka Division', type: 'text', icon: 'fa-map' },
-    { id: 'postal_code', title: 'What\'s your postal code?', field: 'postal_code', placeholder: '1205', type: 'text', icon: 'fa-hashtag' },
-    { id: 'country', title: 'And finally, your country?', field: 'country', placeholder: 'Select country', type: 'select', icon: 'fa-globe' },
-    { id: 'complete', title: 'You\'re all set!', field: null, subtitle: 'Review and create your account' }
+  const fields = [
+    { id: 'first_name', label: 'First Name', required: true, errorMsg: 'First name is required' },
+    { id: 'last_name', label: 'Last Name', required: true, errorMsg: 'Last name is required' },
+    { id: 'email', label: 'Email Address', required: true, type: 'email', errorMsg: 'Valid email is required' },
+    { id: 'phone', label: 'Phone Number', required: true, errorMsg: 'Valid phone number is required' },
+    { id: 'password', label: 'Password', required: true, minLength: 8, errorMsg: 'Password must be at least 8 characters' },
+    { id: 'address_line1', label: 'Address Line 1', required: true, errorMsg: 'Address is required' },
+    { id: 'city', label: 'City', required: true, errorMsg: 'City is required' },
+    { id: 'state', label: 'State / Division', required: true, errorMsg: 'State is required' },
+    { id: 'postal_code', label: 'Postal Code', required: true, errorMsg: 'Postal code is required' },
+    { id: 'country', label: 'Country', required: true, errorMsg: 'Please select a country' }
   ];
 
   const countries = ['Bangladesh', 'India', 'United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Japan', 'Other'];
-
-  useEffect(() => {
-    if (step === 0) {
-      let i = 0;
-      setTypedText('');
-      const interval = setInterval(() => {
-        if (i <= fullGreeting.length) {
-          setTypedText(fullGreeting.slice(0, i));
-          i++;
-        } else {
-          clearInterval(interval);
-          setTimeout(() => setStep(1), 800);
-        }
-      }, 50);
-      return () => clearInterval(interval);
-    }
-  }, [step === 0]);
-
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-    setAnimationState('entering');
-    const timer = setTimeout(() => setAnimationState('active'), 50);
-    return () => clearTimeout(timer);
-  }, [step]);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  const validateField = (field, value) => {
-    if (!value.trim()) return 'This field is required';
-    if (field === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return 'Please enter a valid email';
-    if (field === 'password' && value.length < 8) return 'Password must be at least 8 characters';
-    if (field === 'phone' && !/^\+?[\d\s\-()]{7,20}$/.test(value)) return 'Enter a valid phone number';
+  const validateField = (id, value) => {
+    const field = fields.find(f => f.id === id);
+    if (!field) return null;
+    if (field.required && !value.trim()) return field.errorMsg;
+    if (field.type === 'email' && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return field.errorMsg;
+    if (field.minLength && value.length < field.minLength) return field.errorMsg;
+    if (id === 'phone' && value && !/^\+?[\d\s\-()]{7,20}$/.test(value)) return field.errorMsg;
     return null;
-  };
-
-  const handleNext = () => {
-    const currentStep = steps[step];
-    if (currentStep.field) {
-      const error = validateField(currentStep.field, formData[currentStep.field]);
-      if (error) {
-        setErrors({ [currentStep.field]: error });
-        return;
-      }
-      setErrors({});
-    }
-
-    if (step < steps.length - 1) {
-      setAnimationState('exiting');
-      setTimeout(() => setStep(prev => prev + 1), 400);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleNext();
-    }
   };
 
   const handleChange = (e) => {
     const { id, value } = e.target;
     setFormData(prev => ({ ...prev, [id]: value }));
-    if (errors[id]) {
-      setErrors(prev => ({ ...prev, [id]: null }));
+    if (touched[id]) {
+      setErrors(prev => ({ ...prev, [id]: validateField(id, value) }));
     }
   };
 
-  const handleSubmit = async () => {
+  const handleBlur = (e) => {
+    const { id, value } = e.target;
+    setTouched(prev => ({ ...prev, [id]: true }));
+    setErrors(prev => ({ ...prev, [id]: validateField(id, value) }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const allTouched = {};
+    fields.forEach(f => allTouched[f.id] = true);
+    setTouched(allTouched);
+
+    let hasError = false;
+    const newErrors = {};
+    fields.forEach(f => {
+      const err = validateField(f.id, formData[f.id]);
+      if (err) { newErrors[f.id] = err; hasError = true; }
+    });
+    setErrors(newErrors);
+
+    if (hasError) { showToast('Please fill in all required fields correctly', 'error'); return; }
+
     setLoading(true);
     try {
       const res = await fetch('/api/auth/signup', {
@@ -130,9 +92,9 @@ export default function SignUp() {
         body: JSON.stringify(formData)
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || 'Signup failed');
-      showToast('Welcome to JABIYEN! 🎉', 'success');
-      setTimeout(() => window.location.href = '/auth/signin', 2000);
+      if (!res.ok) throw new Error(result.message || result.error || 'Signup failed');
+      showToast('Account created successfully! Redirecting...', 'success');
+      setTimeout(() => window.location.href = '/auth/signin', 1500);
     } catch (err) {
       showToast(err.message || 'Something went wrong', 'error');
     } finally {
@@ -146,514 +108,150 @@ export default function SignUp() {
     window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
   };
 
-  const currentStepData = steps[step];
-  const progress = ((step) / (steps.length - 1)) * 100;
+  const getBorderColor = (id) => {
+    if (errors[id] && touched[id]) return '#ff3b30';
+    if (touched[id] && formData[id] && !errors[id]) return '#34c759';
+    return '#e5e5ea';
+  };
 
   return (
     <>
       <Head>
-        <title>Sign Up | JABIYEN</title>
-        <meta name="description" content="Create your JABIYEN account" />
+        <title>Sign Up | JAYENWARE</title>
+        <meta name="description" content="Create your JAYENWARE account" />
       </Head>
 
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 40%, #16213e 70%, #0a0a0a 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '20px',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        {/* Ambient Background Effects */}
-        <div style={{
-          position: 'absolute',
-          width: 600,
-          height: 600,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.08) 0%, transparent 70%)',
-          top: '10%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          animation: 'pulse 8s ease-in-out infinite'
-        }} />
-        <div style={{
-          position: 'absolute',
-          width: 400,
-          height: 400,
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(168,85,247,0.06) 0%, transparent 70%)',
-          bottom: '10%',
-          right: '20%',
-          animation: 'pulse 10s ease-in-out infinite alternate'
-        }} />
-
-        {/* Main Card */}
-        <div style={{
-          width: '100%',
-          maxWidth: 520,
-          background: 'rgba(255,255,255,0.03)',
-          backdropFilter: 'blur(30px)',
-          WebkitBackdropFilter: 'blur(30px)',
-          borderRadius: 32,
-          padding: '48px 40px',
-          border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 25px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.05) inset',
-          position: 'relative',
-          zIndex: 1
-        }}>
-          {/* Logo */}
-          <div style={{ textAlign: 'center', marginBottom: 32 }}>
-            <div style={{
-              width: 56,
-              height: 56,
-              borderRadius: 16,
-              background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.03))',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              margin: '0 auto 20px',
-              border: '1px solid rgba(255,255,255,0.1)'
-            }}>
-              <i className="fa-solid fa-crown" style={{ fontSize: 24, color: '#fff' }}></i>
-            </div>
-            
-            {/* Animated Title */}
-            <div style={{
-              minHeight: 40,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {step === 0 ? (
-                <h1 style={{
-                  fontFamily: "'Manrope', sans-serif",
-                  fontSize: 26,
-                  fontWeight: 700,
-                  color: '#fff',
-                  margin: 0,
-                  letterSpacing: '-0.02em',
-                  textAlign: 'center'
-                }}>
-                  {typedText}
-                  <span style={{
-                    animation: 'blink 0.8s infinite',
-                    color: 'rgba(255,255,255,0.5)',
-                    fontWeight: 300
-                  }}>|</span>
-                </h1>
-              ) : (
-                <div style={{
-                  opacity: animationState === 'entering' ? 0 : 1,
-                  transform: animationState === 'entering' ? 'translateY(10px)' : 'translateY(0)',
-                  transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}>
-                  <h2 style={{
-                    fontFamily: "'Manrope', sans-serif",
-                    fontSize: 24,
-                    fontWeight: 700,
-                    color: '#fff',
-                    margin: '0 0 6px',
-                    letterSpacing: '-0.02em'
-                  }}>
-                    {currentStepData.title}
-                  </h2>
-                  {currentStepData.subtitle && (
-                    <p style={{
-                      fontSize: 13,
-                      color: 'rgba(255,255,255,0.4)',
-                      margin: 0,
-                      fontFamily: "'Inter', sans-serif"
-                    }}>
-                      {currentStepData.subtitle}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+      <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
+        <div style={{ width: '100%', maxWidth: 440, background: '#fff', borderRadius: 24, padding: '40px 36px', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)' }}>
+          
+          {/* Logo + Title */}
+          <div style={{ textAlign: 'center', marginBottom: 36 }}>
+            <img src="/logo.png" alt="JAYENWARE" style={{ width: 52, height: 52, borderRadius: 14, margin: '0 auto 14px' }} />
+            <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 26, fontWeight: 800, color: '#1d1d1f', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Create your JABIYEN ID</h1>
+            <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>One account for everything JABIYEN</p>
           </div>
 
-          {/* Step Content */}
-          {step > 0 && step < steps.length - 1 && (
-            <div style={{
-              opacity: animationState === 'exiting' ? 0 : 1,
-              transform: animationState === 'exiting' ? 'translateY(-10px)' : 'translateY(0)',
-              transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+          {/* Social Sign-In Buttons */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
+            {/* Google */}
+            <button onClick={() => handleSocialSignIn('google')} style={{
+              width: '100%', padding: '13px 20px',
+              background: '#fff', color: '#1d1d1f',
+              border: '1.5px solid #e0e0e0', borderRadius: 14,
+              fontSize: 15, fontWeight: 500, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              fontFamily: "'Inter', sans-serif",
+              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
             }}>
-              <div style={{ position: 'relative', marginBottom: 24 }}>
-                <div style={{
-                  position: 'absolute',
-                  left: 20,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  zIndex: 2,
-                  color: 'rgba(255,255,255,0.3)',
-                  fontSize: 16
-                }}>
-                  <i className={`fa-solid ${currentStepData.icon}`}></i>
+              <svg width="20" height="20" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+
+            {/* Microsoft */}
+            <button onClick={() => handleSocialSignIn('azure')} style={{
+              width: '100%', padding: '13px 20px',
+              background: '#fff', color: '#1d1d1f',
+              border: '1.5px solid #e0e0e0', borderRadius: 14,
+              fontSize: 15, fontWeight: 500, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              fontFamily: "'Inter', sans-serif",
+              transition: 'all 0.2s ease',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+            }}>
+              <svg width="20" height="20" viewBox="0 0 21 21">
+                <rect x="1" y="1" width="9" height="9" fill="#f25022"/>
+                <rect x="11" y="1" width="9" height="9" fill="#7fba00"/>
+                <rect x="1" y="11" width="9" height="9" fill="#00a4ef"/>
+                <rect x="11" y="11" width="9" height="9" fill="#ffb900"/>
+              </svg>
+              <span>Continue with Microsoft</span>
+            </button>
+
+            {/* Continue with Email Button */}
+            <button onClick={() => setShowEmailForm(!showEmailForm)} style={{
+              width: '100%', padding: '13px 20px',
+              background: showEmailForm ? '#1d1d1f' : '#fff',
+              color: showEmailForm ? '#fff' : '#1d1d1f',
+              border: showEmailForm ? '1.5px solid #1d1d1f' : '1.5px solid #e0e0e0',
+              borderRadius: 14,
+              fontSize: 15, fontWeight: 500, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+              fontFamily: "'Inter', sans-serif",
+              transition: 'all 0.25s ease',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.04)'
+            }}>
+              <i className="fa-regular fa-envelope" style={{ fontSize: 18 }}></i>
+              <span>{showEmailForm ? 'Hide Sign Up Form' : 'Continue with Email'}</span>
+            </button>
+          </div>
+
+          {/* Email Form - Toggle */}
+          {showEmailForm && (
+            <div style={{
+              animation: 'slideDown 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+              borderTop: '1px solid #e5e5ea',
+              paddingTop: 24
+            }}>
+              <form onSubmit={handleSubmit} noValidate>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <FormField id="first_name" label="First Name" required value={formData.first_name} error={errors.first_name} touched={touched.first_name} onChange={handleChange} onBlur={handleBlur} placeholder="John" borderColor={getBorderColor('first_name')} />
+                  <FormField id="last_name" label="Last Name" required value={formData.last_name} error={errors.last_name} touched={touched.last_name} onChange={handleChange} onBlur={handleBlur} placeholder="Doe" borderColor={getBorderColor('last_name')} />
                 </div>
+                <FormField id="email" label="Email Address" required type="email" value={formData.email} error={errors.email} touched={touched.email} onChange={handleChange} onBlur={handleBlur} placeholder="you@example.com" borderColor={getBorderColor('email')} />
+                <FormField id="phone" label="Phone Number" required type="tel" value={formData.phone} error={errors.phone} touched={touched.phone} onChange={handleChange} onBlur={handleBlur} placeholder="+8801XXXXXXXXX" borderColor={getBorderColor('phone')} />
+                <FormField id="password" label="Password" required type="password" value={formData.password} error={errors.password} touched={touched.password} onChange={handleChange} onBlur={handleBlur} placeholder="Minimum 8 characters" borderColor={getBorderColor('password')} />
+                <FormField id="address_line1" label="Address Line 1" required value={formData.address_line1} error={errors.address_line1} touched={touched.address_line1} onChange={handleChange} onBlur={handleBlur} placeholder="House/Flat, Street" borderColor={getBorderColor('address_line1')} />
                 
-                {currentStepData.type === 'select' ? (
-                  <div style={{ position: 'relative' }}>
-                    <select
-                      id={currentStepData.field}
-                      value={formData[currentStepData.field]}
-                      onChange={handleChange}
-                      onKeyDown={handleKeyDown}
-                      ref={inputRef}
-                      style={{
-                        ...inputStyle,
-                        paddingLeft: 52,
-                        paddingRight: 48,
-                        cursor: 'pointer',
-                        appearance: 'none',
-                        WebkitAppearance: 'none',
-                        borderColor: errors[currentStepData.field] ? 'rgba(255,59,48,0.5)' : 'rgba(255,255,255,0.15)'
-                      }}
-                    >
-                      <option value="" style={{ background: '#1a1a2e', color: '#fff' }}>{currentStepData.placeholder}</option>
-                      {countries.map(c => (
-                        <option key={c} value={c} style={{ background: '#1a1a2e', color: '#fff' }}>{c}</option>
-                      ))}
-                    </select>
-                    <i className="fa-solid fa-chevron-down" style={{
-                      position: 'absolute',
-                      right: 20,
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      color: 'rgba(255,255,255,0.3)',
-                      pointerEvents: 'none'
-                    }}></i>
-                  </div>
-                ) : (
-                  <input
-                    ref={inputRef}
-                    id={currentStepData.field}
-                    type={currentStepData.type || 'text'}
-                    value={formData[currentStepData.field]}
-                    onChange={handleChange}
-                    onKeyDown={handleKeyDown}
-                    placeholder={currentStepData.placeholder}
-                    style={{
-                      ...inputStyle,
-                      paddingLeft: 52,
-                      borderColor: errors[currentStepData.field] ? 'rgba(255,59,48,0.5)' : 'rgba(255,255,255,0.15)'
-                    }}
-                  />
-                )}
-              </div>
-
-              {currentStepData.hint && (
-                <p style={{
-                  fontSize: 12,
-                  color: 'rgba(255,255,255,0.3)',
-                  marginTop: -16,
-                  marginBottom: 20,
-                  paddingLeft: 4,
-                  fontFamily: "'Inter', sans-serif"
-                }}>
-                  <i className="fa-solid fa-circle-info" style={{ marginRight: 6 }}></i>
-                  {currentStepData.hint}
-                </p>
-              )}
-
-              {errors[currentStepData.field] && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  fontSize: 13,
-                  color: '#ff6b6b',
-                  marginTop: -16,
-                  marginBottom: 16,
-                  paddingLeft: 4,
-                  fontFamily: "'Inter', sans-serif"
-                }}>
-                  <i className="fa-solid fa-circle-exclamation"></i>
-                  <span>{errors[currentStepData.field]}</span>
+                <div style={{ marginBottom: 18 }}>
+                  <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1d1d1f', marginBottom: 6 }}>Address Line 2 <span style={{ color: '#86868b', fontWeight: 400 }}>(optional)</span></label>
+                  <input id="address_line2" type="text" value={formData.address_line2} onChange={handleChange} placeholder="Landmark, Area" style={inputStyle} />
                 </div>
-              )}
 
-              <button
-                onClick={handleNext}
-                style={{
-                  width: '100%',
-                  padding: '16px 24px',
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))',
-                  color: '#fff',
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  border: '1px solid rgba(255,255,255,0.15)',
-                  borderRadius: 16,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 8,
-                  transition: 'all 0.3s ease',
-                  backdropFilter: 'blur(10px)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1))';
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255,255,255,0.15), rgba(255,255,255,0.05))';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                Continue
-                <i className="fa-solid fa-arrow-right" style={{ fontSize: 14 }}></i>
-              </button>
-            </div>
-          )}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <FormField id="city" label="City" required value={formData.city} error={errors.city} touched={touched.city} onChange={handleChange} onBlur={handleBlur} placeholder="Dhaka" borderColor={getBorderColor('city')} />
+                  <FormField id="state" label="State / Division" required value={formData.state} error={errors.state} touched={touched.state} onChange={handleChange} onBlur={handleBlur} placeholder="Dhaka Division" borderColor={getBorderColor('state')} />
+                </div>
 
-          {/* Complete Step */}
-          {step === steps.length - 1 && (
-            <div style={{
-              opacity: animationState === 'entering' ? 0 : 1,
-              transform: animationState === 'entering' ? 'translateY(10px)' : 'translateY(0)',
-              transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-            }}>
-              <div style={{
-                background: 'rgba(255,255,255,0.04)',
-                borderRadius: 20,
-                padding: '24px',
-                marginBottom: 24,
-                border: '1px solid rgba(255,255,255,0.06)'
-              }}>
-                {[
-                  { label: 'Name', value: `${formData.first_name} ${formData.last_name}`, icon: 'fa-user' },
-                  { label: 'Email', value: formData.email, icon: 'fa-envelope' },
-                  { label: 'Phone', value: formData.phone, icon: 'fa-phone' },
-                  { label: 'Address', value: `${formData.address_line1}, ${formData.city}, ${formData.state} ${formData.postal_code}, ${formData.country}`, icon: 'fa-location-dot' }
-                ].map((item, i) => (
-                  <div key={i} style={{
-                    display: 'flex',
-                    gap: 12,
-                    padding: '12px 0',
-                    borderBottom: i < 3 ? '1px solid rgba(255,255,255,0.05)' : 'none'
-                  }}>
-                    <i className={`fa-solid ${item.icon}`} style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14, marginTop: 2 }}></i>
-                    <div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 2 }}>{item.label}</div>
-                      <div style={{ fontSize: 14, color: '#fff', fontFamily: "'Inter', sans-serif" }}>{item.value}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <FormField id="postal_code" label="Postal Code" required value={formData.postal_code} error={errors.postal_code} touched={touched.postal_code} onChange={handleChange} onBlur={handleBlur} placeholder="1205" borderColor={getBorderColor('postal_code')} />
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1d1d1f', marginBottom: 6 }}>Country <span style={{ color: '#ff3b30' }}>*</span></label>
+                    <div style={{ position: 'relative' }}>
+                      <select id="country" value={formData.country} onChange={handleChange} onBlur={handleBlur} style={{ ...inputStyle, paddingRight: 40, cursor: 'pointer', borderColor: getBorderColor('country') }}>
+                        <option value="">Select country</option>
+                        {countries.map(c => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                      <i className="fa-solid fa-chevron-down" style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', color: '#86868b', pointerEvents: 'none', fontSize: 14 }}></i>
                     </div>
+                    {errors.country && touched.country && <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#ff3b30', marginTop: 4 }}><i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i><span>{errors.country}</span></div>}
                   </div>
-                ))}
-              </div>
+                </div>
 
-              <button
-                onClick={handleSubmit}
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '18px 24px',
-                  background: loading ? 'rgba(255,255,255,0.05)' : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                  color: '#fff',
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 17,
-                  fontWeight: 700,
-                  border: 'none',
-                  borderRadius: 16,
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  transition: 'all 0.3s ease',
-                  boxShadow: loading ? 'none' : '0 10px 40px rgba(99,102,241,0.3)'
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 15px 50px rgba(99,102,241,0.4)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 10px 40px rgba(99,102,241,0.3)';
-                  }
-                }}
-              >
-                {loading ? (
-                  <span style={{
-                    width: 22,
-                    height: 22,
-                    border: '2px solid rgba(255,255,255,0.2)',
-                    borderTopColor: '#fff',
-                    borderRadius: '50%',
-                    animation: 'spin 0.7s linear infinite'
-                  }} />
-                ) : (
-                  <>
-                    <i className="fa-solid fa-sparkles" style={{ fontSize: 16 }}></i>
-                    Create Account
-                  </>
-                )}
-              </button>
-
-              <button
-                onClick={() => setStep(prev => prev - 1)}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  background: 'transparent',
-                  color: 'rgba(255,255,255,0.5)',
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  border: 'none',
-                  cursor: 'pointer',
-                  marginTop: 12,
-                  transition: 'color 0.3s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.color = '#fff'}
-                onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.5)'}
-              >
-                <i className="fa-solid fa-arrow-left" style={{ marginRight: 8 }}></i>
-                Go back and edit
-              </button>
-            </div>
-          )}
-
-          {/* Progress Bar */}
-          <div style={{
-            marginTop: 32,
-            height: 3,
-            background: 'rgba(255,255,255,0.06)',
-            borderRadius: 2,
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              height: '100%',
-              background: 'linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7)',
-              borderRadius: 2,
-              width: `${progress}%`,
-              transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
-            }} />
-          </div>
-          <div style={{
-            textAlign: 'center',
-            fontSize: 11,
-            color: 'rgba(255,255,255,0.2)',
-            marginTop: 8,
-            fontFamily: "'Inter', sans-serif"
-          }}>
-            Step {step} of {steps.length - 1}
-          </div>
-
-          {/* Social Sign-In (Only on first step) */}
-          {step === 0 && (
-            <div style={{
-              marginTop: 32,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 12
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 16,
-                marginBottom: 4
-              }}>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', fontFamily: "'Inter', sans-serif", textTransform: 'uppercase', letterSpacing: '0.05em' }}>Or continue with</span>
-                <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.06)' }} />
-              </div>
-              
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-                <button onClick={() => handleSocialSignIn('google')} style={{
-                  padding: '13px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 14,
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-                >
-                  <svg width="18" height="18" viewBox="0 0 24 24">
-                    <path fill="#fff" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-                    <path fill="#fff" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" opacity="0.7"/>
-                    <path fill="#fff" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" opacity="0.5"/>
-                    <path fill="#fff" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" opacity="0.3"/>
-                  </svg>
-                  Google
+                <button type="submit" disabled={loading} style={{ width: '100%', padding: '14px 24px', background: loading ? '#a1a1a6' : '#1d1d1f', color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600, border: 'none', borderRadius: 12, cursor: loading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 8 }}>
+                  {loading ? <span style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} /> : 'Create Account'}
                 </button>
-                <button onClick={() => handleSocialSignIn('azure')} style={{
-                  padding: '13px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 14,
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 10,
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 14,
-                  fontWeight: 500,
-                  transition: 'all 0.3s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.08)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.04)'}
-                >
-                  <i className="fa-brands fa-microsoft" style={{ fontSize: 18 }}></i>
-                  Microsoft
-                </button>
-              </div>
+              </form>
             </div>
           )}
 
           {/* Footer */}
-          <div style={{ textAlign: 'center', marginTop: 28 }}>
-            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.3)', margin: 0, fontFamily: "'Inter', sans-serif" }}>
-              Already have an account?{' '}
-              <Link href="/auth/signin" style={{ color: '#818cf8', textDecoration: 'none', fontWeight: 600 }}>
-                Sign in
-              </Link>
+          <div style={{ textAlign: 'center', marginTop: 24 }}>
+            <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>
+              Already have an account? <Link href="/auth/signin" style={{ color: '#007aff', textDecoration: 'none', fontWeight: 600 }}>Sign in</Link>
             </p>
           </div>
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
-        <div style={{
-          position: 'fixed',
-          top: 24,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: toast.type === 'error' ? 'rgba(255,59,48,0.9)' : 'rgba(34,197,94,0.9)',
-          backdropFilter: 'blur(20px)',
-          color: '#fff',
-          padding: '14px 24px',
-          borderRadius: 50,
-          fontSize: 14,
-          fontWeight: 500,
-          zIndex: 999,
-          boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 10,
-          fontFamily: "'Inter', sans-serif",
-          animation: 'slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-        }}>
-          <i className={`fa-solid fa-${toast.type === 'error' ? 'circle-exclamation' : 'circle-check'}`}></i>
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
           <span>{toast.message}</span>
         </div>
       )}
@@ -661,18 +259,28 @@ export default function SignUp() {
       <style jsx>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes slideDown {
-          from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
-          to { opacity: 1; transform: translateX(-50%) translateY(0); }
-        }
-        @keyframes pulse {
-          0%, 100% { opacity: 0.5; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-        }
-        @keyframes blink {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0; }
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
     </>
   );
 }
+
+function FormField({ id, label, required, type = 'text', value, error, touched, onChange, onBlur, placeholder, borderColor }) {
+  return (
+    <div style={{ marginBottom: 18 }}>
+      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1d1d1f', marginBottom: 6 }} htmlFor={id}>
+        {label} {required && <span style={{ color: '#ff3b30', marginLeft: 2 }}>*</span>}
+      </label>
+      <input id={id} type={type} value={value} onChange={onChange} onBlur={onBlur} placeholder={placeholder} style={{ ...inputStyle, borderColor }} />
+      {error && touched && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#ff3b30', marginTop: 4 }}>
+          <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i>
+          <span>{error}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
