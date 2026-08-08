@@ -36,7 +36,6 @@ export default function Account() {
   const [qrVerifying, setQrVerifying] = useState(false);
   const [qrVerified, setQrVerified] = useState(false);
   const [qrGenerated, setQrGenerated] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState(null);
   const [qrError, setQrError] = useState(null);
   const [cardImageUrl, setCardImageUrl] = useState(null);
   const qrContainerRef = useRef(null);
@@ -60,14 +59,11 @@ export default function Account() {
         if (hash && hash.includes('access_token')) {
           const params = new URLSearchParams(hash.substring(1));
           const accessToken = params.get('access_token');
-          const refreshToken = params.get('refresh_token');
-          const expiresAt = params.get('expires_at');
-          
           if (accessToken) {
             localStorage.setItem('jayenware_session', JSON.stringify({
               access_token: accessToken,
-              refresh_token: refreshToken,
-              expires_at: expiresAt
+              refresh_token: params.get('refresh_token'),
+              expires_at: params.get('expires_at')
             }));
             window.history.replaceState(null, '', window.location.pathname);
             return accessToken;
@@ -104,7 +100,6 @@ export default function Account() {
       const result = await res.json();
       const profile = result.profile || {};
       const user = result.user || {};
-
       const metadata = user.user_metadata || {};
       const appMetadata = user.app_metadata || {};
 
@@ -132,14 +127,12 @@ export default function Account() {
 
   useEffect(() => { 
     fetchUserData();
-    // Load QR code library dynamically
     if (typeof window !== 'undefined' && !window.QRCode) {
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
       script.async = true;
       document.head.appendChild(script);
     }
-    // Load html2canvas for card download
     if (typeof window !== 'undefined' && !window.html2canvas) {
       const script = document.createElement('script');
       script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
@@ -161,11 +154,7 @@ export default function Account() {
       const res = await fetch('/api/user/profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          phone: userData.phone
-        })
+        body: JSON.stringify({ first_name: userData.first_name, last_name: userData.last_name, phone: userData.phone })
       });
       if (!res.ok) throw new Error();
       showToast('Profile updated successfully!');
@@ -184,12 +173,9 @@ export default function Account() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          address_line1: userData.address_line1,
-          address_line2: userData.address_line2,
-          city: userData.city,
-          state: userData.state,
-          postal_code: userData.postal_code,
-          country: userData.country
+          address_line1: userData.address_line1, address_line2: userData.address_line2,
+          city: userData.city, state: userData.state,
+          postal_code: userData.postal_code, country: userData.country
         })
       });
       if (!res.ok) throw new Error();
@@ -216,7 +202,6 @@ export default function Account() {
   const fullName = `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim() || userData?.email?.split('@')[0] || 'User';
   const username = userData?.email?.split('@')[0] || 'user';
 
-  // Password verification
   const verifyPasswordForQR = async () => {
     if (!qrPassword) {
       setQrError('Please enter your password');
@@ -231,10 +216,7 @@ export default function Account() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: userData.email, 
-          password: qrPassword 
-        })
+        body: JSON.stringify({ email: userData.email, password: qrPassword })
       });
 
       const result = await res.json();
@@ -257,12 +239,8 @@ export default function Account() {
     }
   };
 
-  // Generate QR Code inside card
   const generateQRCode = () => {
-    const qrData = JSON.stringify({
-      email: userData.email,
-      password: qrPassword
-    });
+    const qrData = JSON.stringify({ email: userData.email, password: qrPassword });
 
     if (qrContainerRef.current) {
       qrContainerRef.current.innerHTML = '';
@@ -272,35 +250,32 @@ export default function Account() {
       if (qrContainerRef.current && window.QRCode) {
         new window.QRCode(qrContainerRef.current, {
           text: qrData,
-          width: 140,
-          height: 140,
-          colorDark: '#1d1d1f',
+          width: 130,
+          height: 130,
+          colorDark: '#000000',
           colorLight: '#ffffff',
           correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 2
         });
 
         setTimeout(() => {
           setQrGenerated(true);
-          // Generate card image after QR is ready
-          setTimeout(() => {
-            captureCard();
-          }, 800);
+          setTimeout(() => { captureCard(); }, 800);
         }, 500);
       }
     }, 100);
   };
 
-  // Capture card as image
   const captureCard = async () => {
     if (!cardRef.current) return;
     
     if (window.html2canvas) {
       try {
         const canvas = await window.html2canvas(cardRef.current, {
-          scale: 3,
+          scale: 4,
           backgroundColor: '#ffffff',
           useCORS: true,
-          allowTaint: true
+          allowTaint: true,
+          logging: false
         });
         const imgUrl = canvas.toDataURL('image/png');
         setCardImageUrl(imgUrl);
@@ -310,10 +285,8 @@ export default function Account() {
     }
   };
 
-  // Download card
   const downloadCard = () => {
     if (!cardImageUrl) return;
-
     const link = document.createElement('a');
     link.download = `${username}-jabiyen-auth.png`;
     link.href = cardImageUrl;
@@ -323,14 +296,12 @@ export default function Account() {
     showToast('Card downloaded successfully!');
   };
 
-  // Reset
   const handlePanelSwitch = (panel) => {
     setCurrentPanel(panel);
     if (panel !== 'card-auth') {
       setQrPassword('');
       setQrVerified(false);
       setQrGenerated(false);
-      setQrDataUrl(null);
       setQrError(null);
       setCardImageUrl(null);
       if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
@@ -509,53 +480,40 @@ export default function Account() {
               </div>
             )}
 
-            {/* ===== JABIYEN Card Auth Section ===== */}
+            {/* ===== JABIYEN Card Auth ===== */}
             {currentPanel === 'card-auth' && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
-                    width: 64, height: 64, 
-                    background: 'linear-gradient(135deg, #1d1d1f 0%, #3a3a3a 100%)',
-                    borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto 16px', color: '#fff', fontSize: 24
+                    width: 56, height: 56, 
+                    background: '#1d1d1f',
+                    borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 16px'
                   }}>
-                    <img src="/logo.png" alt="J" style={{ width: 32, height: 32, borderRadius: 6 }} />
+                    <img src="/logo.png" alt="J" style={{ width: 28, height: 28, borderRadius: 4 }} />
                   </div>
                   <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>JABIYEN Card Auth</h2>
-                  <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>
-                    Generate your personalized JABIYEN card with QR code for instant login
+                  <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>
+                    Generate your secure JABIYEN card for instant QR login
                   </p>
                 </div>
 
-                {/* Password Input */}
                 {!qrVerified && (
                   <div style={{ maxWidth: 400, margin: '0 auto' }}>
                     <div style={{ marginBottom: 20 }}>
-                      <label style={{ 
-                        display: 'block', fontSize: 13, fontWeight: 600, 
-                        color: '#1d1d1f', marginBottom: 8 
-                      }}>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#1d1d1f', marginBottom: 8 }}>
                         Verify Password <span style={{ color: '#ff3b30' }}>*</span>
                       </label>
                       <div style={{ position: 'relative' }}>
                         <input 
-                          type="password" 
-                          value={qrPassword}
-                          onChange={(e) => {
-                            setQrPassword(e.target.value);
-                            setQrError(null);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') verifyPasswordForQR();
-                          }}
-                          placeholder="Enter your password to generate card"
+                          type="password" value={qrPassword}
+                          onChange={(e) => { setQrPassword(e.target.value); setQrError(null); }}
+                          onKeyDown={(e) => { if (e.key === 'Enter') verifyPasswordForQR(); }}
+                          placeholder="Enter your password"
                           style={{
-                            ...inputStyle,
-                            padding: '14px 16px',
-                            paddingRight: 50,
+                            ...inputStyle, padding: '14px 16px', paddingRight: 48,
                             borderColor: qrError ? '#ff3b30' : '#e5e5ea',
-                            fontSize: 15,
-                            borderRadius: 12
+                            fontSize: 15, borderRadius: 12
                           }}
                         />
                         <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#86868b' }}>
@@ -563,16 +521,12 @@ export default function Account() {
                         </div>
                       </div>
                       {qrError && (
-                        <div style={{ 
-                          display: 'flex', alignItems: 'center', gap: 6, 
-                          fontSize: 12, color: '#ff3b30', marginTop: 6 
-                        }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#ff3b30', marginTop: 6 }}>
                           <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i>
                           <span>{qrError}</span>
                         </div>
                       )}
                     </div>
-
                     <button 
                       onClick={verifyPasswordForQR}
                       disabled={qrVerifying || !qrPassword}
@@ -582,18 +536,12 @@ export default function Account() {
                         color: '#fff', fontFamily: "'Inter', sans-serif",
                         fontSize: 15, fontWeight: 600, border: 'none',
                         borderRadius: 12, cursor: qrVerifying || !qrPassword ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                        transition: 'all 0.3s ease'
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
                       }}
                     >
                       {qrVerifying ? (
                         <>
-                          <span style={{ 
-                            width: 20, height: 20, 
-                            border: '2px solid rgba(255,255,255,0.3)', 
-                            borderTopColor: '#fff', borderRadius: '50%', 
-                            animation: 'spin 0.7s linear infinite' 
-                          }} />
+                          <span style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
                           Verifying...
                         </>
                       ) : (
@@ -606,70 +554,61 @@ export default function Account() {
                   </div>
                 )}
 
-                {/* Card Display */}
                 {qrVerified && (
                   <div style={{ animation: 'fadeInUp 0.6s ease' }}>
-                    {/* The Card */}
-                    <div style={{ 
-                      display: 'flex', justifyContent: 'center', marginBottom: 24 
-                    }}>
+                    {/* ======== PAYMENT-CARD STYLE DESIGN ======== */}
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
                       <div 
                         ref={cardRef}
                         style={{
-                          width: 400,
+                          width: 480,
                           background: '#ffffff',
-                          borderRadius: 20,
                           overflow: 'hidden',
-                          boxShadow: '0 8px 40px rgba(0,0,0,0.12)',
-                          border: '1px solid #e5e5ea'
+                          border: '1px solid #d4d4d8',
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
                         }}
                       >
-                        {/* Card Header */}
+                        {/* ---- CARD TOP STRIP ---- */}
                         <div style={{
-                          background: '#1d1d1f',
-                          padding: '20px 24px',
+                          background: '#18181b',
+                          padding: '18px 24px',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'space-between'
                         }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <img src="/logo.png" alt="J" style={{ width: 28, height: 28, borderRadius: 6 }} />
-                            <span style={{ color: '#fff', fontWeight: 700, fontSize: 16, fontFamily: "'Manrope', sans-serif", letterSpacing: '-0.3px' }}>
+                            <img src="/logo.png" alt="J" style={{ width: 26, height: 26, borderRadius: 4 }} />
+                            <span style={{ color: '#fff', fontWeight: 800, fontSize: 16, fontFamily: "'Manrope', sans-serif", letterSpacing: '-0.3px' }}>
                               JABIYEN
                             </span>
                           </div>
-                          <span style={{ 
-                            color: 'rgba(255,255,255,0.7)', 
-                            fontSize: 10, 
-                            fontWeight: 500,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.08em'
-                          }}>
-                            Card Auth
-                          </span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                              Auth Card
+                            </span>
+                            <div style={{ width: 28, height: 20, background: 'linear-gradient(135deg, #f4b731, #e8961e)', borderRadius: 3 }} />
+                          </div>
                         </div>
 
-                        {/* Card Body */}
-                        <div style={{ padding: '24px' }}>
-                          {/* User Info Row */}
+                        {/* ---- CARD BODY ---- */}
+                        <div style={{ padding: '24px 28px' }}>
+                          {/* Name + Email Row */}
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: 14,
-                            marginBottom: 20,
+                            marginBottom: 22,
                             paddingBottom: 20,
-                            borderBottom: '1px solid #f0f0f0'
+                            borderBottom: '1px solid #e4e4e7'
                           }}>
-                            {/* Avatar */}
                             <div style={{
-                              width: 48, height: 48,
-                              borderRadius: '50%',
-                              background: 'linear-gradient(135deg, #007aff, #5856d6)',
+                              width: 44, height: 44,
+                              background: '#18181b',
                               color: '#fff',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
-                              fontSize: 18,
+                              fontSize: 16,
                               fontWeight: 700,
                               flexShrink: 0,
                               fontFamily: "'Manrope', sans-serif"
@@ -678,14 +617,14 @@ export default function Account() {
                             </div>
                             <div style={{ flex: 1, minWidth: 0 }}>
                               <div style={{ 
-                                fontSize: 15, fontWeight: 700, color: '#1d1d1f',
+                                fontSize: 15, fontWeight: 700, color: '#18181b',
                                 fontFamily: "'Manrope', sans-serif",
                                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                               }}>
                                 {fullName}
                               </div>
                               <div style={{ 
-                                fontSize: 12, color: '#86868b', marginTop: 2,
+                                fontSize: 12, color: '#71717a', marginTop: 2,
                                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
                               }}>
                                 {userData.email}
@@ -693,60 +632,56 @@ export default function Account() {
                             </div>
                           </div>
 
-                          {/* Details Grid */}
+                          {/* Info Grid */}
                           <div style={{
                             display: 'grid',
                             gridTemplateColumns: '1fr 1fr',
-                            gap: '12px 20px',
-                            marginBottom: 20
+                            gap: '14px 28px',
+                            marginBottom: 22
                           }}>
                             {userData.phone && (
                               <div>
-                                <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#a1a1a6', marginBottom: 3 }}>Phone</div>
-                                <div style={{ fontSize: 12, fontWeight: 500, color: '#1d1d1f' }}>{userData.phone}</div>
+                                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a1a1aa', marginBottom: 4 }}>Phone</div>
+                                <div style={{ fontSize: 12, fontWeight: 500, color: '#18181b', fontFamily: 'monospace' }}>{userData.phone}</div>
                               </div>
                             )}
-                            {userData.city && (
+                            {(userData.city || userData.state) && (
                               <div>
-                                <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#a1a1a6', marginBottom: 3 }}>Location</div>
-                                <div style={{ fontSize: 12, fontWeight: 500, color: '#1d1d1f' }}>
-                                  {[userData.city, userData.state].filter(Boolean).join(', ')}
+                                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a1a1aa', marginBottom: 4 }}>Location</div>
+                                <div style={{ fontSize: 12, fontWeight: 500, color: '#18181b' }}>
+                                  {[userData.city, userData.state].filter(Boolean).join(', ') || '—'}
                                 </div>
                               </div>
                             )}
                             {userData.country && (
                               <div>
-                                <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#a1a1a6', marginBottom: 3 }}>Country</div>
-                                <div style={{ fontSize: 12, fontWeight: 500, color: '#1d1d1f' }}>{userData.country}</div>
+                                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a1a1aa', marginBottom: 4 }}>Country</div>
+                                <div style={{ fontSize: 12, fontWeight: 500, color: '#18181b' }}>{userData.country}</div>
                               </div>
                             )}
                             <div>
-                              <div style={{ fontSize: 9, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: '#a1a1a6', marginBottom: 3 }}>Member Since</div>
-                              <div style={{ fontSize: 12, fontWeight: 500, color: '#1d1d1f' }}>{formatDate(userData.created_at)}</div>
+                              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.1em', color: '#a1a1aa', marginBottom: 4 }}>Member Since</div>
+                              <div style={{ fontSize: 12, fontWeight: 500, color: '#18181b' }}>{formatDate(userData.created_at)}</div>
                             </div>
                           </div>
 
-                          {/* QR Code Section */}
+                          {/* QR Section */}
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            gap: 20,
-                            padding: '20px',
-                            background: '#f8f9fa',
-                            borderRadius: 14,
-                            border: '1px dashed #d1d5db'
+                            gap: 24,
+                            padding: '18px 20px',
+                            background: '#f4f4f5',
+                            border: '1px solid #e4e4e7'
                           }}>
-                            {/* QR Code */}
                             <div style={{
                               width: 100, height: 100,
                               background: '#fff',
-                              borderRadius: 12,
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               flexShrink: 0,
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                              overflow: 'hidden'
+                              border: '1px solid #d4d4d8'
                             }}>
                               <div ref={qrContainerRef} style={{ 
                                 width: 100, height: 100,
@@ -755,71 +690,57 @@ export default function Account() {
                                 {!qrGenerated && (
                                   <div style={{ 
                                     width: 24, height: 24,
-                                    border: '2px solid #e5e5ea',
-                                    borderTopColor: '#1d1d1f',
+                                    border: '2px solid #e4e4e7',
+                                    borderTopColor: '#18181b',
                                     borderRadius: '50%',
                                     animation: 'spin 0.7s linear infinite'
                                   }} />
                                 )}
                               </div>
                             </div>
-                            {/* QR Info */}
                             <div style={{ flex: 1 }}>
-                              <div style={{ fontSize: 12, fontWeight: 700, color: '#1d1d1f', marginBottom: 4 }}>
-                                Scan to Login
+                              <div style={{ fontSize: 11, fontWeight: 700, color: '#18181b', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                Scan to Authenticate
                               </div>
-                              <div style={{ fontSize: 11, color: '#86868b', lineHeight: 1.4 }}>
-                                Use this QR code with JABIYEN Card Auth to sign in instantly
-                              </div>
-                              <div style={{ 
-                                marginTop: 8,
-                                display: 'inline-block',
-                                fontSize: 9, fontWeight: 600,
-                                color: '#34c759', 
-                                background: '#e8f5e9',
-                                padding: '3px 8px',
-                                borderRadius: 4,
-                                letterSpacing: '0.04em'
-                              }}>
-                                ● ACTIVE
+                              <div style={{ fontSize: 11, color: '#71717a', lineHeight: 1.5 }}>
+                                Point your camera at this QR code with JABIYEN Card Auth for instant secure login.
                               </div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Card Footer */}
+                        {/* ---- CARD FOOTER ---- */}
                         <div style={{
                           background: '#fafafa',
-                          padding: '12px 24px',
+                          padding: '12px 28px',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          borderTop: '1px solid #f0f0f0'
+                          borderTop: '1px solid #e4e4e7'
                         }}>
-                          <span style={{ fontSize: 9, color: '#a1a1a6', fontWeight: 500, letterSpacing: '0.04em' }}>
+                          <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, letterSpacing: '0.06em' }}>
                             JABIYEN CARD AUTH • {new Date().getFullYear()}
                           </span>
-                          <span style={{ fontSize: 9, color: '#a1a1a6', fontWeight: 500 }}>
+                          <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, fontFamily: 'monospace' }}>
                             @{username}
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Download Button */}
+                    {/* Buttons */}
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
                       <button
                         onClick={downloadCard}
                         disabled={!qrGenerated || !cardImageUrl}
                         style={{
                           padding: '14px 28px',
-                          background: (qrGenerated && cardImageUrl) ? '#1d1d1f' : '#a1a1a6',
+                          background: (qrGenerated && cardImageUrl) ? '#18181b' : '#a1a1a6',
                           color: '#fff', fontFamily: "'Inter', sans-serif",
                           fontSize: 15, fontWeight: 600, border: 'none',
                           borderRadius: 12, cursor: (qrGenerated && cardImageUrl) ? 'pointer' : 'not-allowed',
                           display: 'flex', alignItems: 'center', gap: 8,
-                          transition: 'all 0.2s ease',
-                          boxShadow: (qrGenerated && cardImageUrl) ? '0 4px 15px rgba(0,0,0,0.15)' : 'none'
+                          boxShadow: (qrGenerated && cardImageUrl) ? '0 4px 16px rgba(0,0,0,0.2)' : 'none'
                         }}
                       >
                         <i className="fa-solid fa-download"></i>
@@ -827,22 +748,15 @@ export default function Account() {
                       </button>
                       <button
                         onClick={() => {
-                          setQrVerified(false);
-                          setQrGenerated(false);
-                          setQrPassword('');
-                          setQrDataUrl(null);
-                          setQrError(null);
-                          setCardImageUrl(null);
+                          setQrVerified(false); setQrGenerated(false);
+                          setQrPassword(''); setQrError(null); setCardImageUrl(null);
                           if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
                         }}
                         style={{
-                          padding: '14px 20px',
-                          background: '#f5f5f7', color: '#1d1d1f',
-                          fontFamily: "'Inter', sans-serif",
-                          fontSize: 15, fontWeight: 600, border: 'none',
-                          borderRadius: 12, cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          transition: 'all 0.2s ease'
+                          padding: '14px 20px', background: '#f4f4f5', color: '#18181b',
+                          fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600,
+                          border: 'none', borderRadius: 12, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: 8
                         }}
                       >
                         <i className="fa-solid fa-rotate"></i>
@@ -850,26 +764,22 @@ export default function Account() {
                       </button>
                     </div>
 
-                    <p style={{ textAlign: 'center', fontSize: 12, color: '#86868b', marginTop: 12 }}>
-                      File: <strong style={{ color: '#1d1d1f' }}>{username}-jabiyen-auth.png</strong>
+                    <p style={{ textAlign: 'center', fontSize: 12, color: '#71717a', marginTop: 12 }}>
+                      File: <strong style={{ color: '#18181b' }}>{username}-jabiyen-auth.png</strong>
                     </p>
                   </div>
                 )}
 
                 {/* Security Note */}
                 <div style={{
-                  marginTop: qrVerified ? 24 : 32,
-                  padding: '14px 16px',
-                  background: '#fff8e1', borderRadius: 12,
-                  border: '1px solid #ffe082',
-                  display: 'flex', gap: 10,
-                  maxWidth: 500, margin: qrVerified ? '24px auto 0' : '32px auto 0'
+                  marginTop: 32, padding: '14px 16px',
+                  background: '#fef3c7', borderRadius: 12,
+                  border: '1px solid #fcd34d', display: 'flex', gap: 10,
+                  maxWidth: 520, margin: '32px auto 0'
                 }}>
-                  <i className="fa-solid fa-triangle-exclamation" style={{ 
-                    color: '#f57c00', fontSize: 16, marginTop: 1, flexShrink: 0 
-                  }}></i>
-                  <div style={{ fontSize: 12, color: '#795548', lineHeight: 1.5 }}>
-                    <strong style={{ color: '#e65100' }}>Security Note:</strong> Your JABIYEN card contains encrypted login credentials. Keep it secure and do not share it with anyone. The QR code can be used for instant authentication.
+                  <i className="fa-solid fa-triangle-exclamation" style={{ color: '#d97706', fontSize: 16, marginTop: 1, flexShrink: 0 }}></i>
+                  <div style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
+                    <strong style={{ color: '#b45309' }}>Security Note:</strong> Your JABIYEN card contains encrypted login credentials. Keep it secure. The QR code provides instant authentication.
                   </div>
                 </div>
               </div>
@@ -879,7 +789,7 @@ export default function Account() {
       </div>
 
       {toast && (
-        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#dc2626' : '#18181b', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
           <span>{toast.message}</span>
         </div>
@@ -888,12 +798,12 @@ export default function Account() {
       {showLogoutModal && (
         <div onClick={() => setShowLogoutModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', textAlign: 'center', maxWidth: 420, width: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ width: 80, height: 80, background: '#fff0ef', color: '#ff3b30', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}><i className="fa-solid fa-power-off"></i></div>
+            <div style={{ width: 80, height: 80, background: '#fef2f2', color: '#dc2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}><i className="fa-solid fa-power-off"></i></div>
             <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 24, fontWeight: 800, margin: '0 0 12px' }}>Sign Out</h2>
-            <p style={{ fontSize: 15, color: '#86868b', margin: '0 0 32px', lineHeight: 1.5 }}>Are you sure you want to sign out?</p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button onClick={() => setShowLogoutModal(false)} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#f5f5f7', color: '#1d1d1f' }}>Cancel</button>
-              <button onClick={handleLogout} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#ff3b30', color: '#fff' }}>Yes, Sign Out</button>
+            <p style={{ fontSize: 15, color: '#71717a', margin: '0 0 32px' }}>Are you sure you want to sign out?</p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setShowLogoutModal(false)} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#f4f4f5', color: '#18181b' }}>Cancel</button>
+              <button onClick={handleLogout} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#dc2626', color: '#fff' }}>Sign Out</button>
             </div>
           </div>
         </div>
