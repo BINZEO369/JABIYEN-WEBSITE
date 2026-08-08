@@ -19,97 +19,60 @@ function formatDate(dateString) {
   } catch { return dateString; }
 }
 
-function useWindowSize() {
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  useEffect(() => {
-    function handleResize() {
-      setSize({ width: window.innerWidth, height: window.innerHeight });
-    }
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  return size;
-}
-
 // ===================== JABIYEN CARD COMPONENT =====================
-function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef, qrGenerated, isMobile }) {
-  const cardWidth = isMobile ? 340 : 560;
-  const cardHeight = isMobile ? 200 : 320;
-  const headerHeight = isMobile ? 48 : 76;
-  const bodyPadding = isMobile ? '14px 18px' : '22px 30px';
-  const bodyHeight = isMobile ? 120 : 200;
-  const footerHeight = isMobile ? 24 : 32;
-  const avatarSize = isMobile ? 32 : 48;
-  const avatarFontSize = isMobile ? 12 : 17;
-  const avatarRadius = isMobile ? 7 : 10;
-  const nameFontSize = isMobile ? 12 : 16;
-  const emailFontSize = isMobile ? 9 : 11;
-  const logoSize = isMobile ? 22 : 32;
-  const logoRadius = isMobile ? 4 : 6;
-  const brandFontSize = isMobile ? 14 : 20;
-  const badgeFontSize = isMobile ? 7 : 10;
-  const qrSize = isMobile ? 64 : 100;
-  const qrInnerSize = isMobile ? 56 : 92;
-  const labelFontSize = isMobile ? 6 : 8;
-  const valueFontSize = isMobile ? 9 : 12;
-  const gridGap = isMobile ? '6px 14px' : '10px 22px';
-  const sectionGap = isMobile ? 16 : 28;
-
+function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef, qrGenerated }) {
   return (
     <div style={{
-      width: cardWidth,
-      minWidth: cardWidth,
-      maxWidth: cardWidth,
-      height: cardHeight,
-      minHeight: cardHeight,
-      maxHeight: cardHeight,
+      width: 600,
+      minWidth: 600,
+      maxWidth: 600,
+      height: 340,
+      minHeight: 340,
+      maxHeight: 340,
       background: '#ffffff',
       position: 'relative',
       overflow: 'hidden',
-      borderRadius: 14,
+      borderRadius: 16,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       boxSizing: 'border-box',
-      boxShadow: '0 6px 32px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04)',
-      margin: isMobile ? '6px' : '12px'
+      boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+      margin: '12px'
     }}>
       {/* ===== TOP DARK HEADER ===== */}
       <div style={{
         width: '100%',
-        height: headerHeight,
+        height: 80,
         background: '#0f0f0f',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: isMobile ? '0 16px' : '0 30px',
+        padding: '0 32px',
         boxSizing: 'border-box',
-        borderRadius: '14px 14px 0 0'
+        borderRadius: '16px 16px 0 0'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img 
             src="/logo.png" 
             alt="J" 
-            style={{ width: logoSize, height: logoSize, borderRadius: logoRadius, flexShrink: 0 }}
+            style={{ width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}
             crossOrigin="anonymous"
           />
           <span style={{ 
             color: '#ffffff', 
             fontWeight: 800, 
-            fontSize: brandFontSize, 
+            fontSize: 20, 
             fontFamily: "'Manrope', sans-serif", 
-            letterSpacing: '-0.5px',
-            lineHeight: 1
+            letterSpacing: '-0.5px'
           }}>
             JABIYEN
           </span>
         </div>
         <span style={{ 
           color: 'rgba(255,255,255,0.6)', 
-          fontSize: badgeFontSize, 
+          fontSize: 10, 
           fontWeight: 600, 
           textTransform: 'uppercase', 
-          letterSpacing: '0.12em',
-          lineHeight: 1
+          letterSpacing: '0.15em'
         }}>
           Digital Auth Card
         </span>
@@ -117,8 +80,8 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
 
       {/* ===== WHITE BODY ===== */}
       <div style={{ 
-        padding: bodyPadding,
-        height: bodyHeight,
+        padding: '24px 32px',
+        height: 210,
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
@@ -128,49 +91,41 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: isMobile ? 10 : 16,
-          paddingBottom: isMobile ? 10 : 18,
+          gap: 16,
+          paddingBottom: 20,
           borderBottom: '1px solid #e5e5ea'
         }}>
           <div style={{
-            width: avatarSize,
-            height: avatarSize,
-            minWidth: avatarSize,
-            minHeight: avatarSize,
+            width: 48,
+            height: 48,
             background: '#0f0f0f',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: avatarFontSize,
+            fontSize: 17,
             fontWeight: 700,
             flexShrink: 0,
             fontFamily: "'Manrope', sans-serif",
-            borderRadius: avatarRadius
+            borderRadius: 10
           }}>
             {getInitials()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ 
-              fontSize: nameFontSize, 
+              fontSize: 16, 
               fontWeight: 700, 
               color: '#0f0f0f',
               fontFamily: "'Manrope', sans-serif",
-              lineHeight: 1.3,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
+              lineHeight: 1.3
             }}>
               {fullName}
             </div>
             <div style={{ 
-              fontSize: emailFontSize, 
+              fontSize: 11, 
               color: '#71717a', 
-              marginTop: 1,
-              fontFamily: "'Inter', sans-serif",
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap'
+              marginTop: 2,
+              fontFamily: "'Inter', sans-serif"
             }}>
               {userData?.email || '—'}
             </div>
@@ -180,68 +135,65 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
         {/* Bottom Section: Info Grid + QR */}
         <div style={{
           display: 'flex',
-          gap: sectionGap,
+          gap: 32,
           alignItems: 'center'
         }}>
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: gridGap,
-            flex: 1,
-            minWidth: 0
+            gap: '12px 24px',
+            flex: 1
           }}>
             {userData?.phone && (
-              <div style={{ minWidth: 0 }}>
-                <div style={{ ...labelStyle, fontSize: labelFontSize }}>Phone</div>
-                <div style={{ ...valueStyle, fontSize: valueFontSize, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userData.phone}</div>
+              <div>
+                <div style={labelStyle}>Phone</div>
+                <div style={valueStyle}>{userData.phone}</div>
               </div>
             )}
             {(userData?.city || userData?.state) && (
-              <div style={{ minWidth: 0 }}>
-                <div style={{ ...labelStyle, fontSize: labelFontSize }}>Location</div>
-                <div style={{ ...valueStyle, fontSize: valueFontSize, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {[userData.city, userData.state].filter(Boolean).join(', ')}
-                </div>
+              <div>
+                <div style={labelStyle}>Location</div>
+                <div style={valueStyle}>{[userData.city, userData.state].filter(Boolean).join(', ')}</div>
               </div>
             )}
             {userData?.country && (
-              <div style={{ minWidth: 0 }}>
-                <div style={{ ...labelStyle, fontSize: labelFontSize }}>Country</div>
-                <div style={{ ...valueStyle, fontSize: valueFontSize, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{userData.country}</div>
+              <div>
+                <div style={labelStyle}>Country</div>
+                <div style={valueStyle}>{userData.country}</div>
               </div>
             )}
-            <div style={{ minWidth: 0 }}>
-              <div style={{ ...labelStyle, fontSize: labelFontSize }}>Member Since</div>
-              <div style={{ ...valueStyle, fontSize: valueFontSize, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{formatDate(userData?.created_at)}</div>
+            <div>
+              <div style={labelStyle}>Member Since</div>
+              <div style={valueStyle}>{formatDate(userData?.created_at)}</div>
             </div>
           </div>
 
           <div style={{
-            width: qrSize,
-            height: qrSize,
-            minWidth: qrSize,
-            minHeight: qrSize,
+            width: 105,
+            height: 105,
+            minWidth: 105,
+            minHeight: 105,
             background: '#ffffff',
             border: '1px solid #e5e5ea',
-            borderRadius: isMobile ? 8 : 12,
+            borderRadius: 12,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             flexShrink: 0,
-            padding: isMobile ? 2 : 4,
+            padding: 4,
             boxSizing: 'border-box'
           }}>
             <div ref={qrContainerRef} style={{ 
-              width: qrInnerSize, 
-              height: qrInnerSize,
+              width: 95, 
+              height: 95,
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center'
             }}>
               {!qrGenerated && (
                 <div style={{ 
-                  width: isMobile ? 16 : 22, 
-                  height: isMobile ? 16 : 22,
+                  width: 22, 
+                  height: 22,
                   border: '2px solid #e5e5ea',
                   borderTopColor: '#0f0f0f',
                   borderRadius: '50%',
@@ -252,14 +204,16 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
           </div>
         </div>
 
-        <div style={{ textAlign: 'right' }}>
+        <div style={{ 
+          textAlign: 'right', 
+          marginTop: 4 
+        }}>
           <span style={{ 
-            fontSize: isMobile ? 6 : 8, 
+            fontSize: 8, 
             fontWeight: 700, 
             color: '#a1a1aa', 
             textTransform: 'uppercase', 
-            letterSpacing: '0.08em',
-            lineHeight: 1
+            letterSpacing: '0.1em'
           }}>
             Scan to Authenticate
           </span>
@@ -272,20 +226,20 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
         bottom: 0,
         left: 0,
         right: 0,
-        height: footerHeight,
+        height: 34,
         background: '#fafafa',
         borderTop: '1px solid #e5e5ea',
-        borderRadius: '0 0 14px 14px',
+        borderRadius: '0 0 16px 16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: isMobile ? '0 16px' : '0 30px',
+        padding: '0 32px',
         boxSizing: 'border-box'
       }}>
-        <span style={{ fontSize: isMobile ? 7 : 9, color: '#a1a1aa', fontWeight: 600, letterSpacing: '0.04em', lineHeight: 1 }}>
+        <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, letterSpacing: '0.05em' }}>
           JABIYEN CARD AUTH &copy; {new Date().getFullYear()}
         </span>
-        <span style={{ fontSize: isMobile ? 7 : 9, color: '#a1a1aa', fontWeight: 600, fontFamily: 'monospace', lineHeight: 1 }}>
+        <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, fontFamily: 'monospace' }}>
           @{username}
         </span>
       </div>
@@ -294,16 +248,17 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
 }
 
 const labelStyle = {
+  fontSize: 8,
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.1em',
   color: '#a1a1aa',
-  marginBottom: 2,
-  fontFamily: "'Inter', sans-serif",
-  lineHeight: 1.2
+  marginBottom: 3,
+  fontFamily: "'Inter', sans-serif"
 };
 
 const valueStyle = {
+  fontSize: 12,
   fontWeight: 500,
   color: '#0f0f0f',
   fontFamily: "'Inter', sans-serif",
@@ -313,9 +268,6 @@ const valueStyle = {
 // ===================== MAIN ACCOUNT PAGE =====================
 export default function Account() {
   const router = useRouter();
-  const { width: windowWidth } = useWindowSize();
-  const isMobile = windowWidth > 0 && windowWidth < 640;
-  
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -530,13 +482,12 @@ export default function Account() {
     if (qrContainerRef.current) {
       qrContainerRef.current.innerHTML = '';
     }
-    const qrInnerSize = isMobile ? 56 : 92;
     setTimeout(() => {
       if (qrContainerRef.current && window.QRCode) {
         new window.QRCode(qrContainerRef.current, {
           text: qrData,
-          width: qrInnerSize,
-          height: qrInnerSize,
+          width: 95,
+          height: 95,
           colorDark: '#000000',
           colorLight: '#ffffff',
           correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.H : 2
@@ -551,9 +502,6 @@ export default function Account() {
 
   const captureCard = async () => {
     if (!cardRef.current || !window.html2canvas) return;
-    const cardWidth = isMobile ? 340 : 560;
-    const cardHeight = isMobile ? 200 : 320;
-    const margin = isMobile ? 12 : 24;
     try {
       const canvas = await window.html2canvas(cardRef.current, {
         scale: 3,
@@ -561,8 +509,8 @@ export default function Account() {
         useCORS: true,
         allowTaint: true,
         logging: false,
-        width: cardWidth + margin,
-        height: cardHeight + margin
+        width: 624,
+        height: 364
       });
       const imgUrl = canvas.toDataURL('image/png');
       setCardImageUrl(imgUrl);
@@ -597,7 +545,7 @@ export default function Account() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '80px 12px 40px' : '100px 16px 48px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '100px 16px 48px' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <div style={{ height: 40, width: 200, background: '#f0f0f0', borderRadius: 8, margin: '0 auto', animation: 'shimmer 1.5s infinite' }} />
         </div>
@@ -609,7 +557,7 @@ export default function Account() {
 
   if (error) {
     return (
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '80px 12px' : '100px 16px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '100px 16px', textAlign: 'center' }}>
         <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 48, color: '#dc2626', marginBottom: 16 }}></i>
         <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 8 }}>Failed to load account</h3>
         <p style={{ fontSize: 14, color: '#71717a' }}>{error}</p>
@@ -629,63 +577,55 @@ export default function Account() {
         <meta name="robots" content="noindex, follow" />
       </Head>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: isMobile ? '80px 12px 40px' : '100px 16px 48px' }}>
-        <div style={{ textAlign: 'center', marginBottom: isMobile ? 24 : 40 }}>
-          <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: isMobile ? 'clamp(22px, 6vw, 28px)' : 'clamp(28px, 4vw, 40px)', fontWeight: 800, color: '#0f0f0f', margin: '0 0 4px' }}>My Account</h1>
-          <p style={{ fontSize: isMobile ? 13 : 15, color: '#71717a', margin: 0 }}>Welcome back, {userData.first_name || 'User'}</p>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: '100px 16px 48px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, color: '#0f0f0f', margin: '0 0 6px' }}>My Account</h1>
+          <p style={{ fontSize: 15, color: '#71717a', margin: 0 }}>Welcome back, {userData.first_name || 'User'}</p>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: isMobile ? 16 : 28 }}>
-          {/* Navigation Tabs */}
-          <div style={{ 
-            background: '#fff', borderRadius: 16, padding: isMobile ? 10 : 16, 
-            boxShadow: '0 1px 3px rgba(0,0,0,0.03)', 
-            display: 'flex', flexWrap: 'wrap', gap: isMobile ? 6 : 12, 
-            justifyContent: 'center' 
-          }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
             {[
               { key: 'profile', icon: 'user', label: 'Profile' },
               { key: 'addresses', icon: 'location-dot', label: 'Location' },
-              { key: 'card-auth', icon: 'id-card', label: isMobile ? 'Card Auth' : 'JABIYEN Card Auth' }
+              { key: 'card-auth', icon: 'id-card', label: 'JABIYEN Card Auth' }
             ].map(panel => (
               <button key={panel.key} onClick={() => handlePanelSwitch(panel.key)} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 6 : 10,
-                padding: isMobile ? '10px 14px' : '14px 20px', borderRadius: 12, cursor: 'pointer',
-                fontSize: isMobile ? 12 : 14, fontWeight: 600, fontFamily: "'Inter', sans-serif",
-                border: 'none', flex: 1, minWidth: isMobile ? 90 : 140,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+                fontSize: 14, fontWeight: 600, fontFamily: "'Inter', sans-serif",
+                border: 'none', flex: 1, minWidth: 140,
                 background: currentPanel === panel.key ? '#0f0f0f' : '#f5f5f7',
                 color: currentPanel === panel.key ? '#fff' : '#0f0f0f',
                 transition: 'all 0.25s ease'
               }}>
-                <i className={`fa-solid fa-${panel.icon}`} style={{ fontSize: isMobile ? 13 : 15 }}></i>
+                <i className={`fa-solid fa-${panel.icon}`} style={{ fontSize: 15 }}></i>
                 {panel.label}
               </button>
             ))}
             <button onClick={() => setShowLogoutModal(true)} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: isMobile ? 6 : 10,
-              padding: isMobile ? '10px 14px' : '14px 20px', borderRadius: 12, cursor: 'pointer',
-              fontSize: isMobile ? 12 : 14, fontWeight: 600, fontFamily: "'Inter', sans-serif",
-              border: 'none', flex: 1, minWidth: isMobile ? 80 : 140,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, fontFamily: "'Inter', sans-serif",
+              border: 'none', flex: 1, minWidth: 140,
               background: '#fef2f2', color: '#dc2626'
             }}>
-              <i className="fa-solid fa-right-from-bracket" style={{ fontSize: isMobile ? 13 : 15 }}></i> 
-              {isMobile ? 'Logout' : 'Sign Out'}
+              <i className="fa-solid fa-right-from-bracket" style={{ fontSize: 15 }}></i> Sign Out
             </button>
           </div>
 
           <div style={{ minHeight: 400 }}>
-            {/* ===== PROFILE PANEL ===== */}
             {currentPanel === 'profile' && (
               <div>
-                <div style={{ background: '#fff', borderRadius: 16, padding: isMobile ? '20px 16px' : '32px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', textAlign: 'center', marginBottom: 16 }}>
+                <div style={{ background: '#fff', borderRadius: 16, padding: '32px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', textAlign: 'center', marginBottom: 20 }}>
                   {userData.avatar_url ? (
-                    <img src={userData.avatar_url} alt={fullName} style={{ width: isMobile ? 60 : 80, height: isMobile ? 60 : 80, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 12px', border: '3px solid #f0f0f0' }} />
+                    <img src={userData.avatar_url} alt={fullName} style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', margin: '0 auto 16px', border: '3px solid #f0f0f0' }} />
                   ) : (
-                    <div style={{ width: isMobile ? 60 : 80, height: isMobile ? 60 : 80, borderRadius: '50%', background: 'linear-gradient(135deg, #007aff, #5856d6)', color: '#fff', fontSize: isMobile ? 22 : 28, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 12px', fontFamily: "'Manrope', sans-serif" }}>{getInitials()}</div>
+                    <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'linear-gradient(135deg, #007aff, #5856d6)', color: '#fff', fontSize: 28, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontFamily: "'Manrope', sans-serif" }}>{getInitials()}</div>
                   )}
-                  <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: isMobile ? 18 : 22, fontWeight: 700, margin: '0 0 4px' }}>{fullName}</h3>
-                  <p style={{ fontSize: isMobile ? 12 : 14, color: '#71717a', margin: 0 }}>{userData.email}</p>
-                  <div style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, background: isGoogleUser ? '#e8f0fe' : '#f5f5f7', padding: '4px 10px', borderRadius: 50, fontSize: isMobile ? 10 : 11, fontWeight: 600, color: '#71717a' }}>
+                  <h3 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 4px' }}>{fullName}</h3>
+                  <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>{userData.email}</p>
+                  <div style={{ marginTop: 12, display: 'inline-flex', alignItems: 'center', gap: 6, background: isGoogleUser ? '#e8f0fe' : '#f5f5f7', padding: '4px 12px', borderRadius: 50, fontSize: 11, fontWeight: 600, color: '#71717a' }}>
                     {isGoogleUser ? (
                       <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
                     ) : (
@@ -695,19 +635,19 @@ export default function Account() {
                   </div>
                 </div>
 
-                <div style={{ background: '#fff', borderRadius: 16, padding: isMobile ? 16 : 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', marginBottom: 16 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 14 : 20 }}>
-                    <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: isMobile ? 16 : 18, fontWeight: 700, margin: 0 }}>Personal Information</h2>
+                <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', marginBottom: 20 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                    <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 700, margin: 0 }}>Personal Information</h2>
                     {!isEditingProfile ? (
-                      <button onClick={() => setIsEditingProfile(true)} style={{ fontSize: isMobile ? 11 : 13, color: '#007aff', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}><i className="fa-solid fa-pen" style={{ marginRight: 4 }}></i> Edit</button>
+                      <button onClick={() => setIsEditingProfile(true)} style={{ fontSize: 13, color: '#007aff', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}><i className="fa-solid fa-pen" style={{ marginRight: 4 }}></i> Edit</button>
                     ) : (
                       <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => setIsEditingProfile(false)} style={{ fontSize: isMobile ? 11 : 13, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-                        <button onClick={saveProfile} disabled={saving} style={{ fontSize: isMobile ? 11 : 13, color: '#fff', background: '#007aff', border: 'none', borderRadius: 50, padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}>{saving ? 'Saving...' : 'Save'}</button>
+                        <button onClick={() => setIsEditingProfile(false)} style={{ fontSize: 13, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+                        <button onClick={saveProfile} disabled={saving} style={{ fontSize: 13, color: '#fff', background: '#007aff', border: 'none', borderRadius: 50, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}>{saving ? 'Saving...' : 'Save'}</button>
                       </div>
                     )}
                   </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '12px 14px' : '16px 24px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 24px' }}>
                     {isEditingProfile ? (
                       <>
                         <InfoField label="First Name"><input style={inputStyle} value={userData.first_name} onChange={(e) => updateField('first_name', e.target.value)} /></InfoField>
@@ -726,9 +666,9 @@ export default function Account() {
                   </div>
                 </div>
 
-                <div style={{ background: '#fff', borderRadius: 16, padding: isMobile ? 16 : 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: isMobile ? 16 : 18, fontWeight: 700, margin: '0 0 16px' }}>Account Details</h2>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '12px 14px' : '16px 24px' }}>
+                <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 700, margin: '0 0 20px' }}>Account Details</h2>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 24px' }}>
                     <InfoField label="Member Since"><span>{formatDate(userData.created_at)}</span></InfoField>
                     <InfoField label="Last Updated"><span>{formatDate(userData.updated_at)}</span></InfoField>
                     <InfoField label="Login Method"><span>{loginMethod}</span></InfoField>
@@ -737,22 +677,21 @@ export default function Account() {
               </div>
             )}
 
-            {/* ===== ADDRESSES PANEL ===== */}
             {currentPanel === 'addresses' && (
-              <div style={{ background: '#fff', borderRadius: 16, padding: isMobile ? 16 : 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', border: '1.5px solid #007aff', position: 'relative' }}>
-                <span style={{ position: 'absolute', top: 10, right: 10, background: '#007aff', color: '#fff', fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 50, textTransform: 'uppercase' }}>Primary</span>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? 14 : 24 }}>
-                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: isMobile ? 16 : 18, fontWeight: 700, margin: 0 }}>Saved Location</h2>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', border: '1.5px solid #007aff', position: 'relative' }}>
+                <span style={{ position: 'absolute', top: 12, right: 12, background: '#007aff', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 50, textTransform: 'uppercase' }}>Primary</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 18, fontWeight: 700, margin: 0 }}>Saved Location</h2>
                   {!isEditingAddress ? (
-                    <button onClick={() => setIsEditingAddress(true)} style={{ fontSize: isMobile ? 11 : 13, color: '#007aff', background: 'none', border: '1.5px solid #e5e5ea', borderRadius: 50, padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}><i className="fa-solid fa-pen" style={{ marginRight: 4 }}></i> Edit</button>
+                    <button onClick={() => setIsEditingAddress(true)} style={{ fontSize: 13, color: '#007aff', background: 'none', border: '1.5px solid #e5e5ea', borderRadius: 50, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}><i className="fa-solid fa-pen" style={{ marginRight: 4 }}></i> Edit</button>
                   ) : (
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setIsEditingAddress(false)} style={{ fontSize: isMobile ? 11 : 13, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
-                      <button onClick={saveAddress} disabled={saving} style={{ fontSize: isMobile ? 11 : 13, color: '#fff', background: '#007aff', border: 'none', borderRadius: 50, padding: '5px 12px', cursor: 'pointer', fontWeight: 600 }}>{saving ? 'Saving...' : 'Save'}</button>
+                      <button onClick={() => setIsEditingAddress(false)} style={{ fontSize: 13, color: '#dc2626', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Cancel</button>
+                      <button onClick={saveAddress} disabled={saving} style={{ fontSize: 13, color: '#fff', background: '#007aff', border: 'none', borderRadius: 50, padding: '6px 14px', cursor: 'pointer', fontWeight: 600 }}>{saving ? 'Saving...' : 'Save'}</button>
                     </div>
                   )}
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: isMobile ? '12px 14px' : '16px 24px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 24px' }}>
                   {isEditingAddress ? (
                     <>
                       <InfoField label="Address Line 1"><input style={inputStyle} value={userData.address_line1} onChange={(e) => updateField('address_line1', e.target.value)} /></InfoField>
@@ -776,28 +715,28 @@ export default function Account() {
               </div>
             )}
 
-            {/* ===== JABIYEN CARD AUTH PANEL ===== */}
             {currentPanel === 'card-auth' && (
-              <div style={{ background: '#fff', borderRadius: 16, padding: isMobile ? 16 : 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                <div style={{ textAlign: 'center', marginBottom: isMobile ? 18 : 28 }}>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
-                    width: isMobile ? 44 : 56, height: isMobile ? 44 : 56, 
-                    background: '#0f0f0f', borderRadius: 10,
+                    width: 56, height: 56, 
+                    background: '#0f0f0f',
+                    borderRadius: 12,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto 12px'
+                    margin: '0 auto 16px'
                   }}>
-                    <img src="/logo.png" alt="J" style={{ width: isMobile ? 22 : 28, height: isMobile ? 22 : 28, borderRadius: 5 }} crossOrigin="anonymous" />
+                    <img src="/logo.png" alt="J" style={{ width: 28, height: 28, borderRadius: 6 }} crossOrigin="anonymous" />
                   </div>
-                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: isMobile ? 18 : 22, fontWeight: 700, margin: '0 0 4px', color: '#0f0f0f' }}>JABIYEN Card Auth</h2>
-                  <p style={{ fontSize: isMobile ? 12 : 14, color: '#71717a', margin: 0 }}>
-                    Generate your digital card for instant QR login
+                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px', color: '#0f0f0f' }}>JABIYEN Card Auth</h2>
+                  <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>
+                    Generate your digital JABIYEN card for instant QR login
                   </p>
                 </div>
 
                 {!qrVerified && (
                   <div style={{ maxWidth: 400, margin: '0 auto' }}>
-                    <div style={{ marginBottom: 16 }}>
-                      <label style={{ display: 'block', fontSize: isMobile ? 12 : 13, fontWeight: 600, color: '#0f0f0f', marginBottom: 6 }}>
+                    <div style={{ marginBottom: 20 }}>
+                      <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#0f0f0f', marginBottom: 8 }}>
                         Verify Password <span style={{ color: '#dc2626' }}>*</span>
                       </label>
                       <div style={{ position: 'relative' }}>
@@ -807,18 +746,18 @@ export default function Account() {
                           onKeyDown={(e) => { if (e.key === 'Enter') verifyPasswordForQR(); }}
                           placeholder="Enter your password"
                           style={{
-                            ...inputStyle, padding: isMobile ? '10px 14px' : '14px 16px', paddingRight: 44,
+                            ...inputStyle, padding: '14px 16px', paddingRight: 48,
                             borderColor: qrError ? '#dc2626' : '#e5e5ea',
-                            fontSize: isMobile ? 14 : 15, borderRadius: 12
+                            fontSize: 15, borderRadius: 12
                           }}
                         />
-                        <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: '#71717a' }}>
+                        <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#71717a' }}>
                           <i className="fa-solid fa-lock" style={{ fontSize: 14 }}></i>
                         </div>
                       </div>
                       {qrError && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#dc2626', marginTop: 5 }}>
-                          <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 10 }}></i>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#dc2626', marginTop: 6 }}>
+                          <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i>
                           <span>{qrError}</span>
                         </div>
                       )}
@@ -827,22 +766,22 @@ export default function Account() {
                       onClick={verifyPasswordForQR}
                       disabled={qrVerifying || !qrPassword}
                       style={{
-                        width: '100%', padding: isMobile ? '12px 20px' : '14px 24px',
+                        width: '100%', padding: '14px 24px',
                         background: qrVerifying || !qrPassword ? '#a1a1a6' : '#0f0f0f',
                         color: '#fff', fontFamily: "'Inter', sans-serif",
-                        fontSize: isMobile ? 14 : 15, fontWeight: 600, border: 'none',
+                        fontSize: 15, fontWeight: 600, border: 'none',
                         borderRadius: 12, cursor: qrVerifying || !qrPassword ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
                       }}
                     >
                       {qrVerifying ? (
                         <>
-                          <span style={{ width: 18, height: 18, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
+                          <span style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
                           Verifying...
                         </>
                       ) : (
                         <>
-                          <i className="fa-solid fa-shield-check" style={{ fontSize: isMobile ? 14 : 15 }}></i>
+                          <i className="fa-solid fa-shield-check"></i>
                           Generate My Card
                         </>
                       )}
@@ -855,12 +794,10 @@ export default function Account() {
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'center', 
-                      marginBottom: 20,
-                      padding: isMobile ? '10px' : '20px',
+                      marginBottom: 24,
+                      padding: '20px',
                       background: '#fafafa',
-                      borderRadius: isMobile ? 14 : 20,
-                      overflow: isMobile ? 'auto' : 'visible',
-                      WebkitOverflowScrolling: 'touch'
+                      borderRadius: 20
                     }}>
                       <div ref={cardRef}>
                         <JABIYENCard 
@@ -870,27 +807,26 @@ export default function Account() {
                           getInitials={getInitials}
                           qrContainerRef={qrContainerRef}
                           qrGenerated={qrGenerated}
-                          isMobile={isMobile}
                         />
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: isMobile ? 8 : 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
                       <button
                         onClick={downloadCard}
                         disabled={!qrGenerated || !cardImageUrl}
                         style={{
-                          padding: isMobile ? '12px 20px' : '14px 28px',
+                          padding: '14px 28px',
                           background: (qrGenerated && cardImageUrl) ? '#0f0f0f' : '#a1a1a6',
                           color: '#fff', fontFamily: "'Inter', sans-serif",
-                          fontSize: isMobile ? 13 : 15, fontWeight: 600, border: 'none',
+                          fontSize: 15, fontWeight: 600, border: 'none',
                           borderRadius: 12, cursor: (qrGenerated && cardImageUrl) ? 'pointer' : 'not-allowed',
-                          display: 'flex', alignItems: 'center', gap: 6,
+                          display: 'flex', alignItems: 'center', gap: 8,
                           boxShadow: (qrGenerated && cardImageUrl) ? '0 4px 16px rgba(0,0,0,0.2)' : 'none'
                         }}
                       >
-                        <i className="fa-solid fa-download" style={{ fontSize: isMobile ? 12 : 14 }}></i>
-                        {isMobile ? 'Download' : 'Download Card'}
+                        <i className="fa-solid fa-download"></i>
+                        Download Card
                       </button>
                       <button
                         onClick={() => {
@@ -899,32 +835,31 @@ export default function Account() {
                           if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
                         }}
                         style={{
-                          padding: isMobile ? '12px 16px' : '14px 20px', 
-                          background: '#f4f4f5', color: '#0f0f0f',
-                          fontFamily: "'Inter', sans-serif", fontSize: isMobile ? 13 : 15, fontWeight: 600,
+                          padding: '14px 20px', background: '#f4f4f5', color: '#0f0f0f',
+                          fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600,
                           border: 'none', borderRadius: 12, cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 6
+                          display: 'flex', alignItems: 'center', gap: 8
                         }}
                       >
-                        <i className="fa-solid fa-rotate" style={{ fontSize: isMobile ? 12 : 14 }}></i>
+                        <i className="fa-solid fa-rotate"></i>
                         Reset
                       </button>
                     </div>
 
-                    <p style={{ textAlign: 'center', fontSize: isMobile ? 10 : 12, color: '#71717a', marginTop: 10 }}>
+                    <p style={{ textAlign: 'center', fontSize: 12, color: '#71717a', marginTop: 12 }}>
                       File: <strong style={{ color: '#0f0f0f' }}>{username}-jabiyen-auth.png</strong>
                     </p>
                   </div>
                 )}
 
                 <div style={{
-                  marginTop: isMobile ? 20 : 32, padding: isMobile ? '10px 12px' : '14px 16px',
-                  background: '#fef3c7', borderRadius: 10,
-                  border: '1px solid #fcd34d', display: 'flex', gap: 8,
-                  maxWidth: 520, margin: isMobile ? '20px auto 0' : '32px auto 0'
+                  marginTop: 32, padding: '14px 16px',
+                  background: '#fef3c7', borderRadius: 12,
+                  border: '1px solid #fcd34d', display: 'flex', gap: 10,
+                  maxWidth: 520, margin: '32px auto 0'
                 }}>
-                  <i className="fa-solid fa-triangle-exclamation" style={{ color: '#d97706', fontSize: isMobile ? 14 : 16, marginTop: 1, flexShrink: 0 }}></i>
-                  <div style={{ fontSize: isMobile ? 10 : 12, color: '#92400e', lineHeight: 1.5 }}>
+                  <i className="fa-solid fa-triangle-exclamation" style={{ color: '#d97706', fontSize: 16, marginTop: 1, flexShrink: 0 }}></i>
+                  <div style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
                     <strong style={{ color: '#b45309' }}>Security Note:</strong> Your JABIYEN card contains encrypted login credentials. Keep it secure. The QR code provides instant authentication.
                   </div>
                 </div>
@@ -934,24 +869,22 @@ export default function Account() {
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: 20, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#dc2626' : '#0f0f0f', color: '#fff', padding: isMobile ? '10px 20px' : '14px 24px', borderRadius: 50, fontSize: isMobile ? 12 : 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}>
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#dc2626' : '#0f0f0f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
           <span>{toast.message}</span>
         </div>
       )}
 
-      {/* Logout Modal */}
       {showLogoutModal && (
-        <div onClick={() => setShowLogoutModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 16 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 20, padding: isMobile ? '24px 20px' : '40px 32px', textAlign: 'center', maxWidth: 400, width: '100%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ width: isMobile ? 56 : 80, height: isMobile ? 56 : 80, background: '#fef2f2', color: '#dc2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? 26 : 36, margin: '0 auto 16px' }}><i className="fa-solid fa-power-off"></i></div>
-            <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: isMobile ? 18 : 24, fontWeight: 800, margin: '0 0 8px' }}>Sign Out</h2>
-            <p style={{ fontSize: isMobile ? 13 : 15, color: '#71717a', margin: '0 0 24px' }}>Are you sure you want to sign out?</p>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button onClick={() => setShowLogoutModal(false)} style={{ flex: 1, padding: isMobile ? '12px 16px' : '14px 20px', borderRadius: 12, fontSize: isMobile ? 13 : 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#f4f4f5', color: '#0f0f0f' }}>Cancel</button>
-              <button onClick={handleLogout} style={{ flex: 1, padding: isMobile ? '12px 16px' : '14px 20px', borderRadius: 12, fontSize: isMobile ? 13 : 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#dc2626', color: '#fff' }}>Sign Out</button>
+        <div onClick={() => setShowLogoutModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', textAlign: 'center', maxWidth: 420, width: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ width: 80, height: 80, background: '#fef2f2', color: '#dc2626', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}><i className="fa-solid fa-power-off"></i></div>
+            <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 24, fontWeight: 800, margin: '0 0 12px' }}>Sign Out</h2>
+            <p style={{ fontSize: 15, color: '#71717a', margin: '0 0 32px' }}>Are you sure you want to sign out?</p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button onClick={() => setShowLogoutModal(false)} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#f4f4f5', color: '#0f0f0f' }}>Cancel</button>
+              <button onClick={handleLogout} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#dc2626', color: '#fff' }}>Sign Out</button>
             </div>
           </div>
         </div>
