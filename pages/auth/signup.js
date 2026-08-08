@@ -117,7 +117,7 @@ export default function SignUp() {
   return (
     <>
       <Head>
-        <title>Sign Up | JAYENWARE</title>
+        <title>Sign Up | JABIYEN</title>
         <meta name="description" content="Create your JAYENWARE account" />
       </Head>
 
@@ -127,7 +127,7 @@ export default function SignUp() {
           {/* Logo + Title */}
           <div style={{ textAlign: 'center', marginBottom: 36 }}>
             <img src="/logo.png" alt="JAYENWARE" style={{ width: 52, height: 52, borderRadius: 14, margin: '0 auto 14px' }} />
-            <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 26, fontWeight: 800, color: '#1d1d1f', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Create your JABIYEN ID</h1>
+            <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 26, fontWeight: 800, color: '#1d1d1f', margin: '0 0 4px', letterSpacing: '-0.02em' }}>Create Your JABIYEN Account</h1>
             <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>One account for everything JABIYEN</p>
           </div>
 
