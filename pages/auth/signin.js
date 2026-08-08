@@ -28,7 +28,9 @@ export default function SignIn() {
   const [showQRScanner, setShowQRScanner] = useState(false);
   const [qrScanning, setQrScanning] = useState(false);
   const [qrError, setQrError] = useState(null);
+  const [qrSuccess, setQrSuccess] = useState(false);
   const [cameraPermission, setCameraPermission] = useState(null);
+  const [qrLoginLoading, setQrLoginLoading] = useState(false);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
@@ -106,6 +108,40 @@ export default function SignIn() {
     }
   };
 
+  // Direct login with credentials (for QR code)
+  const loginWithCredentials = async (emailVal, passwordVal) => {
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailVal.trim(), password: passwordVal })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        return { 
+          success: false, 
+          error: result.error || result.message || 'Invalid email or password',
+          status: res.status
+        };
+      }
+
+      if (result.session) saveSession(result.session);
+
+      return { 
+        success: true, 
+        redirect: result.redirect || '/auth/account',
+        data: result
+      };
+    } catch (err) {
+      return { 
+        success: false, 
+        error: err.message || 'Network error. Please check your connection.'
+      };
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setAlert(null);
@@ -122,34 +158,24 @@ export default function SignIn() {
 
     setLoading(true);
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password })
-      });
+    const result = await loginWithCredentials(email, password);
 
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result.error || result.message || 'Invalid email or password');
-
-      if (result.session) saveSession(result.session);
-
-      showToast('Signed in successfully! Redirecting...', 'success');
-      setTimeout(() => {
-        window.location.href = result.redirect || '/auth/account';
-      }, 1000);
-    } catch (err) {
-      const msg = err.message || 'Something went wrong';
+    if (!result.success) {
+      const msg = result.error;
       if (msg.toLowerCase().includes('invalid') || msg.toLowerCase().includes('credentials') || msg.toLowerCase().includes('password') || msg.toLowerCase().includes('email')) {
         setAlert(msg);
         setErrors({ email: ' ', password: ' ' });
       } else {
         showToast(msg, 'error');
       }
-    } finally {
-      setLoading(false);
+    } else {
+      showToast('Signed in successfully! Redirecting...', 'success');
+      setTimeout(() => {
+        window.location.href = result.redirect;
+      }, 800);
     }
+
+    setLoading(false);
   };
 
   const handleGoogleSignIn = async () => {
@@ -189,35 +215,73 @@ export default function SignIn() {
     return null;
   };
 
-  // Process scanned QR data
-  const processQRData = (data) => {
+  // Process scanned QR data - Direct login without filling form
+  const processQRData = async (data) => {
     if (!data) return;
     
     const credentials = parseQRCredentials(data);
-    if (credentials) {
-      setEmail(credentials.email);
-      setPassword(credentials.password);
-      setTouched({ email: true, password: true });
-      setErrors({});
-      setAlert(null);
-      stopCamera();
-      setShowQRScanner(false);
-      showToast('Credentials loaded from QR code!', 'success');
-      
-      // Auto-submit after a short delay
-      setTimeout(() => {
-        handleSubmit(new Event('submit'));
-      }, 500);
-    } else {
-      setQrError('Invalid QR code format. Expected email and password.');
+    if (!credentials) {
+      setQrError('Invalid QR code. This QR doesn\'t contain valid login credentials.');
       showToast('Invalid QR code format', 'error');
-      setTimeout(() => setQrError(null), 3000);
+      setTimeout(() => setQrError(null), 4000);
+      return;
+    }
+
+    // Stop scanning and show loading
+    stopCamera();
+    setQrScanning(false);
+    setQrLoginLoading(true);
+    setQrError(null);
+
+    // Attempt direct login
+    const result = await loginWithCredentials(credentials.email, credentials.password);
+
+    if (result.success) {
+      // Login successful
+      setQrSuccess(true);
+      setQrLoginLoading(false);
+      
+      // Close scanner after a brief moment
+      setTimeout(() => {
+        setShowQRScanner(false);
+        showToast('Signed in successfully! Redirecting...', 'success');
+        // Redirect
+        setTimeout(() => {
+          window.location.href = result.redirect;
+        }, 500);
+      }, 1200);
+    } else {
+      // Login failed - show error in scanner modal
+      setQrLoginLoading(false);
+      
+      const errorMessage = result.error || 'Invalid credentials';
+      
+      if (errorMessage.toLowerCase().includes('invalid') || 
+          errorMessage.toLowerCase().includes('credentials') || 
+          errorMessage.toLowerCase().includes('password') || 
+          errorMessage.toLowerCase().includes('email')) {
+        setQrError('The credentials in this QR code are incorrect or expired.');
+      } else if (errorMessage.toLowerCase().includes('network')) {
+        setQrError('Network error. Please check your connection and try again.');
+      } else {
+        setQrError(errorMessage);
+      }
+      
+      showToast('QR login failed', 'error');
+      
+      // Restart camera after error
+      setTimeout(() => {
+        setQrError(null);
+        startCamera();
+      }, 3000);
     }
   };
 
   // Start camera for QR scanning
   const startCamera = async () => {
     setQrError(null);
+    setQrSuccess(false);
+    setQrLoginLoading(false);
     setQrScanning(true);
     
     try {
@@ -239,11 +303,11 @@ export default function SignIn() {
       setQrScanning(false);
       
       if (err.name === 'NotAllowedError') {
-        setQrError('Camera access denied. Please allow camera access or upload a QR image.');
+        setQrError('Camera access denied. Please allow camera access in your browser settings or upload a QR image.');
       } else if (err.name === 'NotFoundError') {
-        setQrError('No camera found. Please upload a QR image instead.');
+        setQrError('No camera found on your device. Please upload a QR image instead.');
       } else {
-        setQrError('Failed to access camera. Please upload a QR image.');
+        setQrError('Failed to access camera. Please upload a QR image or sign in manually.');
       }
     }
   };
@@ -297,11 +361,15 @@ export default function SignIn() {
     if (!file) return;
     
     setQrError(null);
+    setQrSuccess(false);
+    stopCamera();
+    setQrScanning(false);
+    setQrLoginLoading(true);
     
     const reader = new FileReader();
     reader.onload = (event) => {
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
@@ -316,15 +384,50 @@ export default function SignIn() {
           });
           
           if (code) {
-            processQRData(code.data);
-            stopCamera();
-            setShowQRScanner(false);
+            // Process the QR data (same flow as camera scan)
+            const credentials = parseQRCredentials(code.data);
+            if (!credentials) {
+              setQrLoginLoading(false);
+              setQrError('No valid login credentials found in this QR code.');
+              showToast('Invalid QR code', 'error');
+              setTimeout(() => setQrError(null), 4000);
+              return;
+            }
+
+            const result = await loginWithCredentials(credentials.email, credentials.password);
+            
+            if (result.success) {
+              setQrSuccess(true);
+              setQrLoginLoading(false);
+              setTimeout(() => {
+                setShowQRScanner(false);
+                showToast('Signed in successfully! Redirecting...', 'success');
+                setTimeout(() => {
+                  window.location.href = result.redirect;
+                }, 500);
+              }, 1200);
+            } else {
+              setQrLoginLoading(false);
+              const errorMessage = result.error || 'Invalid credentials';
+              if (errorMessage.toLowerCase().includes('invalid') || 
+                  errorMessage.toLowerCase().includes('credentials')) {
+                setQrError('The credentials in this QR code are incorrect or expired.');
+              } else {
+                setQrError(errorMessage);
+              }
+              showToast('QR login failed', 'error');
+              setTimeout(() => setQrError(null), 4000);
+            }
           } else {
-            setQrError('No QR code found in the image. Please try another image.');
+            setQrLoginLoading(false);
+            setQrError('No QR code detected in the image. Please try another image.');
             showToast('No QR code detected', 'error');
+            setTimeout(() => setQrError(null), 4000);
           }
         } else {
-          setQrError('QR scanner is loading. Please try again.');
+          setQrLoginLoading(false);
+          setQrError('QR scanner is still loading. Please try again in a moment.');
+          setTimeout(() => setQrError(null), 3000);
         }
       };
       img.src = event.target.result;
@@ -348,6 +451,8 @@ export default function SignIn() {
     stopCamera();
     setShowQRScanner(false);
     setQrError(null);
+    setQrSuccess(false);
+    setQrLoginLoading(false);
     setCameraPermission(null);
   };
 
@@ -501,7 +606,7 @@ export default function SignIn() {
               width: 36, height: 36, borderRadius: '50%',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', color: '#1d1d1f', fontSize: 16,
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease', zIndex: 10
             }}>
               <i className="fa-solid fa-xmark"></i>
             </button>
@@ -511,107 +616,210 @@ export default function SignIn() {
               fontSize: 18, fontWeight: 700, color: '#1d1d1f',
               margin: '0 0 6px', textAlign: 'center'
             }}>
-              Scan QR Code
+              {qrSuccess ? 'Login Successful!' : qrLoginLoading ? 'Signing In...' : 'Scan QR Code'}
             </h3>
             <p style={{
               fontSize: 13, color: '#86868b', textAlign: 'center',
               margin: '0 0 20px'
             }}>
-              Point your camera at a QR code with login credentials
+              {qrSuccess 
+                ? 'Redirecting you to your account...' 
+                : qrLoginLoading 
+                  ? 'Verifying your credentials...' 
+                  : 'Point your camera at a QR code to sign in instantly'}
             </p>
 
-            {/* Camera View */}
+            {/* Camera View / Loading / Success */}
             <div style={{
               width: '100%', aspectRatio: '1/1',
               background: '#000', borderRadius: 16,
               overflow: 'hidden', position: 'relative',
               marginBottom: 16
             }}>
-              <video 
-                ref={videoRef}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                playsInline
-                muted
-              />
-              <canvas ref={canvasRef} style={{ display: 'none' }} />
-              
-              {/* Scanning Overlay */}
-              {qrScanning && (
-                <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center'
-                }}>
-                  <div style={{
-                    width: '70%', height: '70%',
-                    border: '2px solid rgba(0,122,255,0.6)',
-                    borderRadius: 12,
-                    boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
-                    animation: 'scanPulse 2s ease-in-out infinite'
-                  }} />
-                </div>
-              )}
-
-              {/* Camera Permission Denied */}
-              {cameraPermission === 'denied' && (
+              {/* QR Success State */}
+              {qrSuccess && (
                 <div style={{
                   position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: 'rgba(0,0,0,0.8)', padding: 20
+                  background: 'rgba(52, 199, 89, 0.95)',
+                  flexDirection: 'column', gap: 16
                 }}>
-                  <div style={{ textAlign: 'center', color: '#fff' }}>
-                    <i className="fa-solid fa-camera-slash" style={{ fontSize: 40, marginBottom: 12, opacity: 0.7 }}></i>
-                    <p style={{ fontSize: 14, margin: '0 0 8px', opacity: 0.9 }}>Camera access denied</p>
-                    <p style={{ fontSize: 12, opacity: 0.6, margin: 0 }}>Use the upload option below</p>
+                  <div style={{
+                    width: 80, height: 80, borderRadius: '50%',
+                    background: '#fff', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center',
+                    animation: 'scaleIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                  }}>
+                    <i className="fa-solid fa-check" style={{ fontSize: 36, color: '#34c759' }}></i>
                   </div>
+                  <span style={{ color: '#fff', fontWeight: 600, fontSize: 16 }}>Verified!</span>
                 </div>
+              )}
+
+              {/* Loading State */}
+              {qrLoginLoading && !qrSuccess && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(0,0,0,0.9)',
+                  flexDirection: 'column', gap: 20
+                }}>
+                  <div style={{
+                    width: 60, height: 60,
+                    border: '3px solid rgba(255,255,255,0.2)',
+                    borderTopColor: '#007aff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite'
+                  }} />
+                  <span style={{ color: '#fff', fontWeight: 500, fontSize: 14 }}>
+                    Authenticating...
+                  </span>
+                </div>
+              )}
+
+              {/* Camera Feed */}
+              {!qrLoginLoading && !qrSuccess && (
+                <>
+                  <video 
+                    ref={videoRef}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    playsInline
+                    muted
+                  />
+                  <canvas ref={canvasRef} style={{ display: 'none' }} />
+                  
+                  {/* Scanning Overlay */}
+                  {qrScanning && (
+                    <div style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center'
+                    }}>
+                      {/* Corner Borders */}
+                      <div style={{
+                        width: '70%', height: '70%',
+                        position: 'relative'
+                      }}>
+                        {/* Top Left */}
+                        <div style={{ position: 'absolute', top: 0, left: 0, width: 30, height: 30, borderTop: '3px solid #007aff', borderLeft: '3px solid #007aff', borderRadius: '4px 0 0 0' }}></div>
+                        {/* Top Right */}
+                        <div style={{ position: 'absolute', top: 0, right: 0, width: 30, height: 30, borderTop: '3px solid #007aff', borderRight: '3px solid #007aff', borderRadius: '0 4px 0 0' }}></div>
+                        {/* Bottom Left */}
+                        <div style={{ position: 'absolute', bottom: 0, left: 0, width: 30, height: 30, borderBottom: '3px solid #007aff', borderLeft: '3px solid #007aff', borderRadius: '0 0 0 4px' }}></div>
+                        {/* Bottom Right */}
+                        <div style={{ position: 'absolute', bottom: 0, right: 0, width: 30, height: 30, borderBottom: '3px solid #007aff', borderRight: '3px solid #007aff', borderRadius: '0 0 4px 0' }}></div>
+                      </div>
+                      {/* Dimmed overlay */}
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        maskImage: 'radial-gradient(circle 35% at center, transparent 100%, black 100%)',
+                        WebkitMaskImage: 'radial-gradient(circle 35% at center, transparent 100%, black 100%)'
+                      }} />
+                      {/* Scanning line */}
+                      <div style={{
+                        position: 'absolute',
+                        width: '60%', height: 2,
+                        background: 'linear-gradient(90deg, transparent, #007aff, transparent)',
+                        animation: 'scanLine 2s ease-in-out infinite'
+                      }} />
+                    </div>
+                  )}
+
+                  {/* Camera Permission Denied */}
+                  {cameraPermission === 'denied' && (
+                    <div style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: 'rgba(0,0,0,0.85)', padding: 20
+                    }}>
+                      <div style={{ textAlign: 'center', color: '#fff' }}>
+                        <i className="fa-solid fa-camera-slash" style={{ fontSize: 40, marginBottom: 12, opacity: 0.7 }}></i>
+                        <p style={{ fontSize: 14, margin: '0 0 8px', opacity: 0.9 }}>Camera access denied</p>
+                        <p style={{ fontSize: 12, opacity: 0.6, margin: 0 }}>Use the upload option below</p>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 
-            {/* Error Message */}
+            {/* Error Message - Apple style */}
             {qrError && (
               <div style={{
-                background: '#fff0ef', border: '1px solid #ffd1cf',
-                borderRadius: 10, padding: '10px 14px',
-                fontSize: 12, color: '#cc1a14',
-                display: 'flex', alignItems: 'center', gap: 8,
-                marginBottom: 16
+                background: '#fff0ef', 
+                border: '1px solid rgba(255,59,48,0.2)', 
+                borderRadius: 14, 
+                padding: '14px 16px',
+                marginBottom: 16,
+                display: 'flex', 
+                alignItems: 'flex-start', 
+                gap: 12,
+                animation: 'shakeError 0.5s ease'
               }}>
-                <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 14, flexShrink: 0 }}></i>
-                <span>{qrError}</span>
+                <div style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: '#ff3b30', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  <i className="fa-solid fa-exclamation" style={{ color: '#fff', fontSize: 12 }}></i>
+                </div>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1d1d1f', marginBottom: 2 }}>
+                    Login Failed
+                  </div>
+                  <div style={{ fontSize: 12, color: '#86868b', lineHeight: 1.4 }}>
+                    {qrError}
+                  </div>
+                </div>
               </div>
             )}
 
             {/* Upload QR from Gallery */}
-            <div style={{ textAlign: 'center' }}>
-              <label style={{
-                display: 'inline-flex', alignItems: 'center', gap: 8,
-                padding: '10px 20px', borderRadius: 10,
-                background: '#f5f5f7', color: '#1d1d1f',
-                fontSize: 14, fontWeight: 500, cursor: 'pointer',
-                fontFamily: "'Inter', sans-serif",
-                transition: 'all 0.2s ease'
-              }}>
-                <i className="fa-solid fa-image"></i>
-                Upload QR from Gallery
-                <input 
-                  type="file" 
-                  accept="image/*"
-                  onChange={handleQRImageUpload}
-                  style={{ display: 'none' }}
-                />
-              </label>
-              <p style={{
-                fontSize: 11, color: '#86868b', marginTop: 8
-              }}>
-                Supports PNG, JPG, or any image with a QR code
-              </p>
-            </div>
+            {!qrSuccess && (
+              <div style={{ textAlign: 'center' }}>
+                <label style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  padding: '12px 20px', borderRadius: 12,
+                  background: qrLoginLoading ? '#f5f5f7' : '#f5f5f7', 
+                  color: qrLoginLoading ? '#a1a1a6' : '#1d1d1f',
+                  fontSize: 14, fontWeight: 500, 
+                  cursor: qrLoginLoading ? 'not-allowed' : 'pointer',
+                  fontFamily: "'Inter', sans-serif",
+                  transition: 'all 0.2s ease',
+                  pointerEvents: qrLoginLoading ? 'none' : 'auto'
+                }}>
+                  <i className="fa-solid fa-image"></i>
+                  Upload QR from Gallery
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={handleQRImageUpload}
+                    disabled={qrLoginLoading}
+                    style={{ display: 'none' }}
+                  />
+                </label>
+                <p style={{
+                  fontSize: 11, color: '#86868b', marginTop: 8
+                }}>
+                  Supports PNG, JPG, or any image with a QR code
+                </p>
+              </div>
+            )}
           </div>
         </div>
       )}
 
       {toast && (
-        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ 
+          position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', 
+          background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', 
+          color: '#fff', padding: '14px 24px', borderRadius: 50, 
+          fontSize: 14, fontWeight: 500, zIndex: 9999, 
+          boxShadow: '0 12px 40px rgba(0,0,0,0.25)', 
+          display: 'flex', alignItems: 'center', gap: 10,
+          animation: 'toastSlideDown 0.4s ease'
+        }}>
           <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
           <span>{toast.message}</span>
         </div>
@@ -621,7 +829,10 @@ export default function SignIn() {
         @keyframes cardSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scanPulse { 0%, 100% { border-color: rgba(0,122,255,0.6); } 50% { border-color: rgba(0,122,255,1); } }
+        @keyframes scanLine { 0% { top: 15%; } 50% { top: 85%; } 100% { top: 15%; } }
+        @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+        @keyframes shakeError { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); } 20%, 40%, 60%, 80% { transform: translateX(4px); } }
+        @keyframes toastSlideDown { from { opacity: 0; transform: translateX(-50%) translateY(-20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
       `}</style>
     </>
   );
