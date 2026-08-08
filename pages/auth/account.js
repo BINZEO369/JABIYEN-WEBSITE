@@ -39,7 +39,6 @@ export default function Account() {
   const [cardDataUrl, setCardDataUrl] = useState(null);
   const [cardError, setCardError] = useState(null);
   const cardCanvasRef = useRef(null);
-  const cardPreviewRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -197,256 +196,284 @@ export default function Account() {
     setUserData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Generate QR Code as image
-  const generateQRImage = (data) => {
+  // Generate QR Code as data URL
+  const generateQRDataURL = (text) => {
     return new Promise((resolve) => {
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      document.body.appendChild(tempDiv);
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      document.body.appendChild(tempContainer);
       
-      const qrCode = new window.QRCode(tempDiv, {
-        text: data,
-        width: 180,
-        height: 180,
+      const qr = new window.QRCode(tempContainer, {
+        text: text,
+        width: 200,
+        height: 200,
         colorDark: '#1d1d1f',
         colorLight: '#ffffff',
-        correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 2
+        correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.L : 1
       });
 
       setTimeout(() => {
-        const img = tempDiv.querySelector('img');
+        const img = tempContainer.querySelector('img');
+        const canvas = tempContainer.querySelector('canvas');
         if (img) {
-          resolve(img);
-        } else {
-          const canvas = tempDiv.querySelector('canvas');
-          const newImg = new Image();
-          newImg.src = canvas.toDataURL('image/png');
-          resolve(newImg);
+          resolve(img.src);
+        } else if (canvas) {
+          resolve(canvas.toDataURL('image/png'));
         }
-        document.body.removeChild(tempDiv);
-      }, 300);
+        document.body.removeChild(tempContainer);
+      }, 500);
     });
   };
 
-  // Draw complete JABIYEN Auth Card
-  const drawAuthCard = async () => {
+  // Generate complete card
+  const generateCard = async () => {
     const canvas = cardCanvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    const width = 600;
-    const height = 380;
-    
+    const width = 900;
+    const height = 540;
     canvas.width = width;
     canvas.height = height;
 
-    // Card Background - Dark premium gradient
+    // Card Background - Premium dark gradient
     const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-    bgGradient.addColorStop(0, '#0a0a0a');
-    bgGradient.addColorStop(0.5, '#1a1a2e');
-    bgGradient.addColorStop(1, '#0f0f1a');
+    bgGradient.addColorStop(0, '#0a0a1a');
+    bgGradient.addColorStop(0.3, '#111133');
+    bgGradient.addColorStop(0.7, '#1a1a3e');
+    bgGradient.addColorStop(1, '#0d0d24');
+    
+    // Rounded rectangle card
+    const cardX = 20;
+    const cardY = 20;
+    const cardW = width - 40;
+    const cardH = height - 40;
+    const radius = 24;
+
+    // Draw shadow
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 40;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 16;
+    
+    // Card body
+    ctx.beginPath();
+    ctx.moveTo(cardX + radius, cardY);
+    ctx.lineTo(cardX + cardW - radius, cardY);
+    ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + radius);
+    ctx.lineTo(cardX + cardW, cardY + cardH - radius);
+    ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - radius, cardY + cardH);
+    ctx.lineTo(cardX + radius, cardY + cardH);
+    ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - radius);
+    ctx.lineTo(cardX, cardY + radius);
+    ctx.quadraticCurveTo(cardX, cardY, cardX + radius, cardY);
+    ctx.closePath();
     ctx.fillStyle = bgGradient;
-    ctx.beginPath();
-    ctx.roundRect(0, 0, width, height, 20);
     ctx.fill();
 
-    // Subtle pattern overlay
-    ctx.fillStyle = 'rgba(255,255,255,0.02)';
-    for (let i = 0; i < width; i += 40) {
-      for (let j = 0; j < height; j += 40) {
-        ctx.fillRect(i, j, 1, 1);
-      }
-    }
+    // Reset shadow for inner elements
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
 
-    // Border glow effect
-    ctx.strokeStyle = 'rgba(102, 126, 234, 0.3)';
-    ctx.lineWidth = 2;
+    // Decorative circles
     ctx.beginPath();
-    ctx.roundRect(4, 4, width - 8, height - 8, 18);
-    ctx.stroke();
-
-    // Inner border
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.roundRect(16, 16, width - 32, height - 32, 14);
-    ctx.stroke();
-
-    // === LEFT SECTION - User Info ===
-    
-    // Logo/Icon area
-    const logoGradient = ctx.createLinearGradient(0, 0, 80, 80);
-    logoGradient.addColorStop(0, '#667eea');
-    logoGradient.addColorStop(1, '#764ba2');
-    ctx.fillStyle = logoGradient;
-    ctx.beginPath();
-    ctx.roundRect(40, 40, 60, 60, 14);
+    ctx.arc(cardX + cardW - 80, cardY + 80, 140, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(102, 126, 234, 0.06)';
     ctx.fill();
     
-    // Logo text
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px "Manrope", "Inter", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('J', 70, 80);
+    ctx.beginPath();
+    ctx.arc(cardX + 100, cardY + cardH - 100, 100, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(118, 75, 162, 0.05)';
+    ctx.fill();
 
-    // Brand name
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px "Manrope", "Inter", sans-serif';
+    // Accent line top
+    const accentGradient = ctx.createLinearGradient(0, 0, width, 0);
+    accentGradient.addColorStop(0, '#667eea');
+    accentGradient.addColorStop(0.5, '#8b5cf6');
+    accentGradient.addColorStop(1, '#a855f7');
+    
+    ctx.fillStyle = accentGradient;
+    ctx.fillRect(cardX, cardY, cardW, 4);
+
+    // Card Brand - "JABIYEN"
+    ctx.font = '600 20px "Inter", "Manrope", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
     ctx.textAlign = 'left';
-    ctx.fillText('JABIYEN', 115, 68);
-    
-    ctx.fillStyle = '#86868b';
-    ctx.font = '500 9px "Inter", sans-serif';
-    ctx.fillText('AUTH CARD', 115, 84);
+    ctx.fillText('JABIYEN', cardX + 40, cardY + 60);
 
-    // User full name
-    const fullName = `${userData.first_name} ${userData.last_name}`.trim() || 'User';
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 22px "Manrope", "Inter", sans-serif';
-    ctx.fillText(fullName, 40, 150);
+    // Logo
+    const logoImg = new Image();
+    logoImg.src = '/logo.png';
     
-    // Divider line
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(40, 168);
-    ctx.lineTo(280, 168);
-    ctx.stroke();
-
-    // Email
-    ctx.fillStyle = '#86868b';
-    ctx.font = '500 11px "Inter", sans-serif';
-    ctx.fillText('EMAIL', 40, 195);
-    ctx.fillStyle = '#d1d1d6';
-    ctx.font = '500 13px "Inter", sans-serif';
-    ctx.fillText(userData.email || '—', 40, 215);
-
-    // Phone
-    ctx.fillStyle = '#86868b';
-    ctx.font = '500 11px "Inter", sans-serif';
-    ctx.fillText('PHONE', 40, 248);
-    ctx.fillStyle = '#d1d1d6';
-    ctx.font = '500 13px "Inter", sans-serif';
-    ctx.fillText(userData.phone || '—', 40, 268);
-
-    // Address
-    const addressParts = [
-      userData.address_line1,
-      userData.address_line2,
-      userData.city,
-      userData.state,
-      userData.postal_code,
-      userData.country
-    ].filter(Boolean);
-    
-    const addressStr = addressParts.length > 0 ? addressParts.join(', ') : 'No address saved';
-    
-    ctx.fillStyle = '#86868b';
-    ctx.font = '500 11px "Inter", sans-serif';
-    ctx.fillText('ADDRESS', 40, 301);
-    ctx.fillStyle = '#d1d1d6';
-    ctx.font = '500 12px "Inter", sans-serif';
-    
-    // Handle long address with line break
-    const words = addressStr.split(' ');
-    let line = '';
-    let y = 321;
-    for (let word of words) {
-      const testLine = line + word + ' ';
-      if (ctx.measureText(testLine).width > 240) {
-        ctx.fillText(line.trim(), 40, y);
-        line = word + ' ';
-        y += 18;
-      } else {
-        line = testLine;
+    await new Promise((resolve) => {
+      logoImg.onload = () => {
+        // Draw logo
+        const logoSize = 44;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cardX + cardW - 60, cardY + 60, logoSize/2 + 4, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fill();
+        ctx.restore();
+        
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cardX + cardW - 60, cardY + 60, logoSize/2, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(logoImg, cardX + cardW - 60 - logoSize/2, cardY + 60 - logoSize/2, logoSize, logoSize);
+        ctx.restore();
+        resolve();
+      };
+      logoImg.onerror = () => resolve();
+      // If already loaded
+      if (logoImg.complete) {
+        logoImg.onload();
       }
+    });
+
+    // Card type chip
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(cardX + 40, cardY + 120, 56, 40);
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.fillRect(cardX + 40, cardY + 126, 56, 4);
+    ctx.fillRect(cardX + 40, cardY + 134, 56, 4);
+    ctx.fillRect(cardX + 40, cardY + 142, 56, 4);
+    ctx.fillStyle = 'rgba(255,255,255,0.04)';
+    ctx.fillRect(cardX + 40, cardY + 152, 56, 4);
+
+    // Card Number (styled)
+    const cardNumber = '••••  ••••  ••••  ' + (userData.phone || '••••').slice(-4).padStart(4, '•');
+    ctx.font = '500 28px "Courier New", monospace';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.fillText(cardNumber, cardX + 40, cardY + 220);
+
+    // Labels row
+    const labels = ['CARD HOLDER', 'VALID THRU', 'CVV'];
+    const labelX = [cardX + 40, cardX + 280, cardX + 460];
+    
+    ctx.font = '500 10px "Inter", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.letterSpacing = '0.1em';
+    labels.forEach((label, i) => {
+      ctx.fillText(label, labelX[i], cardY + 270);
+    });
+
+    // Values row
+    const fullName = `${userData.first_name} ${userData.last_name}`.trim() || userData.email?.split('@')[0] || 'User';
+    const validThru = new Date().toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' }) + ' / ' + 
+      new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' });
+    
+    ctx.font = '600 15px "Inter", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.fillText(fullName.toUpperCase(), labelX[0], cardY + 292);
+    ctx.fillText(validThru, labelX[1], cardY + 292);
+    ctx.fillText('•••', labelX[2], cardY + 292);
+
+    // User Details Section
+    const detailStartY = cardY + 330;
+    ctx.font = '400 12px "Inter", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    
+    // Email
+    ctx.fillText('EMAIL', cardX + 40, detailStartY);
+    ctx.font = '500 13px "Inter", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+    ctx.fillText(userData.email || '—', cardX + 40, detailStartY + 20);
+
+    // Address (if exists)
+    if (userData.address_line1) {
+      const address = [userData.address_line1, userData.address_line2, userData.city, userData.state, userData.postal_code, userData.country]
+        .filter(Boolean).join(', ');
+      
+      ctx.font = '400 11px "Inter", sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.fillText('ADDRESS', cardX + 280, detailStartY);
+      ctx.font = '500 12px "Inter", sans-serif';
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+      
+      // Wrap text if too long
+      const words = address.split(' ');
+      let line = '';
+      let y = detailStartY + 20;
+      words.forEach((word) => {
+        const testLine = line + word + ' ';
+        if (ctx.measureText(testLine).width > 280) {
+          ctx.fillText(line.trim(), cardX + 280, y);
+          line = word + ' ';
+          y += 18;
+        } else {
+          line = testLine;
+        }
+      });
+      ctx.fillText(line.trim(), cardX + 280, y);
     }
-    ctx.fillText(line.trim(), 40, y);
 
-    // === RIGHT SECTION - QR Code ===
-    
-    // QR Background container
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.roundRect(370, 40, 200, 200, 14);
-    ctx.fill();
-    
-    // QR Code border
-    ctx.strokeStyle = 'rgba(102, 126, 234, 0.2)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(370, 40, 200, 200, 14);
-    ctx.stroke();
-
-    // Generate QR Code
+    // QR Code on right side
     const qrData = JSON.stringify({
       email: userData.email,
       password: cardPassword
     });
 
     try {
-      const qrImage = await generateQRImage(qrData);
-      ctx.drawImage(qrImage, 380, 50, 180, 180);
+      const qrDataUrl = await generateQRDataURL(qrData);
+      const qrImg = new Image();
+      qrImg.src = qrDataUrl;
+      
+      await new Promise((resolve) => {
+        qrImg.onload = () => {
+          const qrSize = 130;
+          const qrX = cardX + cardW - qrSize - 50;
+          const qrY = cardY + cardH - qrSize - 50;
+          
+          // QR background
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
+          ctx.fillStyle = '#fff';
+          ctx.fillRect(qrX, qrY, qrSize, qrSize);
+          
+          // Draw QR
+          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+          
+          // QR Label
+          ctx.font = '400 9px "Inter", sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.5)';
+          ctx.textAlign = 'center';
+          ctx.fillText('SCAN TO AUTH', qrX + qrSize/2, qrY + qrSize + 16);
+          ctx.textAlign = 'left';
+          resolve();
+        };
+        qrImg.onerror = () => resolve();
+      });
     } catch (e) {
-      // Fallback text
-      ctx.fillStyle = '#86868b';
-      ctx.font = '13px "Inter", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('QR Code', 470, 140);
+      // QR generation failed, continue without QR
     }
-    
-    ctx.textAlign = 'left';
 
-    // QR Label
-    ctx.fillStyle = '#86868b';
-    ctx.font = '500 10px "Inter", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('Scan for instant login', 470, 260);
-    ctx.textAlign = 'left';
-
-    // === BOTTOM SECTION ===
-    
-    // Bottom separator
-    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
-    ctx.lineWidth = 1;
+    // Divider line
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 0.5;
     ctx.beginPath();
-    ctx.moveTo(40, 290);
-    ctx.lineTo(560, 290);
+    ctx.moveTo(cardX + 40, cardY + cardH - 60);
+    ctx.lineTo(cardX + cardW - 40, cardY + cardH - 60);
     ctx.stroke();
 
-    // Member since and card info
-    ctx.fillStyle = '#86868b';
-    ctx.font = '500 10px "Inter", sans-serif';
-    ctx.fillText('MEMBER SINCE', 40, 320);
-    ctx.fillStyle = '#d1d1d6';
-    ctx.font = '500 11px "Inter", sans-serif';
-    ctx.fillText(formatDate(userData.created_at), 40, 337);
-
-    // Card ID
-    ctx.fillStyle = '#86868b';
-    ctx.font = '500 10px "Inter", sans-serif';
-    ctx.fillText('CARD ID', 40, 358);
-    ctx.fillStyle = '#d1d1d6';
-    ctx.font = '500 11px "Inter", sans-serif';
-    const cardId = `JAB-${userData.email?.split('@')[0]?.toUpperCase() || 'USER'}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
-    ctx.fillText(cardId, 40, 375);
-
-    // Powered by
-    ctx.fillStyle = 'rgba(255,255,255,0.2)';
-    ctx.font = '500 8px "Inter", sans-serif';
+    // Footer
+    ctx.font = '400 10px "Inter", sans-serif';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+    ctx.fillText('This card is encrypted and contains your secure login credentials. Do not share.', cardX + 40, cardY + cardH - 38);
     ctx.textAlign = 'right';
-    ctx.fillText('JAYENWARE', 560, 370);
+    ctx.fillText('JABIYEN AUTH CARD © ' + new Date().getFullYear(), cardX + cardW - 40, cardY + cardH - 38);
     ctx.textAlign = 'left';
 
-    // Set preview
-    if (cardPreviewRef.current) {
-      setCardDataUrl(canvas.toDataURL('image/png'));
-      setCardGenerated(true);
-    }
+    // Set data URL
+    setCardDataUrl(canvas.toDataURL('image/png'));
+    setCardGenerated(true);
   };
 
-  // Verify password and generate card
+  // Password verification
   const verifyPasswordForCard = async () => {
     if (!cardPassword) {
       setCardError('Please enter your password');
@@ -477,7 +504,7 @@ export default function Account() {
       }
 
       setCardVerified(true);
-      await drawAuthCard();
+      await generateCard();
       showToast('JABIYEN Auth Card generated!', 'success');
     } catch (err) {
       setCardError('Verification failed. Please try again.');
@@ -491,20 +518,17 @@ export default function Account() {
   const downloadCard = () => {
     if (!cardDataUrl) return;
 
-    const username = userData.first_name 
-      ? userData.first_name.toLowerCase().replace(/\s+/g, '-')
-      : userData.email?.split('@')[0] || 'user';
-
+    const username = (userData.first_name + '-' + userData.last_name).toLowerCase().replace(/\s+/g, '-') || 'user';
     const link = document.createElement('a');
     link.download = `${username}-jabiyen-auth-card.png`;
     link.href = cardDataUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Card downloaded successfully!');
+    showToast('Auth card downloaded successfully!');
   };
 
-  // Reset card states
+  // Reset card states when switching panels
   const handlePanelSwitch = (panel) => {
     setCurrentPanel(panel);
     if (panel !== 'card-auth') {
@@ -697,23 +721,22 @@ export default function Account() {
               </div>
             )}
 
-            {/* JABIYEN Card Auth Section */}
+            {/* JABIYEN Card Auth Section - Premium Card Design */}
             {currentPanel === 'card-auth' && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
                     width: 64, height: 64, 
-                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                    background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%)',
                     borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto 16px', color: '#fff', fontSize: 28,
-                    border: '2px solid rgba(102, 126, 234, 0.3)'
+                    margin: '0 auto 16px', color: '#fff', fontSize: 28
                   }}>
                     <i className="fa-solid fa-credit-card"></i>
                   </div>
                   <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>JABIYEN Card Auth</h2>
                   <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>
-                    Generate your premium JABIYEN Auth Card with QR login.<br />
-                    Verify your password to create a personalized card.
+                    Generate your premium JABIYEN Auth Card for secure, instant login.<br />
+                    Verify your password to create your personalized card.
                   </p>
                 </div>
 
@@ -737,7 +760,7 @@ export default function Account() {
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') verifyPasswordForCard();
                         }}
-                        placeholder="Enter your password to generate card"
+                        placeholder="Enter your password to verify"
                         style={{
                           ...inputStyle,
                           padding: '14px 16px',
@@ -763,20 +786,20 @@ export default function Account() {
                   </div>
                 )}
 
-                {/* Verify Button or Card Display */}
+                {/* Verify Button */}
                 {!cardVerified ? (
                   <button 
                     onClick={verifyPasswordForCard}
                     disabled={cardVerifying || !cardPassword}
                     style={{
                       width: '100%', padding: '14px 24px',
-                      background: cardVerifying || !cardPassword ? '#a1a1a6' : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
+                      background: cardVerifying || !cardPassword ? '#a1a1a6' : 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%)',
                       color: '#fff', fontFamily: "'Inter', sans-serif",
                       fontSize: 15, fontWeight: 600, border: 'none',
                       borderRadius: 12, cursor: cardVerifying || !cardPassword ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                       transition: 'all 0.3s ease',
-                      boxShadow: cardVerifying || !cardPassword ? 'none' : '0 4px 20px rgba(26, 26, 46, 0.4)'
+                      boxShadow: cardVerifying || !cardPassword ? 'none' : '0 4px 20px rgba(10,10,26,0.3)'
                     }}
                   >
                     {cardVerifying ? (
@@ -792,7 +815,7 @@ export default function Account() {
                     ) : (
                       <>
                         <i className="fa-solid fa-shield-check"></i>
-                        Verify & Generate Auth Card
+                        Verify & Generate Card
                       </>
                     )}
                   </button>
@@ -811,22 +834,18 @@ export default function Account() {
 
                     {/* Card Preview */}
                     <div style={{
-                      background: '#f0f0f5', borderRadius: 16,
-                      padding: 16, textAlign: 'center',
-                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.06)',
-                      marginBottom: 20
+                      background: '#f0f0f5', borderRadius: 20,
+                      padding: 20, marginBottom: 20
                     }}>
-                      <img 
-                        ref={cardPreviewRef}
-                        src={cardDataUrl} 
-                        alt="JABIYEN Auth Card"
-                        style={{
-                          width: '100%', maxWidth: 560,
-                          borderRadius: 12,
+                      <canvas 
+                        ref={cardCanvasRef} 
+                        style={{ 
+                          width: '100%', 
+                          height: 'auto', 
+                          borderRadius: 16,
                           boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-                        }}
+                        }} 
                       />
-                      <canvas ref={cardCanvasRef} style={{ display: 'none' }} />
                     </div>
 
                     {/* Download & Reset Buttons */}
@@ -836,7 +855,7 @@ export default function Account() {
                         disabled={!cardGenerated}
                         style={{
                           flex: 1, padding: '14px 20px',
-                          background: cardGenerated ? '#1d1d1f' : '#a1a1a6',
+                          background: cardGenerated ? '#0a0a1a' : '#a1a1a6',
                           color: '#fff', fontFamily: "'Inter', sans-serif",
                           fontSize: 15, fontWeight: 600, border: 'none',
                           borderRadius: 12, cursor: cardGenerated ? 'pointer' : 'not-allowed',
@@ -845,7 +864,7 @@ export default function Account() {
                         }}
                       >
                         <i className="fa-solid fa-download"></i>
-                        Download Auth Card
+                        Download Card (PNG)
                       </button>
                       <button
                         onClick={() => {
@@ -866,7 +885,7 @@ export default function Account() {
                         }}
                       >
                         <i className="fa-solid fa-rotate"></i>
-                        Reset
+                        Generate New
                       </button>
                     </div>
                   </div>
@@ -883,7 +902,7 @@ export default function Account() {
                     color: '#f57c00', fontSize: 16, marginTop: 1, flexShrink: 0 
                   }}></i>
                   <div style={{ fontSize: 12, color: '#795548', lineHeight: 1.5 }}>
-                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This card contains encrypted login credentials in the QR code. Keep it secure and do not share it with anyone. Download and store it safely.
+                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This card contains encrypted login credentials in the QR code. Keep it secure and do not share with anyone. The card is for your personal use only.
                   </div>
                 </div>
               </div>
