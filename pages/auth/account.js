@@ -297,7 +297,7 @@ export default function Account() {
   // Reset QR states when switching panels
   const handlePanelSwitch = (panel) => {
     setCurrentPanel(panel);
-    if (panel !== 'qr-generator') {
+    if (panel !== 'card-auth') {
       setQrPassword('');
       setQrVerified(false);
       setQrGenerated(false);
@@ -360,7 +360,7 @@ export default function Account() {
             {[
               { key: 'profile', icon: 'user', label: 'Profile' },
               { key: 'addresses', icon: 'location-dot', label: 'Location' },
-              { key: 'qr-generator', icon: 'qrcode', label: 'QR Generator' }
+              { key: 'card-auth', icon: 'id-card', label: 'JABIYEN Card Auth' }
             ].map(panel => (
               <button key={panel.key} onClick={() => handlePanelSwitch(panel.key)} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
@@ -487,8 +487,8 @@ export default function Account() {
               </div>
             )}
 
-            {/* QR Generator Section */}
-            {currentPanel === 'qr-generator' && (
+            {/* JABIYEN Card Auth Section */}
+            {currentPanel === 'card-auth' && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
@@ -497,12 +497,12 @@ export default function Account() {
                     borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 16px', color: '#fff', fontSize: 28
                   }}>
-                    <i className="fa-solid fa-qrcode"></i>
+                    <i className="fa-solid fa-id-card"></i>
                   </div>
-                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>QR Login Generator</h2>
+                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>JABIYEN Card Auth</h2>
                   <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>
-                    Generate a QR code for quick login. Your email is pre-filled.<br />
-                    Enter your password to verify and generate the QR code.
+                    Generate your JABIYEN QR card for instant login.<br />
+                    Verify your password to create a secure login card.
                   </p>
                 </div>
 
@@ -610,7 +610,7 @@ export default function Account() {
                     ) : (
                       <>
                         <i className="fa-solid fa-shield-check"></i>
-                        Verify & Generate QR Code
+                        Verify & Generate QR Card
                       </>
                     )}
                   </button>
@@ -659,7 +659,7 @@ export default function Account() {
                       
                       <p style={{ fontSize: 12, color: '#86868b', margin: 0 }}>
                         <i className="fa-solid fa-info-circle" style={{ marginRight: 4 }}></i>
-                        Scan this QR code to login instantly
+                        Scan this QR card to login instantly with JABIYEN Card Auth
                       </p>
                     </div>
 
@@ -679,7 +679,7 @@ export default function Account() {
                         }}
                       >
                         <i className="fa-solid fa-download"></i>
-                        Download QR Code
+                        Download QR Card
                       </button>
                       <button
                         onClick={() => {
@@ -718,7 +718,7 @@ export default function Account() {
                     color: '#f57c00', fontSize: 16, marginTop: 1, flexShrink: 0 
                   }}></i>
                   <div style={{ fontSize: 12, color: '#795548', lineHeight: 1.5 }}>
-                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This QR code contains your login credentials. Keep it secure and do not share it with anyone. The QR code stores your email and password in encrypted format for quick login.
+                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This QR card contains your login credentials. Keep it secure and do not share it with anyone. Use it with JABIYEN Card Auth for instant, secure login.
                   </div>
                 </div>
               </div>
