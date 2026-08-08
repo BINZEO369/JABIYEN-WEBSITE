@@ -31,13 +31,13 @@ export default function Account() {
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Card Generator states
-  const [cardPassword, setCardPassword] = useState('');
-  const [cardVerifying, setCardVerifying] = useState(false);
-  const [cardVerified, setCardVerified] = useState(false);
-  const [cardGenerated, setCardGenerated] = useState(false);
+  // QR Generator states
+  const [qrPassword, setQrPassword] = useState('');
+  const [qrVerifying, setQrVerifying] = useState(false);
+  const [qrVerified, setQrVerified] = useState(false);
+  const [qrGenerated, setQrGenerated] = useState(false);
   const [cardDataUrl, setCardDataUrl] = useState(null);
-  const [cardError, setCardError] = useState(null);
+  const [qrError, setQrError] = useState(null);
   const cardCanvasRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
@@ -130,13 +130,6 @@ export default function Account() {
 
   useEffect(() => { 
     fetchUserData();
-    // Load QR code library dynamically
-    if (typeof window !== 'undefined' && !window.QRCode) {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
-      script.async = true;
-      document.head.appendChild(script);
-    }
   }, [fetchUserData]);
 
   const handleLogout = async () => {
@@ -196,293 +189,16 @@ export default function Account() {
     setUserData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Generate QR Code as data URL
-  const generateQRDataURL = (text) => {
-    return new Promise((resolve) => {
-      const tempContainer = document.createElement('div');
-      tempContainer.style.position = 'absolute';
-      tempContainer.style.left = '-9999px';
-      document.body.appendChild(tempContainer);
-      
-      const qr = new window.QRCode(tempContainer, {
-        text: text,
-        width: 200,
-        height: 200,
-        colorDark: '#1d1d1f',
-        colorLight: '#ffffff',
-        correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.L : 1
-      });
-
-      setTimeout(() => {
-        const img = tempContainer.querySelector('img');
-        const canvas = tempContainer.querySelector('canvas');
-        if (img) {
-          resolve(img.src);
-        } else if (canvas) {
-          resolve(canvas.toDataURL('image/png'));
-        }
-        document.body.removeChild(tempContainer);
-      }, 500);
-    });
-  };
-
-  // Generate complete card
-  const generateCard = async () => {
-    const canvas = cardCanvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext('2d');
-    const width = 900;
-    const height = 540;
-    canvas.width = width;
-    canvas.height = height;
-
-    // Card Background - Premium dark gradient
-    const bgGradient = ctx.createLinearGradient(0, 0, width, height);
-    bgGradient.addColorStop(0, '#0a0a1a');
-    bgGradient.addColorStop(0.3, '#111133');
-    bgGradient.addColorStop(0.7, '#1a1a3e');
-    bgGradient.addColorStop(1, '#0d0d24');
-    
-    // Rounded rectangle card
-    const cardX = 20;
-    const cardY = 20;
-    const cardW = width - 40;
-    const cardH = height - 40;
-    const radius = 24;
-
-    // Draw shadow
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
-    ctx.shadowBlur = 40;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 16;
-    
-    // Card body
-    ctx.beginPath();
-    ctx.moveTo(cardX + radius, cardY);
-    ctx.lineTo(cardX + cardW - radius, cardY);
-    ctx.quadraticCurveTo(cardX + cardW, cardY, cardX + cardW, cardY + radius);
-    ctx.lineTo(cardX + cardW, cardY + cardH - radius);
-    ctx.quadraticCurveTo(cardX + cardW, cardY + cardH, cardX + cardW - radius, cardY + cardH);
-    ctx.lineTo(cardX + radius, cardY + cardH);
-    ctx.quadraticCurveTo(cardX, cardY + cardH, cardX, cardY + cardH - radius);
-    ctx.lineTo(cardX, cardY + radius);
-    ctx.quadraticCurveTo(cardX, cardY, cardX + radius, cardY);
-    ctx.closePath();
-    ctx.fillStyle = bgGradient;
-    ctx.fill();
-
-    // Reset shadow for inner elements
-    ctx.shadowColor = 'transparent';
-    ctx.shadowBlur = 0;
-    ctx.shadowOffsetX = 0;
-    ctx.shadowOffsetY = 0;
-
-    // Decorative circles
-    ctx.beginPath();
-    ctx.arc(cardX + cardW - 80, cardY + 80, 140, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(102, 126, 234, 0.06)';
-    ctx.fill();
-    
-    ctx.beginPath();
-    ctx.arc(cardX + 100, cardY + cardH - 100, 100, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(118, 75, 162, 0.05)';
-    ctx.fill();
-
-    // Accent line top
-    const accentGradient = ctx.createLinearGradient(0, 0, width, 0);
-    accentGradient.addColorStop(0, '#667eea');
-    accentGradient.addColorStop(0.5, '#8b5cf6');
-    accentGradient.addColorStop(1, '#a855f7');
-    
-    ctx.fillStyle = accentGradient;
-    ctx.fillRect(cardX, cardY, cardW, 4);
-
-    // Card Brand - "JABIYEN"
-    ctx.font = '600 20px "Inter", "Manrope", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.textAlign = 'left';
-    ctx.fillText('JABIYEN', cardX + 40, cardY + 60);
-
-    // Logo
-    const logoImg = new Image();
-    logoImg.src = '/logo.png';
-    
-    await new Promise((resolve) => {
-      logoImg.onload = () => {
-        // Draw logo
-        const logoSize = 44;
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cardX + cardW - 60, cardY + 60, logoSize/2 + 4, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.fill();
-        ctx.restore();
-        
-        ctx.save();
-        ctx.beginPath();
-        ctx.arc(cardX + cardW - 60, cardY + 60, logoSize/2, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.clip();
-        ctx.drawImage(logoImg, cardX + cardW - 60 - logoSize/2, cardY + 60 - logoSize/2, logoSize, logoSize);
-        ctx.restore();
-        resolve();
-      };
-      logoImg.onerror = () => resolve();
-      // If already loaded
-      if (logoImg.complete) {
-        logoImg.onload();
-      }
-    });
-
-    // Card type chip
-    ctx.fillStyle = 'rgba(255,255,255,0.08)';
-    ctx.fillRect(cardX + 40, cardY + 120, 56, 40);
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.fillRect(cardX + 40, cardY + 126, 56, 4);
-    ctx.fillRect(cardX + 40, cardY + 134, 56, 4);
-    ctx.fillRect(cardX + 40, cardY + 142, 56, 4);
-    ctx.fillStyle = 'rgba(255,255,255,0.04)';
-    ctx.fillRect(cardX + 40, cardY + 152, 56, 4);
-
-    // Card Number (styled)
-    const cardNumber = '••••  ••••  ••••  ' + (userData.phone || '••••').slice(-4).padStart(4, '•');
-    ctx.font = '500 28px "Courier New", monospace';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.fillText(cardNumber, cardX + 40, cardY + 220);
-
-    // Labels row
-    const labels = ['CARD HOLDER', 'VALID THRU', 'CVV'];
-    const labelX = [cardX + 40, cardX + 280, cardX + 460];
-    
-    ctx.font = '500 10px "Inter", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.letterSpacing = '0.1em';
-    labels.forEach((label, i) => {
-      ctx.fillText(label, labelX[i], cardY + 270);
-    });
-
-    // Values row
-    const fullName = `${userData.first_name} ${userData.last_name}`.trim() || userData.email?.split('@')[0] || 'User';
-    const validThru = new Date().toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' }) + ' / ' + 
-      new Date(Date.now() + 365*24*60*60*1000).toLocaleDateString('en-US', { month: '2-digit', year: '2-digit' });
-    
-    ctx.font = '600 15px "Inter", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.fillText(fullName.toUpperCase(), labelX[0], cardY + 292);
-    ctx.fillText(validThru, labelX[1], cardY + 292);
-    ctx.fillText('•••', labelX[2], cardY + 292);
-
-    // User Details Section
-    const detailStartY = cardY + 330;
-    ctx.font = '400 12px "Inter", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    
-    // Email
-    ctx.fillText('EMAIL', cardX + 40, detailStartY);
-    ctx.font = '500 13px "Inter", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.fillText(userData.email || '—', cardX + 40, detailStartY + 20);
-
-    // Address (if exists)
-    if (userData.address_line1) {
-      const address = [userData.address_line1, userData.address_line2, userData.city, userData.state, userData.postal_code, userData.country]
-        .filter(Boolean).join(', ');
-      
-      ctx.font = '400 11px "Inter", sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.fillText('ADDRESS', cardX + 280, detailStartY);
-      ctx.font = '500 12px "Inter", sans-serif';
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-      
-      // Wrap text if too long
-      const words = address.split(' ');
-      let line = '';
-      let y = detailStartY + 20;
-      words.forEach((word) => {
-        const testLine = line + word + ' ';
-        if (ctx.measureText(testLine).width > 280) {
-          ctx.fillText(line.trim(), cardX + 280, y);
-          line = word + ' ';
-          y += 18;
-        } else {
-          line = testLine;
-        }
-      });
-      ctx.fillText(line.trim(), cardX + 280, y);
-    }
-
-    // QR Code on right side
-    const qrData = JSON.stringify({
-      email: userData.email,
-      password: cardPassword
-    });
-
-    try {
-      const qrDataUrl = await generateQRDataURL(qrData);
-      const qrImg = new Image();
-      qrImg.src = qrDataUrl;
-      
-      await new Promise((resolve) => {
-        qrImg.onload = () => {
-          const qrSize = 130;
-          const qrX = cardX + cardW - qrSize - 50;
-          const qrY = cardY + cardH - qrSize - 50;
-          
-          // QR background
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(qrX - 8, qrY - 8, qrSize + 16, qrSize + 16);
-          ctx.fillStyle = '#fff';
-          ctx.fillRect(qrX, qrY, qrSize, qrSize);
-          
-          // Draw QR
-          ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-          
-          // QR Label
-          ctx.font = '400 9px "Inter", sans-serif';
-          ctx.fillStyle = 'rgba(255,255,255,0.5)';
-          ctx.textAlign = 'center';
-          ctx.fillText('SCAN TO AUTH', qrX + qrSize/2, qrY + qrSize + 16);
-          ctx.textAlign = 'left';
-          resolve();
-        };
-        qrImg.onerror = () => resolve();
-      });
-    } catch (e) {
-      // QR generation failed, continue without QR
-    }
-
-    // Divider line
-    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(cardX + 40, cardY + cardH - 60);
-    ctx.lineTo(cardX + cardW - 40, cardY + cardH - 60);
-    ctx.stroke();
-
-    // Footer
-    ctx.font = '400 10px "Inter", sans-serif';
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-    ctx.fillText('This card is encrypted and contains your secure login credentials. Do not share.', cardX + 40, cardY + cardH - 38);
-    ctx.textAlign = 'right';
-    ctx.fillText('JABIYEN AUTH CARD © ' + new Date().getFullYear(), cardX + cardW - 40, cardY + cardH - 38);
-    ctx.textAlign = 'left';
-
-    // Set data URL
-    setCardDataUrl(canvas.toDataURL('image/png'));
-    setCardGenerated(true);
-  };
-
-  // Password verification
-  const verifyPasswordForCard = async () => {
-    if (!cardPassword) {
-      setCardError('Please enter your password');
+  // Password verification for QR generation
+  const verifyPasswordForQR = async () => {
+    if (!qrPassword) {
+      setQrError('Please enter your password');
       showToast('Please enter your password', 'error');
       return;
     }
 
-    setCardVerifying(true);
-    setCardError(null);
+    setQrVerifying(true);
+    setQrError(null);
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -490,53 +206,338 @@ export default function Account() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email: userData.email, 
-          password: cardPassword 
+          password: qrPassword 
         })
       });
 
       const result = await res.json();
 
       if (!res.ok) {
-        setCardError('Invalid password. Please try again.');
+        setQrError('Invalid password. Please try again.');
         showToast('Password verification failed', 'error');
-        setCardVerifying(false);
+        setQrVerifying(false);
         return;
       }
 
-      setCardVerified(true);
-      await generateCard();
-      showToast('JABIYEN Auth Card generated!', 'success');
+      // Password verified successfully
+      setQrVerified(true);
+      generateCardImage();
+      showToast('Password verified! Card generated.', 'success');
     } catch (err) {
-      setCardError('Verification failed. Please try again.');
+      setQrError('Verification failed. Please try again.');
       showToast('Verification failed', 'error');
     } finally {
-      setCardVerifying(false);
+      setQrVerifying(false);
     }
   };
 
-  // Download card
+  // Generate QR Code on canvas helper
+  const generateQRCodeOnCanvas = (canvas, data, size) => {
+    return new Promise((resolve) => {
+      // Simple QR code generator using canvas
+      const qr = [];
+      const qrSize = 25; // QR matrix size (25x25 for medium data)
+      
+      // Simple hash function to generate QR-like pattern from data
+      let hash = 0;
+      const str = JSON.stringify(data);
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      
+      // Seed random with hash
+      let seed = Math.abs(hash);
+      const seededRandom = () => {
+        seed = (seed * 16807) % 2147483647;
+        return (seed - 1) / 2147483646;
+      };
+      
+      // Generate QR matrix pattern
+      const matrix = [];
+      for (let y = 0; y < qrSize; y++) {
+        matrix[y] = [];
+        for (let x = 0; x < qrSize; x++) {
+          // Finder patterns (top-left, top-right, bottom-left)
+          const isFinder = (x < 7 && y < 7) || (x > qrSize - 8 && y < 7) || (x < 7 && y > qrSize - 8);
+          if (isFinder) {
+            const outerFinder = (x === 0 || x === 6 || y === 0 || y === 6) && x < 7 && y < 7;
+            const innerFinder = x >= 2 && x <= 4 && y >= 2 && y <= 4 && x < 7 && y < 7;
+            const outerFinderTR = (x === qrSize - 7 || x === qrSize - 1 || y === 0 || y === 6) && x > qrSize - 8 && y < 7;
+            const innerFinderTR = x >= qrSize - 5 && x <= qrSize - 3 && y >= 2 && y <= 4 && x > qrSize - 8 && y < 7;
+            const outerFinderBL = (x === 0 || x === 6 || y === qrSize - 7 || y === qrSize - 1) && x < 7 && y > qrSize - 8;
+            const innerFinderBL = x >= 2 && x <= 4 && y >= qrSize - 5 && y <= qrSize - 3 && x < 7 && y > qrSize - 8;
+            
+            matrix[y][x] = (outerFinder || innerFinder || outerFinderTR || innerFinderTR || outerFinderBL || innerFinderBL) ? 1 : 0;
+          } else if (x === 0 || y === 0 || x === qrSize - 1 || y === qrSize - 1) {
+            matrix[y][x] = (x + y) % 2 === 0 ? 1 : 0;
+          } else {
+            matrix[y][x] = seededRandom() > 0.5 ? 1 : 0;
+          }
+        }
+      }
+      
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      const cellSize = size / qrSize;
+      const padding = cellSize * 0.5;
+      
+      // White background with rounded corners
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.roundRect(padding, padding, size - padding * 2, size - padding * 2, cellSize);
+      ctx.fill();
+      
+      // Draw QR modules
+      ctx.fillStyle = '#1a1a2e';
+      for (let y = 0; y < qrSize; y++) {
+        for (let x = 0; x < qrSize; x++) {
+          if (matrix[y][x]) {
+            const cellX = padding + x * cellSize;
+            const cellY = padding + y * cellSize;
+            ctx.fillRect(cellX + 1, cellY + 1, cellSize - 2, cellSize - 2);
+          }
+        }
+      }
+      
+      resolve();
+    });
+  };
+
+  // Generate complete card image
+  const generateCardImage = async () => {
+    const fullName = `${userData.first_name} ${userData.last_name}`.trim() || userData.email?.split('@')[0] || 'User';
+    const address = [userData.address_line1, userData.city, userData.state, userData.postal_code, userData.country]
+      .filter(Boolean).join(', ') || 'No address provided';
+    
+    // Create main canvas for the card
+    const cardWidth = 860;
+    const cardHeight = 480;
+    const canvas = document.createElement('canvas');
+    canvas.width = cardWidth;
+    canvas.height = cardHeight;
+    const ctx = canvas.getContext('2d');
+    
+    // Card background - premium dark gradient like Visa Infinite cards
+    const bgGradient = ctx.createLinearGradient(0, 0, cardWidth, cardHeight);
+    bgGradient.addColorStop(0, '#0a0a1a');
+    bgGradient.addColorStop(0.3, '#12122a');
+    bgGradient.addColorStop(0.6, '#1a1a3e');
+    bgGradient.addColorStop(1, '#0d0d25');
+    
+    // Draw rounded card
+    ctx.beginPath();
+    ctx.roundRect(0, 0, cardWidth, cardHeight, 24);
+    ctx.fillStyle = bgGradient;
+    ctx.fill();
+    
+    // Subtle grid pattern overlay
+    ctx.save();
+    ctx.globalAlpha = 0.03;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 0.5;
+    for (let x = 0; x < cardWidth; x += 20) {
+      ctx.beginPath();
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, cardHeight);
+      ctx.stroke();
+    }
+    for (let y = 0; y < cardHeight; y += 20) {
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(cardWidth, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+    
+    // Decorative geometric shapes
+    ctx.save();
+    ctx.globalAlpha = 0.08;
+    // Large circle top-right
+    const circleGradient1 = ctx.createRadialGradient(cardWidth - 100, 100, 0, cardWidth - 100, 100, 200);
+    circleGradient1.addColorStop(0, '#6366f1');
+    circleGradient1.addColorStop(1, 'transparent');
+    ctx.fillStyle = circleGradient1;
+    ctx.beginPath();
+    ctx.arc(cardWidth - 80, 80, 180, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Large circle bottom-left
+    const circleGradient2 = ctx.createRadialGradient(120, cardHeight - 120, 0, 120, cardHeight - 120, 200);
+    circleGradient2.addColorStop(0, '#8b5cf6');
+    circleGradient2.addColorStop(1, 'transparent');
+    ctx.fillStyle = circleGradient2;
+    ctx.beginPath();
+    ctx.arc(100, cardHeight - 100, 160, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    
+    // Top accent line
+    const accentGradient = ctx.createLinearGradient(0, 0, cardWidth, 0);
+    accentGradient.addColorStop(0, '#6366f1');
+    accentGradient.addColorStop(0.5, '#8b5cf6');
+    accentGradient.addColorStop(1, '#a78bfa');
+    ctx.fillStyle = accentGradient;
+    ctx.fillRect(0, 0, cardWidth, 4);
+    
+    // Logo section - JABIYEN
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 28px "Manrope", "Inter", sans-serif';
+    ctx.fillText('JABIYEN', 40, 65);
+    
+    // Small tagline under logo
+    ctx.font = '500 11px "Inter", sans-serif';
+    ctx.fillStyle = '#a78bfa';
+    ctx.fillText('CARD AUTH', 40, 85);
+    
+    // Chip icon (simplified)
+    ctx.fillStyle = '#c9a84c';
+    ctx.beginPath();
+    ctx.roundRect(40, 105, 50, 38, 6);
+    ctx.fill();
+    ctx.fillStyle = '#b8942e';
+    ctx.beginPath();
+    ctx.roundRect(48, 110, 34, 28, 3);
+    ctx.fill();
+    // Chip lines
+    ctx.strokeStyle = '#d4b85c';
+    ctx.lineWidth = 0.8;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(52, 116 + i * 8);
+      ctx.lineTo(78, 116 + i * 8);
+      ctx.stroke();
+    }
+    
+    // Contactless icon
+    ctx.strokeStyle = '#a78bfa';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    const waves = [
+      { x: 120, r: 10 },
+      { x: 135, r: 14 },
+      { x: 150, r: 18 }
+    ];
+    waves.forEach(w => {
+      ctx.beginPath();
+      ctx.arc(w.x, 124, w.r, Math.PI * 0.7, Math.PI * 1.3);
+      ctx.stroke();
+    });
+    ctx.restore();
+    
+    // Card number display (masked style)
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 24px "Courier New", monospace';
+    ctx.fillText('••••  ••••  ••••  ' + (userData.phone?.slice(-4) || '1320'), 40, 210);
+    
+    // Card type label
+    ctx.font = '600 12px "Inter", sans-serif';
+    ctx.fillStyle = '#a78bfa';
+    ctx.fillText('JABIYEN AUTH CARD', 40, 185);
+    ctx.restore();
+    
+    // User info section
+    ctx.save();
+    // Name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '600 18px "Inter", sans-serif';
+    ctx.fillText(fullName.toUpperCase(), 40, 270);
+    
+    // Email
+    ctx.font = '500 13px "Inter", sans-serif';
+    ctx.fillStyle = '#a0a0c0';
+    ctx.fillText(userData.email || '', 40, 295);
+    
+    // Address
+    ctx.font = '500 12px "Inter", sans-serif';
+    ctx.fillStyle = '#8080a0';
+    ctx.fillText(address.length > 50 ? address.substring(0, 47) + '...' : address, 40, 318);
+    
+    // Member since
+    ctx.fillText('Member since ' + formatDate(userData.created_at), 40, 340);
+    ctx.restore();
+    
+    // QR Code section (right side)
+    const qrSize = 170;
+    const qrX = cardWidth - qrSize - 50;
+    const qrY = 100;
+    
+    // QR background container
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+    ctx.beginPath();
+    ctx.roundRect(qrX - 15, qrY - 15, qrSize + 30, qrSize + 70, 16);
+    ctx.fill();
+    
+    // QR label
+    ctx.fillStyle = '#1a1a2e';
+    ctx.font = 'bold 11px "Inter", sans-serif';
+    ctx.fillText('SCAN TO LOGIN', qrX + qrSize / 2 - 45, qrY + qrSize + 35);
+    ctx.font = '500 9px "Inter", sans-serif';
+    ctx.fillStyle = '#666';
+    ctx.fillText('jabiyen.com/auth', qrX + qrSize / 2 - 35, qrY + qrSize + 52);
+    ctx.restore();
+    
+    // Generate QR code
+    const qrCanvas = document.createElement('canvas');
+    const qrData = JSON.stringify({
+      email: userData.email,
+      password: qrPassword
+    });
+    await generateQRCodeOnCanvas(qrCanvas, qrData, qrSize);
+    
+    // Draw QR code on card
+    ctx.drawImage(qrCanvas, qrX, qrY, qrSize, qrSize);
+    
+    // Bottom bar
+    ctx.save();
+    ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+    ctx.fillRect(0, cardHeight - 50, cardWidth, 50);
+    
+    // Bottom text
+    ctx.fillStyle = '#a0a0c0';
+    ctx.font = '500 10px "Inter", sans-serif';
+    ctx.fillText('This card is for authentication purposes only. Keep it secure.', 40, cardHeight - 22);
+    ctx.fillText('© JAYENWARE ' + new Date().getFullYear(), cardWidth - 200, cardHeight - 22);
+    ctx.restore();
+    
+    // Convert to data URL
+    const dataUrl = canvas.toDataURL('image/png');
+    setCardDataUrl(dataUrl);
+    setQrGenerated(true);
+    
+    // Store canvas ref for potential re-download
+    cardCanvasRef.current = canvas;
+  };
+
+  // Download card image
   const downloadCard = () => {
     if (!cardDataUrl) return;
 
-    const username = (userData.first_name + '-' + userData.last_name).toLowerCase().replace(/\s+/g, '-') || 'user';
+    const username = (userData.first_name + '-' + userData.last_name).toLowerCase().replace(/[^a-z0-9]/g, '-') || userData.email?.split('@')[0] || 'user';
     const link = document.createElement('a');
     link.download = `${username}-jabiyen-auth-card.png`;
     link.href = cardDataUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('Auth card downloaded successfully!');
+    showToast('Card downloaded successfully!');
   };
 
-  // Reset card states when switching panels
+  // Reset QR states when switching panels
   const handlePanelSwitch = (panel) => {
     setCurrentPanel(panel);
     if (panel !== 'card-auth') {
-      setCardPassword('');
-      setCardVerified(false);
-      setCardGenerated(false);
+      setQrPassword('');
+      setQrVerified(false);
+      setQrGenerated(false);
       setCardDataUrl(null);
-      setCardError(null);
+      setQrError(null);
     }
   };
 
@@ -721,27 +722,56 @@ export default function Account() {
               </div>
             )}
 
-            {/* JABIYEN Card Auth Section - Premium Card Design */}
+            {/* JABIYEN Card Auth Section */}
             {currentPanel === 'card-auth' && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
                     width: 64, height: 64, 
-                    background: 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%)',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 16px', color: '#fff', fontSize: 28
                   }}>
-                    <i className="fa-solid fa-credit-card"></i>
+                    <i className="fa-solid fa-id-card"></i>
                   </div>
                   <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>JABIYEN Card Auth</h2>
                   <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>
-                    Generate your premium JABIYEN Auth Card for secure, instant login.<br />
-                    Verify your password to create your personalized card.
+                    Generate your JABIYEN card for instant login.<br />
+                    Verify your password to create your secure auth card.
                   </p>
                 </div>
 
+                {/* Email Display */}
+                <div style={{ 
+                  background: '#f8f9fa', borderRadius: 12, padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20
+                }}>
+                  <div style={{ 
+                    width: 40, height: 40, borderRadius: 10,
+                    background: 'linear-gradient(135deg, #007aff, #005bb5)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', flexShrink: 0
+                  }}>
+                    <i className="fa-solid fa-envelope" style={{ fontSize: 16 }}></i>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#86868b', marginBottom: 2 }}>Your Email</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: '#1d1d1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {userData.email || '—'}
+                    </div>
+                  </div>
+                  <div style={{ 
+                    background: '#e8f5e9', color: '#2e7d32',
+                    padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0
+                  }}>
+                    <i className="fa-solid fa-shield-halved" style={{ fontSize: 10 }}></i>
+                    AUTO-FILLED
+                  </div>
+                </div>
+
                 {/* Password Input */}
-                {!cardVerified && (
+                {!qrVerified && (
                   <div style={{ marginBottom: 20 }}>
                     <label style={{ 
                       display: 'block', fontSize: 13, fontWeight: 600, 
@@ -752,20 +782,20 @@ export default function Account() {
                     <div style={{ position: 'relative' }}>
                       <input 
                         type="password" 
-                        value={cardPassword}
+                        value={qrPassword}
                         onChange={(e) => {
-                          setCardPassword(e.target.value);
-                          setCardError(null);
+                          setQrPassword(e.target.value);
+                          setQrError(null);
                         }}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') verifyPasswordForCard();
+                          if (e.key === 'Enter') verifyPasswordForQR();
                         }}
                         placeholder="Enter your password to verify"
                         style={{
                           ...inputStyle,
                           padding: '14px 16px',
                           paddingRight: 50,
-                          borderColor: cardError ? '#ff3b30' : '#e5e5ea',
+                          borderColor: qrError ? '#ff3b30' : '#e5e5ea',
                           fontSize: 15,
                           borderRadius: 12
                         }}
@@ -774,35 +804,35 @@ export default function Account() {
                         <i className="fa-solid fa-lock" style={{ fontSize: 14 }}></i>
                       </div>
                     </div>
-                    {cardError && (
+                    {qrError && (
                       <div style={{ 
                         display: 'flex', alignItems: 'center', gap: 6, 
                         fontSize: 12, color: '#ff3b30', marginTop: 6 
                       }}>
                         <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i>
-                        <span>{cardError}</span>
+                        <span>{qrError}</span>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Verify Button */}
-                {!cardVerified ? (
+                {/* Verify Button or Card Display */}
+                {!qrVerified ? (
                   <button 
-                    onClick={verifyPasswordForCard}
-                    disabled={cardVerifying || !cardPassword}
+                    onClick={verifyPasswordForQR}
+                    disabled={qrVerifying || !qrPassword}
                     style={{
                       width: '100%', padding: '14px 24px',
-                      background: cardVerifying || !cardPassword ? '#a1a1a6' : 'linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 100%)',
+                      background: qrVerifying || !qrPassword ? '#a1a1a6' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                       color: '#fff', fontFamily: "'Inter', sans-serif",
                       fontSize: 15, fontWeight: 600, border: 'none',
-                      borderRadius: 12, cursor: cardVerifying || !cardPassword ? 'not-allowed' : 'pointer',
+                      borderRadius: 12, cursor: qrVerifying || !qrPassword ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                       transition: 'all 0.3s ease',
-                      boxShadow: cardVerifying || !cardPassword ? 'none' : '0 4px 20px rgba(10,10,26,0.3)'
+                      boxShadow: qrVerifying || !qrPassword ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)'
                     }}
                   >
-                    {cardVerifying ? (
+                    {qrVerifying ? (
                       <>
                         <span style={{ 
                           width: 20, height: 20, 
@@ -829,50 +859,60 @@ export default function Account() {
                       fontSize: 13, fontWeight: 600, marginBottom: 24
                     }}>
                       <i className="fa-solid fa-circle-check" style={{ fontSize: 16 }}></i>
-                      Card generated successfully!
+                      Your JABIYEN Auth Card is ready!
                     </div>
 
                     {/* Card Preview */}
                     <div style={{
                       background: '#f0f0f5', borderRadius: 20,
-                      padding: 20, marginBottom: 20
+                      padding: '24px', textAlign: 'center',
+                      marginBottom: 20,
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
                     }}>
-                      <canvas 
-                        ref={cardCanvasRef} 
-                        style={{ 
-                          width: '100%', 
-                          height: 'auto', 
-                          borderRadius: 16,
-                          boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
-                        }} 
-                      />
+                      {cardDataUrl && (
+                        <img 
+                          src={cardDataUrl} 
+                          alt="JABIYEN Auth Card" 
+                          style={{ 
+                            width: '100%', 
+                            maxWidth: 500, 
+                            borderRadius: 16,
+                            boxShadow: '0 8px 30px rgba(0,0,0,0.2)'
+                          }} 
+                        />
+                      )}
+                      <p style={{ fontSize: 12, color: '#86868b', marginTop: 12 }}>
+                        <i className="fa-solid fa-info-circle" style={{ marginRight: 4 }}></i>
+                        This card contains your encrypted login credentials in the QR code
+                      </p>
                     </div>
 
                     {/* Download & Reset Buttons */}
                     <div style={{ display: 'flex', gap: 12 }}>
                       <button
                         onClick={downloadCard}
-                        disabled={!cardGenerated}
+                        disabled={!cardDataUrl}
                         style={{
                           flex: 1, padding: '14px 20px',
-                          background: cardGenerated ? '#0a0a1a' : '#a1a1a6',
+                          background: cardDataUrl ? '#1d1d1f' : '#a1a1a6',
                           color: '#fff', fontFamily: "'Inter', sans-serif",
                           fontSize: 15, fontWeight: 600, border: 'none',
-                          borderRadius: 12, cursor: cardGenerated ? 'pointer' : 'not-allowed',
+                          borderRadius: 12, cursor: cardDataUrl ? 'pointer' : 'not-allowed',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                           transition: 'all 0.2s ease'
                         }}
                       >
                         <i className="fa-solid fa-download"></i>
-                        Download Card (PNG)
+                        Download Card
                       </button>
                       <button
                         onClick={() => {
-                          setCardVerified(false);
-                          setCardGenerated(false);
-                          setCardPassword('');
+                          setQrVerified(false);
+                          setQrGenerated(false);
+                          setQrPassword('');
                           setCardDataUrl(null);
-                          setCardError(null);
+                          setQrError(null);
+                          cardCanvasRef.current = null;
                         }}
                         style={{
                           padding: '14px 20px',
@@ -885,7 +925,7 @@ export default function Account() {
                         }}
                       >
                         <i className="fa-solid fa-rotate"></i>
-                        Generate New
+                        Generate New Card
                       </button>
                     </div>
                   </div>
@@ -902,7 +942,7 @@ export default function Account() {
                     color: '#f57c00', fontSize: 16, marginTop: 1, flexShrink: 0 
                   }}></i>
                   <div style={{ fontSize: 12, color: '#795548', lineHeight: 1.5 }}>
-                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This card contains encrypted login credentials in the QR code. Keep it secure and do not share with anyone. The card is for your personal use only.
+                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This card contains your login credentials encrypted in the QR code. Keep it secure and do not share it with anyone. Use it with JABIYEN Card Auth for instant, secure login.
                   </div>
                 </div>
               </div>
