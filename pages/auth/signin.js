@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { Html5Qrcode } from 'html5-qrcode';
 
 const inputStyle = {
   width: '100%', padding: '12px 16px',
@@ -23,6 +24,12 @@ export default function SignIn() {
   const [alert, setAlert] = useState(null);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  
+  // QR Scanner states
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const scannerRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -30,6 +37,11 @@ export default function SignIn() {
     if (msg === 'signup_success') showToast('Account created successfully! Please sign in.', 'success');
     else if (msg === 'password_reset') showToast('Password reset successfully! Please sign in.', 'success');
     else if (msg === 'session_expired') showToast('Your session has expired. Please sign in again.', 'error');
+    
+    // Cleanup scanner on unmount
+    return () => {
+      stopScanner();
+    };
   }, []);
 
   const showToast = (message, type = 'success') => {
@@ -81,17 +93,95 @@ export default function SignIn() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // QR Code Scanner Functions
+  const startScanner = async () => {
+    setShowScanner(true);
+    setScanning(true);
+    
+    try {
+      // Initialize scanner
+      html5QrCodeRef.current = new Html5Qrcode("qr-reader");
+      
+      await html5QrCodeRef.current.start(
+        { facingMode: "environment" }, // Rear camera
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 },
+        },
+        onScanSuccess,
+        onScanFailure
+      );
+    } catch (err) {
+      console.error('Failed to start scanner:', err);
+      showToast('Failed to start camera. Please check permissions.', 'error');
+      stopScanner();
+    }
+  };
+
+  const stopScanner = () => {
+    if (html5QrCodeRef.current) {
+      html5QrCodeRef.current.stop()
+        .then(() => {
+          html5QrCodeRef.current.clear();
+          console.log('Scanner stopped');
+        })
+        .catch(err => console.error('Error stopping scanner:', err));
+    }
+    setShowScanner(false);
+    setScanning(false);
+  };
+
+  const onScanSuccess = async (decodedText) => {
+    stopScanner();
+    
+    try {
+      // Try to parse QR code data as JSON
+      let credentials;
+      try {
+        credentials = JSON.parse(decodedText);
+      } catch {
+        // If not JSON, try to parse as query string format
+        const params = new URLSearchParams(decodedText);
+        credentials = {
+          email: params.get('email'),
+          password: params.get('password')
+        };
+      }
+
+      if (!credentials.email || !credentials.password) {
+        showToast('Invalid QR code format. Missing email or password.', 'error');
+        return;
+      }
+
+      // Set the credentials
+      setEmail(credentials.email);
+      setPassword(credentials.password);
+      
+      showToast('Credentials scanned successfully! Signing in...', 'success');
+      
+      // Auto sign in
+      await performSignIn(credentials.email, credentials.password);
+      
+    } catch (err) {
+      showToast('Failed to process QR code. Invalid format.', 'error');
+    }
+  };
+
+  const onScanFailure = (error) => {
+    // QR scan failure is normal during scanning process
+    // We don't need to show this to users
+  };
+
+  const performSignIn = async (emailToUse, passwordToUse) => {
     setAlert(null);
 
-    const emailErr = validateEmail(email);
-    const passErr = validatePassword(password);
+    const emailErr = validateEmail(emailToUse);
+    const passErr = validatePassword(passwordToUse);
     setTouched({ email: true, password: true });
     setErrors({ email: emailErr, password: passErr });
 
     if (emailErr || passErr) {
-      showToast('Please fill in all required fields', 'error');
+      showToast('Invalid credentials from QR code', 'error');
       return;
     }
 
@@ -101,7 +191,7 @@ export default function SignIn() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), password })
+        body: JSON.stringify({ email: emailToUse.trim(), password: passwordToUse })
       });
 
       const result = await res.json();
@@ -127,6 +217,11 @@ export default function SignIn() {
     }
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await performSignIn(email, password);
+  };
+
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
@@ -143,6 +238,8 @@ export default function SignIn() {
       <Head>
         <title>Sign In | JAYENWARE</title>
         <meta name="description" content="Sign in to your JAYENWARE account" />
+        {/* Add html5-qrcode library */}
+        <script src="https://unpkg.com/html5-qrcode" async></script>
       </Head>
 
       <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
@@ -153,6 +250,91 @@ export default function SignIn() {
             <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 24, fontWeight: 800, color: '#1d1d1f', margin: '0 0 4px' }}>Welcome Back</h1>
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Sign in to continue your journey</p>
           </div>
+
+          {/* QR Code Scanner Button */}
+          <button 
+            onClick={startScanner}
+            disabled={showScanner}
+            style={{
+              width: '100%', padding: '12px 24px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#fff',
+              border: 'none', borderRadius: 12,
+              fontSize: 15, fontWeight: 500, cursor: showScanner ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              fontFamily: "'Inter', sans-serif", marginBottom: 16,
+              transition: 'all 0.2s ease',
+              opacity: showScanner ? 0.6 : 1
+            }}
+          >
+            <i className="fa-solid fa-qrcode" style={{ fontSize: 18 }}></i>
+            Scan QR Code to Sign In
+          </button>
+
+          {/* QR Scanner Modal */}
+          {showScanner && (
+            <div style={{
+              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.8)', zIndex: 1000,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              padding: 20
+            }}>
+              <div style={{
+                background: '#fff', borderRadius: 24,
+                padding: '24px', maxWidth: 400, width: '100%',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+              }}>
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between',
+                  alignItems: 'center', marginBottom: 16
+                }}>
+                  <h3 style={{
+                    fontFamily: "var(--font-heading), 'Manrope', sans-serif",
+                    fontSize: 18, fontWeight: 700, color: '#1d1d1f', margin: 0
+                  }}>
+                    Scan QR Code
+                  </h3>
+                  <button
+                    onClick={stopScanner}
+                    style={{
+                      background: 'none', border: 'none',
+                      color: '#86868b', cursor: 'pointer',
+                      fontSize: 20, padding: 4
+                    }}
+                  >
+                    <i className="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+                
+                <div id="qr-reader" ref={scannerRef} style={{
+                  width: '100%', borderRadius: 12, overflow: 'hidden',
+                  marginBottom: 16
+                }}></div>
+                
+                <p style={{
+                  fontSize: 13, color: '#86868b', textAlign: 'center', margin: 0
+                }}>
+                  Position the QR code within the frame to scan
+                </p>
+                
+                {scanning && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    gap: 8, marginTop: 12
+                  }}>
+                    <div style={{
+                      width: 20, height: 20,
+                      border: '2px solid #e5e5ea',
+                      borderTopColor: '#1d1d1f',
+                      borderRadius: '50%',
+                      animation: 'spin 0.7s linear infinite'
+                    }}></div>
+                    <span style={{ fontSize: 13, color: '#86868b' }}>Scanning...</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Google Sign-In Button */}
           <button onClick={handleGoogleSignIn} disabled={googleLoading} style={{
@@ -250,7 +432,7 @@ export default function SignIn() {
       </div>
 
       {toast && (
-        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
           <span>{toast.message}</span>
         </div>
@@ -259,6 +441,12 @@ export default function SignIn() {
       <style jsx>{`
         @keyframes cardSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
+        #qr-reader {
+          border: 2px solid #e5e5ea;
+        }
+        #qr-reader video {
+          border-radius: 8px;
+        }
       `}</style>
     </>
   );
