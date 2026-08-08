@@ -468,7 +468,7 @@ export default function SignIn() {
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Sign in to continue your journey</p>
           </div>
 
-          {/* ===== GOOGLE BUTTON ===== */}
+          {/* ===== CONTINUE WITH GOOGLE ===== */}
           <button 
             onClick={handleGoogleSignIn} 
             disabled={googleLoading}
@@ -491,36 +491,12 @@ export default function SignIn() {
             )}
           </button>
 
-          {/* ===== QR SCAN BUTTON ===== */}
+          {/* ===== JABIYEN CARD AUTH (QR Scanner) ===== */}
           <button 
             onClick={openQRScanner}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.borderColor = '#c4c7cc'; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#dadce0'; }}
-            style={{
-              ...socialButtonStyle,
-              color: '#1d1d1f',
-              background: '#fff'
-            }}
-          >
-            <div style={{ 
-              width: 20, height: 20, 
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0
-            }}>
-              <i className="fa-solid fa-qrcode" style={{ fontSize: 18, color: '#1d1d1f' }}></i>
-            </div>
-            <span style={{ flex: 1, textAlign: 'center' }}>Scan QR Code to Login</span>
-          </button>
-
-          {/* ===== JABIYEN CARD AUTH BUTTON ===== */}
-          <button 
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.borderColor = '#c4c7cc'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#dadce0'; }}
-            style={{
-              ...socialButtonStyle,
-              color: '#1d1d1f',
-              background: '#fff'
-            }}
+            style={socialButtonStyle}
           >
             <img 
               src="/logo.png" 
@@ -535,7 +511,7 @@ export default function SignIn() {
             <span style={{ flex: 1, textAlign: 'center' }}>JABIYEN Card Auth</span>
           </button>
 
-          {/* ===== CONTINUE WITH EMAIL BUTTON ===== */}
+          {/* ===== CONTINUE WITH EMAIL ===== */}
           {!showEmailForm ? (
             <button 
               onClick={() => setShowEmailForm(true)}
@@ -721,7 +697,7 @@ export default function SignIn() {
               fontSize: 18, fontWeight: 700, color: '#1d1d1f',
               margin: '0 0 6px', textAlign: 'center'
             }}>
-              {qrSuccess ? 'Login Successful!' : qrLoginLoading ? 'Signing In...' : 'Scan QR Code'}
+              {qrSuccess ? 'Login Successful!' : qrLoginLoading ? 'Signing In...' : 'JABIYEN Card Auth'}
             </h3>
             <p style={{
               fontSize: 13, color: '#86868b', textAlign: 'center',
@@ -731,7 +707,7 @@ export default function SignIn() {
                 ? 'Redirecting you to your account...' 
                 : qrLoginLoading 
                   ? 'Verifying your credentials...' 
-                  : 'Point your camera at a QR code to sign in instantly'}
+                  : 'Scan your JABIYEN QR card to sign in instantly'}
             </p>
 
             <div style={{
