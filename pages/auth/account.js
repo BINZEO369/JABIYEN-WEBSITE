@@ -629,3 +629,139 @@ export default function Account() {
 
                     {/* QR Code Display */}
                     <div style={{
+                      background: '#f8f9fa', borderRadius: 20,
+                      padding: '32px 24px', textAlign: 'center',
+                      border: '2px dashed #d1d5db', marginBottom: 20,
+                      position: 'relative'
+                    }}>
+                      {/* QR Container */}
+                      <div style={{
+                        display: 'inline-block', padding: 16,
+                        background: '#fff', borderRadius: 16,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                        marginBottom: 16
+                      }}>
+                        <div ref={qrContainerRef} style={{ 
+                          minHeight: 220, minWidth: 220,
+                          display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                          {!qrGenerated && (
+                            <div style={{ 
+                              width: 40, height: 40,
+                              border: '3px solid #e5e5ea',
+                              borderTopColor: '#667eea',
+                              borderRadius: '50%',
+                              animation: 'spin 0.7s linear infinite'
+                            }} />
+                          )}
+                        </div>
+                      </div>
+                      
+                      <p style={{ fontSize: 12, color: '#86868b', margin: 0 }}>
+                        <i className="fa-solid fa-info-circle" style={{ marginRight: 4 }}></i>
+                        Scan this QR code to login instantly
+                      </p>
+                    </div>
+
+                    {/* Download & Reset Buttons */}
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      <button
+                        onClick={downloadQRCode}
+                        disabled={!qrGenerated}
+                        style={{
+                          flex: 1, padding: '14px 20px',
+                          background: qrGenerated ? '#1d1d1f' : '#a1a1a6',
+                          color: '#fff', fontFamily: "'Inter', sans-serif",
+                          fontSize: 15, fontWeight: 600, border: 'none',
+                          borderRadius: 12, cursor: qrGenerated ? 'pointer' : 'not-allowed',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <i className="fa-solid fa-download"></i>
+                        Download QR Code
+                      </button>
+                      <button
+                        onClick={() => {
+                          setQrVerified(false);
+                          setQrGenerated(false);
+                          setQrPassword('');
+                          setQrDataUrl(null);
+                          setQrError(null);
+                          if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
+                        }}
+                        style={{
+                          padding: '14px 20px',
+                          background: '#f5f5f7', color: '#1d1d1f',
+                          fontFamily: "'Inter', sans-serif",
+                          fontSize: 15, fontWeight: 600, border: 'none',
+                          borderRadius: 12, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <i className="fa-solid fa-rotate"></i>
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Security Notice */}
+                <div style={{
+                  marginTop: 24, padding: '14px 16px',
+                  background: '#fff8e1', borderRadius: 12,
+                  border: '1px solid #ffe082',
+                  display: 'flex', gap: 10
+                }}>
+                  <i className="fa-solid fa-triangle-exclamation" style={{ 
+                    color: '#f57c00', fontSize: 16, marginTop: 1, flexShrink: 0 
+                  }}></i>
+                  <div style={{ fontSize: 12, color: '#795548', lineHeight: 1.5 }}>
+                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This QR code contains your login credentials. Keep it secure and do not share it with anyone. The QR code stores your email and password in encrypted format for quick login.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {toast && (
+        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
+          <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
+          <span>{toast.message}</span>
+        </div>
+      )}
+
+      {showLogoutModal && (
+        <div onClick={() => setShowLogoutModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
+          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', textAlign: 'center', maxWidth: 420, width: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
+            <div style={{ width: 80, height: 80, background: '#fff0ef', color: '#ff3b30', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}><i className="fa-solid fa-power-off"></i></div>
+            <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 24, fontWeight: 800, margin: '0 0 12px' }}>Sign Out</h2>
+            <p style={{ fontSize: 15, color: '#86868b', margin: '0 0 32px', lineHeight: 1.5 }}>Are you sure you want to sign out?</p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
+              <button onClick={() => setShowLogoutModal(false)} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#f5f5f7', color: '#1d1d1f' }}>Cancel</button>
+              <button onClick={handleLogout} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#ff3b30', color: '#fff' }}>Yes, Sign Out</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+      `}</style>
+    </>
+  );
+}
+
+function InfoField({ label, children }) {
+  return (
+    <div>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#86868b', marginBottom: 6 }}>{label}</label>
+      <div style={{ fontSize: 15, color: '#1d1d1f', fontWeight: 500, minHeight: 22 }}>{children}</div>
+    </div>
+  );
+}
