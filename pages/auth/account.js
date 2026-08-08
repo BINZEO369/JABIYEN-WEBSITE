@@ -31,15 +31,15 @@ export default function Account() {
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // QR Generator states
-  const [qrPassword, setQrPassword] = useState('');
-  const [qrVerifying, setQrVerifying] = useState(false);
-  const [qrVerified, setQrVerified] = useState(false);
-  const [qrGenerated, setQrGenerated] = useState(false);
-  const [qrDataUrl, setQrDataUrl] = useState(null);
-  const [qrError, setQrError] = useState(null);
-  const qrCanvasRef = useRef(null);
-  const qrContainerRef = useRef(null);
+  // Card Generator states
+  const [cardPassword, setCardPassword] = useState('');
+  const [cardVerifying, setCardVerifying] = useState(false);
+  const [cardVerified, setCardVerified] = useState(false);
+  const [cardGenerated, setCardGenerated] = useState(false);
+  const [cardDataUrl, setCardDataUrl] = useState(null);
+  const [cardError, setCardError] = useState(null);
+  const cardCanvasRef = useRef(null);
+  const cardPreviewRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -197,16 +197,265 @@ export default function Account() {
     setUserData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Password verification for QR generation
-  const verifyPasswordForQR = async () => {
-    if (!qrPassword) {
-      setQrError('Please enter your password');
+  // Generate QR Code as image
+  const generateQRImage = (data) => {
+    return new Promise((resolve) => {
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      document.body.appendChild(tempDiv);
+      
+      const qrCode = new window.QRCode(tempDiv, {
+        text: data,
+        width: 180,
+        height: 180,
+        colorDark: '#1d1d1f',
+        colorLight: '#ffffff',
+        correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.M : 2
+      });
+
+      setTimeout(() => {
+        const img = tempDiv.querySelector('img');
+        if (img) {
+          resolve(img);
+        } else {
+          const canvas = tempDiv.querySelector('canvas');
+          const newImg = new Image();
+          newImg.src = canvas.toDataURL('image/png');
+          resolve(newImg);
+        }
+        document.body.removeChild(tempDiv);
+      }, 300);
+    });
+  };
+
+  // Draw complete JABIYEN Auth Card
+  const drawAuthCard = async () => {
+    const canvas = cardCanvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const width = 600;
+    const height = 380;
+    
+    canvas.width = width;
+    canvas.height = height;
+
+    // Card Background - Dark premium gradient
+    const bgGradient = ctx.createLinearGradient(0, 0, width, height);
+    bgGradient.addColorStop(0, '#0a0a0a');
+    bgGradient.addColorStop(0.5, '#1a1a2e');
+    bgGradient.addColorStop(1, '#0f0f1a');
+    ctx.fillStyle = bgGradient;
+    ctx.beginPath();
+    ctx.roundRect(0, 0, width, height, 20);
+    ctx.fill();
+
+    // Subtle pattern overlay
+    ctx.fillStyle = 'rgba(255,255,255,0.02)';
+    for (let i = 0; i < width; i += 40) {
+      for (let j = 0; j < height; j += 40) {
+        ctx.fillRect(i, j, 1, 1);
+      }
+    }
+
+    // Border glow effect
+    ctx.strokeStyle = 'rgba(102, 126, 234, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(4, 4, width - 8, height - 8, 18);
+    ctx.stroke();
+
+    // Inner border
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(16, 16, width - 32, height - 32, 14);
+    ctx.stroke();
+
+    // === LEFT SECTION - User Info ===
+    
+    // Logo/Icon area
+    const logoGradient = ctx.createLinearGradient(0, 0, 80, 80);
+    logoGradient.addColorStop(0, '#667eea');
+    logoGradient.addColorStop(1, '#764ba2');
+    ctx.fillStyle = logoGradient;
+    ctx.beginPath();
+    ctx.roundRect(40, 40, 60, 60, 14);
+    ctx.fill();
+    
+    // Logo text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px "Manrope", "Inter", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('J', 70, 80);
+
+    // Brand name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px "Manrope", "Inter", sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('JABIYEN', 115, 68);
+    
+    ctx.fillStyle = '#86868b';
+    ctx.font = '500 9px "Inter", sans-serif';
+    ctx.fillText('AUTH CARD', 115, 84);
+
+    // User full name
+    const fullName = `${userData.first_name} ${userData.last_name}`.trim() || 'User';
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 22px "Manrope", "Inter", sans-serif';
+    ctx.fillText(fullName, 40, 150);
+    
+    // Divider line
+    ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(40, 168);
+    ctx.lineTo(280, 168);
+    ctx.stroke();
+
+    // Email
+    ctx.fillStyle = '#86868b';
+    ctx.font = '500 11px "Inter", sans-serif';
+    ctx.fillText('EMAIL', 40, 195);
+    ctx.fillStyle = '#d1d1d6';
+    ctx.font = '500 13px "Inter", sans-serif';
+    ctx.fillText(userData.email || '—', 40, 215);
+
+    // Phone
+    ctx.fillStyle = '#86868b';
+    ctx.font = '500 11px "Inter", sans-serif';
+    ctx.fillText('PHONE', 40, 248);
+    ctx.fillStyle = '#d1d1d6';
+    ctx.font = '500 13px "Inter", sans-serif';
+    ctx.fillText(userData.phone || '—', 40, 268);
+
+    // Address
+    const addressParts = [
+      userData.address_line1,
+      userData.address_line2,
+      userData.city,
+      userData.state,
+      userData.postal_code,
+      userData.country
+    ].filter(Boolean);
+    
+    const addressStr = addressParts.length > 0 ? addressParts.join(', ') : 'No address saved';
+    
+    ctx.fillStyle = '#86868b';
+    ctx.font = '500 11px "Inter", sans-serif';
+    ctx.fillText('ADDRESS', 40, 301);
+    ctx.fillStyle = '#d1d1d6';
+    ctx.font = '500 12px "Inter", sans-serif';
+    
+    // Handle long address with line break
+    const words = addressStr.split(' ');
+    let line = '';
+    let y = 321;
+    for (let word of words) {
+      const testLine = line + word + ' ';
+      if (ctx.measureText(testLine).width > 240) {
+        ctx.fillText(line.trim(), 40, y);
+        line = word + ' ';
+        y += 18;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line.trim(), 40, y);
+
+    // === RIGHT SECTION - QR Code ===
+    
+    // QR Background container
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.roundRect(370, 40, 200, 200, 14);
+    ctx.fill();
+    
+    // QR Code border
+    ctx.strokeStyle = 'rgba(102, 126, 234, 0.2)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(370, 40, 200, 200, 14);
+    ctx.stroke();
+
+    // Generate QR Code
+    const qrData = JSON.stringify({
+      email: userData.email,
+      password: cardPassword
+    });
+
+    try {
+      const qrImage = await generateQRImage(qrData);
+      ctx.drawImage(qrImage, 380, 50, 180, 180);
+    } catch (e) {
+      // Fallback text
+      ctx.fillStyle = '#86868b';
+      ctx.font = '13px "Inter", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('QR Code', 470, 140);
+    }
+    
+    ctx.textAlign = 'left';
+
+    // QR Label
+    ctx.fillStyle = '#86868b';
+    ctx.font = '500 10px "Inter", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Scan for instant login', 470, 260);
+    ctx.textAlign = 'left';
+
+    // === BOTTOM SECTION ===
+    
+    // Bottom separator
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(40, 290);
+    ctx.lineTo(560, 290);
+    ctx.stroke();
+
+    // Member since and card info
+    ctx.fillStyle = '#86868b';
+    ctx.font = '500 10px "Inter", sans-serif';
+    ctx.fillText('MEMBER SINCE', 40, 320);
+    ctx.fillStyle = '#d1d1d6';
+    ctx.font = '500 11px "Inter", sans-serif';
+    ctx.fillText(formatDate(userData.created_at), 40, 337);
+
+    // Card ID
+    ctx.fillStyle = '#86868b';
+    ctx.font = '500 10px "Inter", sans-serif';
+    ctx.fillText('CARD ID', 40, 358);
+    ctx.fillStyle = '#d1d1d6';
+    ctx.font = '500 11px "Inter", sans-serif';
+    const cardId = `JAB-${userData.email?.split('@')[0]?.toUpperCase() || 'USER'}-${Date.now().toString(36).slice(-4).toUpperCase()}`;
+    ctx.fillText(cardId, 40, 375);
+
+    // Powered by
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.font = '500 8px "Inter", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('JAYENWARE', 560, 370);
+    ctx.textAlign = 'left';
+
+    // Set preview
+    if (cardPreviewRef.current) {
+      setCardDataUrl(canvas.toDataURL('image/png'));
+      setCardGenerated(true);
+    }
+  };
+
+  // Verify password and generate card
+  const verifyPasswordForCard = async () => {
+    if (!cardPassword) {
+      setCardError('Please enter your password');
       showToast('Please enter your password', 'error');
       return;
     }
 
-    setQrVerifying(true);
-    setQrError(null);
+    setCardVerifying(true);
+    setCardError(null);
 
     try {
       const res = await fetch('/api/auth/login', {
@@ -214,95 +463,56 @@ export default function Account() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email: userData.email, 
-          password: qrPassword 
+          password: cardPassword 
         })
       });
 
       const result = await res.json();
 
       if (!res.ok) {
-        setQrError('Invalid password. Please try again.');
+        setCardError('Invalid password. Please try again.');
         showToast('Password verification failed', 'error');
-        setQrVerifying(false);
+        setCardVerifying(false);
         return;
       }
 
-      // Password verified successfully
-      setQrVerified(true);
-      generateQRCode(userData.email, qrPassword);
-      showToast('Password verified! QR code generated.', 'success');
+      setCardVerified(true);
+      await drawAuthCard();
+      showToast('JABIYEN Auth Card generated!', 'success');
     } catch (err) {
-      setQrError('Verification failed. Please try again.');
+      setCardError('Verification failed. Please try again.');
       showToast('Verification failed', 'error');
     } finally {
-      setQrVerifying(false);
+      setCardVerifying(false);
     }
   };
 
-  // Generate QR Code
-  const generateQRCode = (email, password) => {
-    const qrData = JSON.stringify({
-      email: email,
-      password: password
-    });
+  // Download card
+  const downloadCard = () => {
+    if (!cardDataUrl) return;
 
-    // Clear previous QR
-    if (qrContainerRef.current) {
-      qrContainerRef.current.innerHTML = '';
-    }
-
-    // Small delay to ensure DOM is ready
-    setTimeout(() => {
-      if (qrContainerRef.current && window.QRCode) {
-        new window.QRCode(qrContainerRef.current, {
-          text: qrData,
-          width: 220,
-          height: 220,
-          colorDark: '#000000',
-          colorLight: '#ffffff',
-          correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.L : 1
-        });
-
-        // Generate download URL after QR is rendered
-        setTimeout(() => {
-          const qrImage = qrContainerRef.current.querySelector('img');
-          if (qrImage) {
-            setQrDataUrl(qrImage.src);
-          } else {
-            // Canvas fallback
-            const canvas = qrContainerRef.current.querySelector('canvas');
-            if (canvas) {
-              setQrDataUrl(canvas.toDataURL('image/png'));
-            }
-          }
-          setQrGenerated(true);
-        }, 500);
-      }
-    }, 100);
-  };
-
-  // Download QR code
-  const downloadQRCode = () => {
-    if (!qrDataUrl) return;
+    const username = userData.first_name 
+      ? userData.first_name.toLowerCase().replace(/\s+/g, '-')
+      : userData.email?.split('@')[0] || 'user';
 
     const link = document.createElement('a');
-    link.download = `jayenware-qr-login-${userData.email?.split('@')[0] || 'user'}.png`;
-    link.href = qrDataUrl;
+    link.download = `${username}-jabiyen-auth-card.png`;
+    link.href = cardDataUrl;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    showToast('QR code downloaded successfully!');
+    showToast('Card downloaded successfully!');
   };
 
-  // Reset QR states when switching panels
+  // Reset card states
   const handlePanelSwitch = (panel) => {
     setCurrentPanel(panel);
     if (panel !== 'card-auth') {
-      setQrPassword('');
-      setQrVerified(false);
-      setQrGenerated(false);
-      setQrDataUrl(null);
-      setQrError(null);
+      setCardPassword('');
+      setCardVerified(false);
+      setCardGenerated(false);
+      setCardDataUrl(null);
+      setCardError(null);
     }
   };
 
@@ -493,50 +703,22 @@ export default function Account() {
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
                     width: 64, height: 64, 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
                     borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto 16px', color: '#fff', fontSize: 28
+                    margin: '0 auto 16px', color: '#fff', fontSize: 28,
+                    border: '2px solid rgba(102, 126, 234, 0.3)'
                   }}>
-                    <i className="fa-solid fa-id-card"></i>
+                    <i className="fa-solid fa-credit-card"></i>
                   </div>
                   <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>JABIYEN Card Auth</h2>
                   <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>
-                    Generate your JABIYEN QR card for instant login.<br />
-                    Verify your password to create a secure login card.
+                    Generate your premium JABIYEN Auth Card with QR login.<br />
+                    Verify your password to create a personalized card.
                   </p>
                 </div>
 
-                {/* Email Display */}
-                <div style={{ 
-                  background: '#f8f9fa', borderRadius: 12, padding: '16px 20px',
-                  display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20
-                }}>
-                  <div style={{ 
-                    width: 40, height: 40, borderRadius: 10,
-                    background: 'linear-gradient(135deg, #007aff, #005bb5)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#fff', flexShrink: 0
-                  }}>
-                    <i className="fa-solid fa-envelope" style={{ fontSize: 16 }}></i>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#86868b', marginBottom: 2 }}>Your Email</div>
-                    <div style={{ fontSize: 15, fontWeight: 600, color: '#1d1d1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {userData.email || '—'}
-                    </div>
-                  </div>
-                  <div style={{ 
-                    background: '#e8f5e9', color: '#2e7d32',
-                    padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 700,
-                    display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0
-                  }}>
-                    <i className="fa-solid fa-shield-halved" style={{ fontSize: 10 }}></i>
-                    AUTO-FILLED
-                  </div>
-                </div>
-
                 {/* Password Input */}
-                {!qrVerified && (
+                {!cardVerified && (
                   <div style={{ marginBottom: 20 }}>
                     <label style={{ 
                       display: 'block', fontSize: 13, fontWeight: 600, 
@@ -547,20 +729,20 @@ export default function Account() {
                     <div style={{ position: 'relative' }}>
                       <input 
                         type="password" 
-                        value={qrPassword}
+                        value={cardPassword}
                         onChange={(e) => {
-                          setQrPassword(e.target.value);
-                          setQrError(null);
+                          setCardPassword(e.target.value);
+                          setCardError(null);
                         }}
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter') verifyPasswordForQR();
+                          if (e.key === 'Enter') verifyPasswordForCard();
                         }}
-                        placeholder="Enter your password to verify"
+                        placeholder="Enter your password to generate card"
                         style={{
                           ...inputStyle,
                           padding: '14px 16px',
                           paddingRight: 50,
-                          borderColor: qrError ? '#ff3b30' : '#e5e5ea',
+                          borderColor: cardError ? '#ff3b30' : '#e5e5ea',
                           fontSize: 15,
                           borderRadius: 12
                         }}
@@ -569,35 +751,35 @@ export default function Account() {
                         <i className="fa-solid fa-lock" style={{ fontSize: 14 }}></i>
                       </div>
                     </div>
-                    {qrError && (
+                    {cardError && (
                       <div style={{ 
                         display: 'flex', alignItems: 'center', gap: 6, 
                         fontSize: 12, color: '#ff3b30', marginTop: 6 
                       }}>
                         <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i>
-                        <span>{qrError}</span>
+                        <span>{cardError}</span>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Verify Button or QR Display */}
-                {!qrVerified ? (
+                {/* Verify Button or Card Display */}
+                {!cardVerified ? (
                   <button 
-                    onClick={verifyPasswordForQR}
-                    disabled={qrVerifying || !qrPassword}
+                    onClick={verifyPasswordForCard}
+                    disabled={cardVerifying || !cardPassword}
                     style={{
                       width: '100%', padding: '14px 24px',
-                      background: qrVerifying || !qrPassword ? '#a1a1a6' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: cardVerifying || !cardPassword ? '#a1a1a6' : 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)',
                       color: '#fff', fontFamily: "'Inter', sans-serif",
                       fontSize: 15, fontWeight: 600, border: 'none',
-                      borderRadius: 12, cursor: qrVerifying || !qrPassword ? 'not-allowed' : 'pointer',
+                      borderRadius: 12, cursor: cardVerifying || !cardPassword ? 'not-allowed' : 'pointer',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                       transition: 'all 0.3s ease',
-                      boxShadow: qrVerifying || !qrPassword ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)'
+                      boxShadow: cardVerifying || !cardPassword ? 'none' : '0 4px 20px rgba(26, 26, 46, 0.4)'
                     }}
                   >
-                    {qrVerifying ? (
+                    {cardVerifying ? (
                       <>
                         <span style={{ 
                           width: 20, height: 20, 
@@ -610,7 +792,7 @@ export default function Account() {
                     ) : (
                       <>
                         <i className="fa-solid fa-shield-check"></i>
-                        Verify & Generate QR Card
+                        Verify & Generate Auth Card
                       </>
                     )}
                   </button>
@@ -624,71 +806,54 @@ export default function Account() {
                       fontSize: 13, fontWeight: 600, marginBottom: 24
                     }}>
                       <i className="fa-solid fa-circle-check" style={{ fontSize: 16 }}></i>
-                      Password verified successfully!
+                      Card generated successfully!
                     </div>
 
-                    {/* QR Code Display */}
+                    {/* Card Preview */}
                     <div style={{
-                      background: '#f8f9fa', borderRadius: 20,
-                      padding: '32px 24px', textAlign: 'center',
-                      border: '2px dashed #d1d5db', marginBottom: 20,
-                      position: 'relative'
+                      background: '#f0f0f5', borderRadius: 16,
+                      padding: 16, textAlign: 'center',
+                      boxShadow: 'inset 0 2px 8px rgba(0,0,0,0.06)',
+                      marginBottom: 20
                     }}>
-                      {/* QR Container */}
-                      <div style={{
-                        display: 'inline-block', padding: 16,
-                        background: '#fff', borderRadius: 16,
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-                        marginBottom: 16
-                      }}>
-                        <div ref={qrContainerRef} style={{ 
-                          minHeight: 220, minWidth: 220,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center'
-                        }}>
-                          {!qrGenerated && (
-                            <div style={{ 
-                              width: 40, height: 40,
-                              border: '3px solid #e5e5ea',
-                              borderTopColor: '#667eea',
-                              borderRadius: '50%',
-                              animation: 'spin 0.7s linear infinite'
-                            }} />
-                          )}
-                        </div>
-                      </div>
-                      
-                      <p style={{ fontSize: 12, color: '#86868b', margin: 0 }}>
-                        <i className="fa-solid fa-info-circle" style={{ marginRight: 4 }}></i>
-                        Scan this QR card to login instantly with JABIYEN Card Auth
-                      </p>
+                      <img 
+                        ref={cardPreviewRef}
+                        src={cardDataUrl} 
+                        alt="JABIYEN Auth Card"
+                        style={{
+                          width: '100%', maxWidth: 560,
+                          borderRadius: 12,
+                          boxShadow: '0 8px 32px rgba(0,0,0,0.15)'
+                        }}
+                      />
+                      <canvas ref={cardCanvasRef} style={{ display: 'none' }} />
                     </div>
 
                     {/* Download & Reset Buttons */}
                     <div style={{ display: 'flex', gap: 12 }}>
                       <button
-                        onClick={downloadQRCode}
-                        disabled={!qrGenerated}
+                        onClick={downloadCard}
+                        disabled={!cardGenerated}
                         style={{
                           flex: 1, padding: '14px 20px',
-                          background: qrGenerated ? '#1d1d1f' : '#a1a1a6',
+                          background: cardGenerated ? '#1d1d1f' : '#a1a1a6',
                           color: '#fff', fontFamily: "'Inter', sans-serif",
                           fontSize: 15, fontWeight: 600, border: 'none',
-                          borderRadius: 12, cursor: qrGenerated ? 'pointer' : 'not-allowed',
+                          borderRadius: 12, cursor: cardGenerated ? 'pointer' : 'not-allowed',
                           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                           transition: 'all 0.2s ease'
                         }}
                       >
                         <i className="fa-solid fa-download"></i>
-                        Download QR Card
+                        Download Auth Card
                       </button>
                       <button
                         onClick={() => {
-                          setQrVerified(false);
-                          setQrGenerated(false);
-                          setQrPassword('');
-                          setQrDataUrl(null);
-                          setQrError(null);
-                          if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
+                          setCardVerified(false);
+                          setCardGenerated(false);
+                          setCardPassword('');
+                          setCardDataUrl(null);
+                          setCardError(null);
                         }}
                         style={{
                           padding: '14px 20px',
@@ -718,7 +883,7 @@ export default function Account() {
                     color: '#f57c00', fontSize: 16, marginTop: 1, flexShrink: 0 
                   }}></i>
                   <div style={{ fontSize: 12, color: '#795548', lineHeight: 1.5 }}>
-                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This QR card contains your login credentials. Keep it secure and do not share it with anyone. Use it with JABIYEN Card Auth for instant, secure login.
+                    <strong style={{ color: '#e65100' }}>Security Note:</strong> This card contains encrypted login credentials in the QR code. Keep it secure and do not share it with anyone. Download and store it safely.
                   </div>
                 </div>
               </div>
