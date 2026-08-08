@@ -19,60 +19,65 @@ function formatDate(dateString) {
   } catch { return dateString; }
 }
 
-// ===================== JABIYEN CARD COMPONENT =====================
+// ===================== JABIYEN CARD COMPONENT (RESPONSIVE) =====================
 function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef, qrGenerated }) {
   return (
-    <div style={{
-      width: 600,
-      minWidth: 600,
+    <div className="jabiyen-card" style={{
+      width: '100%',
       maxWidth: 600,
-      height: 340,
-      minHeight: 340,
-      maxHeight: 340,
+      minWidth: 280,
+      aspectRatio: '600 / 340',
       background: '#ffffff',
       position: 'relative',
       overflow: 'hidden',
-      borderRadius: 16,
+      borderRadius: 'clamp(8px, 1.5vw, 16px)',
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
       boxSizing: 'border-box',
       boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
-      margin: '12px'
+      margin: '0 auto'
     }}>
       {/* ===== TOP DARK HEADER ===== */}
       <div style={{
         width: '100%',
-        height: 80,
+        height: 'clamp(50px, 23.5%, 80px)',
         background: '#0f0f0f',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 32px',
+        padding: '0 clamp(12px, 5.3%, 32px)',
         boxSizing: 'border-box',
-        borderRadius: '16px 16px 0 0'
+        borderRadius: 'clamp(8px, 1.5vw, 16px) clamp(8px, 1.5vw, 16px) 0 0'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'clamp(6px, 2vw, 12px)' }}>
           <img 
             src="/logo.png" 
             alt="J" 
-            style={{ width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}
+            className="card-logo"
+            style={{ 
+              width: 'clamp(20px, 5.3%, 32px)', 
+              height: 'clamp(20px, 5.3%, 32px)', 
+              borderRadius: 'clamp(4px, 1vw, 6px)', 
+              flexShrink: 0 
+            }}
             crossOrigin="anonymous"
           />
-          <span style={{ 
+          <span className="card-brand" style={{ 
             color: '#ffffff', 
             fontWeight: 800, 
-            fontSize: 20, 
+            fontSize: 'clamp(14px, 3.3vw, 20px)',
             fontFamily: "'Manrope', sans-serif", 
             letterSpacing: '-0.5px'
           }}>
             JABIYEN
           </span>
         </div>
-        <span style={{ 
+        <span className="card-badge" style={{ 
           color: 'rgba(255,255,255,0.6)', 
-          fontSize: 10, 
+          fontSize: 'clamp(7px, 1.7vw, 10px)',
           fontWeight: 600, 
           textTransform: 'uppercase', 
-          letterSpacing: '0.15em'
+          letterSpacing: '0.15em',
+          whiteSpace: 'nowrap'
         }}>
           Digital Auth Card
         </span>
@@ -80,8 +85,8 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
 
       {/* ===== WHITE BODY ===== */}
       <div style={{ 
-        padding: '24px 32px',
-        height: 210,
+        padding: 'clamp(12px, 4vw, 24px) clamp(12px, 5.3%, 32px)',
+        height: 'clamp(130px, 61.8%, 210px)',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
@@ -91,41 +96,47 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 16,
-          paddingBottom: 20,
+          gap: 'clamp(8px, 2.7vw, 16px)',
+          paddingBottom: 'clamp(10px, 5.9%, 20px)',
           borderBottom: '1px solid #e5e5ea'
         }}>
-          <div style={{
-            width: 48,
-            height: 48,
+          <div className="card-avatar" style={{
+            width: 'clamp(32px, 8vw, 48px)',
+            height: 'clamp(32px, 8vw, 48px)',
             background: '#0f0f0f',
             color: '#ffffff',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 17,
+            fontSize: 'clamp(12px, 2.8vw, 17px)',
             fontWeight: 700,
             flexShrink: 0,
             fontFamily: "'Manrope', sans-serif",
-            borderRadius: 10
+            borderRadius: 'clamp(6px, 1.7vw, 10px)'
           }}>
             {getInitials()}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ 
-              fontSize: 16, 
+            <div className="card-name" style={{ 
+              fontSize: 'clamp(12px, 2.7vw, 16px)',
               fontWeight: 700, 
               color: '#0f0f0f',
               fontFamily: "'Manrope', sans-serif",
-              lineHeight: 1.3
+              lineHeight: 1.3,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
             }}>
               {fullName}
             </div>
-            <div style={{ 
-              fontSize: 11, 
+            <div className="card-email" style={{ 
+              fontSize: 'clamp(9px, 1.8vw, 11px)',
               color: '#71717a', 
               marginTop: 2,
-              fontFamily: "'Inter', sans-serif"
+              fontFamily: "'Inter', sans-serif",
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
             }}>
               {userData?.email || '—'}
             </div>
@@ -135,47 +146,47 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
         {/* Bottom Section: Info Grid + QR */}
         <div style={{
           display: 'flex',
-          gap: 32,
+          gap: 'clamp(12px, 5.3vw, 32px)',
           alignItems: 'center'
         }}>
-          <div style={{
+          <div className="card-info-grid" style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '12px 24px',
+            gap: 'clamp(4px, 2vw, 12px) clamp(8px, 4vw, 24px)',
             flex: 1
           }}>
             {userData?.phone && (
               <div>
-                <div style={labelStyle}>Phone</div>
-                <div style={valueStyle}>{userData.phone}</div>
+                <div className="card-label" style={labelStyle}>Phone</div>
+                <div className="card-value" style={valueStyle}>{userData.phone}</div>
               </div>
             )}
             {(userData?.city || userData?.state) && (
               <div>
-                <div style={labelStyle}>Location</div>
-                <div style={valueStyle}>{[userData.city, userData.state].filter(Boolean).join(', ')}</div>
+                <div className="card-label" style={labelStyle}>Location</div>
+                <div className="card-value" style={valueStyle}>{[userData.city, userData.state].filter(Boolean).join(', ')}</div>
               </div>
             )}
             {userData?.country && (
               <div>
-                <div style={labelStyle}>Country</div>
-                <div style={valueStyle}>{userData.country}</div>
+                <div className="card-label" style={labelStyle}>Country</div>
+                <div className="card-value" style={valueStyle}>{userData.country}</div>
               </div>
             )}
             <div>
-              <div style={labelStyle}>Member Since</div>
-              <div style={valueStyle}>{formatDate(userData?.created_at)}</div>
+              <div className="card-label" style={labelStyle}>Member Since</div>
+              <div className="card-value" style={valueStyle}>{formatDate(userData?.created_at)}</div>
             </div>
           </div>
 
-          <div style={{
-            width: 105,
-            height: 105,
-            minWidth: 105,
-            minHeight: 105,
+          <div className="card-qr-wrapper" style={{
+            width: 'clamp(70px, 17.5vw, 105px)',
+            height: 'clamp(70px, 17.5vw, 105px)',
+            minWidth: 'clamp(70px, 17.5vw, 105px)',
+            minHeight: 'clamp(70px, 17.5vw, 105px)',
             background: '#ffffff',
             border: '1px solid #e5e5ea',
-            borderRadius: 12,
+            borderRadius: 'clamp(8px, 2vw, 12px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -184,16 +195,16 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
             boxSizing: 'border-box'
           }}>
             <div ref={qrContainerRef} style={{ 
-              width: 95, 
-              height: 95,
+              width: 'clamp(62px, 15.8vw, 95px)', 
+              height: 'clamp(62px, 15.8vw, 95px)',
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center'
             }}>
               {!qrGenerated && (
                 <div style={{ 
-                  width: 22, 
-                  height: 22,
+                  width: 'clamp(16px, 3.7vw, 22px)', 
+                  height: 'clamp(16px, 3.7vw, 22px)',
                   border: '2px solid #e5e5ea',
                   borderTopColor: '#0f0f0f',
                   borderRadius: '50%',
@@ -204,12 +215,12 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
           </div>
         </div>
 
-        <div style={{ 
+        <div className="card-footer-text" style={{ 
           textAlign: 'right', 
           marginTop: 4 
         }}>
           <span style={{ 
-            fontSize: 8, 
+            fontSize: 'clamp(6px, 1.3vw, 8px)',
             fontWeight: 700, 
             color: '#a1a1aa', 
             textTransform: 'uppercase', 
@@ -221,25 +232,37 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
       </div>
 
       {/* ===== BOTTOM STRIP ===== */}
-      <div style={{
+      <div className="card-bottom-strip" style={{
         position: 'absolute',
         bottom: 0,
         left: 0,
         right: 0,
-        height: 34,
+        height: 'clamp(22px, 10%, 34px)',
         background: '#fafafa',
         borderTop: '1px solid #e5e5ea',
-        borderRadius: '0 0 16px 16px',
+        borderRadius: '0 0 clamp(8px, 1.5vw, 16px) clamp(8px, 1.5vw, 16px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 32px',
+        padding: '0 clamp(12px, 5.3%, 32px)',
         boxSizing: 'border-box'
       }}>
-        <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, letterSpacing: '0.05em' }}>
+        <span style={{ 
+          fontSize: 'clamp(7px, 1.5vw, 9px)', 
+          color: '#a1a1aa', 
+          fontWeight: 600, 
+          letterSpacing: '0.05em',
+          whiteSpace: 'nowrap'
+        }}>
           JABIYEN CARD AUTH &copy; {new Date().getFullYear()}
         </span>
-        <span style={{ fontSize: 9, color: '#a1a1aa', fontWeight: 600, fontFamily: 'monospace' }}>
+        <span style={{ 
+          fontSize: 'clamp(7px, 1.5vw, 9px)', 
+          color: '#a1a1aa', 
+          fontWeight: 600, 
+          fontFamily: 'monospace',
+          whiteSpace: 'nowrap'
+        }}>
           @{username}
         </span>
       </div>
@@ -248,7 +271,7 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
 }
 
 const labelStyle = {
-  fontSize: 8,
+  fontSize: 'clamp(6px, 1.3vw, 8px)',
   fontWeight: 700,
   textTransform: 'uppercase',
   letterSpacing: '0.1em',
@@ -258,7 +281,7 @@ const labelStyle = {
 };
 
 const valueStyle = {
-  fontSize: 12,
+  fontSize: 'clamp(9px, 2vw, 12px)',
   fontWeight: 500,
   color: '#0f0f0f',
   fontFamily: "'Inter', sans-serif",
@@ -484,10 +507,11 @@ export default function Account() {
     }
     setTimeout(() => {
       if (qrContainerRef.current && window.QRCode) {
+        const qrSize = Math.min(qrContainerRef.current.offsetWidth, qrContainerRef.current.offsetHeight) || 95;
         new window.QRCode(qrContainerRef.current, {
           text: qrData,
-          width: 95,
-          height: 95,
+          width: qrSize,
+          height: qrSize,
           colorDark: '#000000',
           colorLight: '#ffffff',
           correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.H : 2
@@ -508,9 +532,7 @@ export default function Account() {
         backgroundColor: null,
         useCORS: true,
         allowTaint: true,
-        logging: false,
-        width: 624,
-        height: 364
+        logging: false
       });
       const imgUrl = canvas.toDataURL('image/png');
       setCardImageUrl(imgUrl);
@@ -575,9 +597,10 @@ export default function Account() {
         <title>My Account | JAYENWARE</title>
         <meta name="description" content="Manage your JAYENWARE account" />
         <meta name="robots" content="noindex, follow" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
       </Head>
 
-      <div style={{ maxWidth: 900, margin: '0 auto', padding: '100px 16px 48px' }}>
+      <div style={{ maxWidth: 900, margin: '0 auto', padding: 'clamp(60px, 10vh, 100px) 16px 48px' }}>
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: 800, color: '#0f0f0f', margin: '0 0 6px' }}>My Account</h1>
           <p style={{ fontSize: 15, color: '#71717a', margin: 0 }}>Welcome back, {userData.first_name || 'User'}</p>
@@ -716,7 +739,7 @@ export default function Account() {
             )}
 
             {currentPanel === 'card-auth' && (
-              <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+              <div style={{ background: '#fff', borderRadius: 16, padding: 'clamp(16px, 3vw, 32px)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
                     width: 56, height: 56, 
@@ -727,8 +750,8 @@ export default function Account() {
                   }}>
                     <img src="/logo.png" alt="J" style={{ width: 28, height: 28, borderRadius: 6 }} crossOrigin="anonymous" />
                   </div>
-                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px', color: '#0f0f0f' }}>JABIYEN Card Auth</h2>
-                  <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>
+                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 'clamp(18px, 3vw, 22px)', fontWeight: 700, margin: '0 0 6px', color: '#0f0f0f' }}>JABIYEN Card Auth</h2>
+                  <p style={{ fontSize: 'clamp(12px, 2vw, 14px)', color: '#71717a', margin: 0 }}>
                     Generate your digital JABIYEN card for instant QR login
                   </p>
                 </div>
@@ -791,15 +814,15 @@ export default function Account() {
 
                 {qrVerified && (
                   <div style={{ animation: 'fadeInUp 0.6s ease' }}>
-                    <div style={{ 
+                    <div className="card-display-container" style={{ 
                       display: 'flex', 
                       justifyContent: 'center', 
                       marginBottom: 24,
-                      padding: '20px',
+                      padding: 'clamp(10px, 2vw, 20px)',
                       background: '#fafafa',
-                      borderRadius: 20
+                      borderRadius: 'clamp(12px, 2vw, 20px)'
                     }}>
-                      <div ref={cardRef}>
+                      <div ref={cardRef} style={{ width: '100%', maxWidth: 600 }}>
                         <JABIYENCard 
                           userData={userData}
                           fullName={fullName}
@@ -811,15 +834,15 @@ export default function Account() {
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: 12, flexWrap: 'wrap' }}>
                       <button
                         onClick={downloadCard}
                         disabled={!qrGenerated || !cardImageUrl}
                         style={{
-                          padding: '14px 28px',
+                          padding: 'clamp(12px, 2vw, 14px) clamp(20px, 3vw, 28px)',
                           background: (qrGenerated && cardImageUrl) ? '#0f0f0f' : '#a1a1a6',
                           color: '#fff', fontFamily: "'Inter', sans-serif",
-                          fontSize: 15, fontWeight: 600, border: 'none',
+                          fontSize: 'clamp(13px, 2vw, 15px)', fontWeight: 600, border: 'none',
                           borderRadius: 12, cursor: (qrGenerated && cardImageUrl) ? 'pointer' : 'not-allowed',
                           display: 'flex', alignItems: 'center', gap: 8,
                           boxShadow: (qrGenerated && cardImageUrl) ? '0 4px 16px rgba(0,0,0,0.2)' : 'none'
@@ -835,8 +858,10 @@ export default function Account() {
                           if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
                         }}
                         style={{
-                          padding: '14px 20px', background: '#f4f4f5', color: '#0f0f0f',
-                          fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 600,
+                          padding: 'clamp(12px, 2vw, 14px) clamp(16px, 2.5vw, 20px)', 
+                          background: '#f4f4f5', color: '#0f0f0f',
+                          fontFamily: "'Inter', sans-serif", 
+                          fontSize: 'clamp(13px, 2vw, 15px)', fontWeight: 600,
                           border: 'none', borderRadius: 12, cursor: 'pointer',
                           display: 'flex', alignItems: 'center', gap: 8
                         }}
@@ -846,7 +871,7 @@ export default function Account() {
                       </button>
                     </div>
 
-                    <p style={{ textAlign: 'center', fontSize: 12, color: '#71717a', marginTop: 12 }}>
+                    <p style={{ textAlign: 'center', fontSize: 'clamp(10px, 1.5vw, 12px)', color: '#71717a', marginTop: 12 }}>
                       File: <strong style={{ color: '#0f0f0f' }}>{username}-jabiyen-auth.png</strong>
                     </p>
                   </div>
@@ -859,7 +884,7 @@ export default function Account() {
                   maxWidth: 520, margin: '32px auto 0'
                 }}>
                   <i className="fa-solid fa-triangle-exclamation" style={{ color: '#d97706', fontSize: 16, marginTop: 1, flexShrink: 0 }}></i>
-                  <div style={{ fontSize: 12, color: '#92400e', lineHeight: 1.5 }}>
+                  <div style={{ fontSize: 'clamp(10px, 1.5vw, 12px)', color: '#92400e', lineHeight: 1.5 }}>
                     <strong style={{ color: '#b45309' }}>Security Note:</strong> Your JABIYEN card contains encrypted login credentials. Keep it secure. The QR code provides instant authentication.
                   </div>
                 </div>
@@ -894,6 +919,13 @@ export default function Account() {
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        
+        @media (max-width: 640px) {
+          .jabiyen-card {
+            aspect-ratio: auto;
+            height: auto;
+          }
+        }
       `}</style>
     </>
   );
