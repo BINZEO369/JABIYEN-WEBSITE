@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
@@ -30,6 +30,16 @@ export default function Account() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
+
+  // QR Generator states
+  const [qrPassword, setQrPassword] = useState('');
+  const [qrVerifying, setQrVerifying] = useState(false);
+  const [qrVerified, setQrVerified] = useState(false);
+  const [qrGenerated, setQrGenerated] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState(null);
+  const [qrError, setQrError] = useState(null);
+  const qrCanvasRef = useRef(null);
+  const qrContainerRef = useRef(null);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -119,7 +129,16 @@ export default function Account() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { fetchUserData(); }, [fetchUserData]);
+  useEffect(() => { 
+    fetchUserData();
+    // Load QR code library dynamically
+    if (typeof window !== 'undefined' && !window.QRCode) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+  }, [fetchUserData]);
 
   const handleLogout = async () => {
     try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
@@ -178,6 +197,115 @@ export default function Account() {
     setUserData(prev => ({ ...prev, [field]: value }));
   };
 
+  // Password verification for QR generation
+  const verifyPasswordForQR = async () => {
+    if (!qrPassword) {
+      setQrError('Please enter your password');
+      showToast('Please enter your password', 'error');
+      return;
+    }
+
+    setQrVerifying(true);
+    setQrError(null);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          email: userData.email, 
+          password: qrPassword 
+        })
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) {
+        setQrError('Invalid password. Please try again.');
+        showToast('Password verification failed', 'error');
+        setQrVerifying(false);
+        return;
+      }
+
+      // Password verified successfully
+      setQrVerified(true);
+      generateQRCode(userData.email, qrPassword);
+      showToast('Password verified! QR code generated.', 'success');
+    } catch (err) {
+      setQrError('Verification failed. Please try again.');
+      showToast('Verification failed', 'error');
+    } finally {
+      setQrVerifying(false);
+    }
+  };
+
+  // Generate QR Code
+  const generateQRCode = (email, password) => {
+    const qrData = JSON.stringify({
+      email: email,
+      password: password
+    });
+
+    // Clear previous QR
+    if (qrContainerRef.current) {
+      qrContainerRef.current.innerHTML = '';
+    }
+
+    // Small delay to ensure DOM is ready
+    setTimeout(() => {
+      if (qrContainerRef.current && window.QRCode) {
+        new window.QRCode(qrContainerRef.current, {
+          text: qrData,
+          width: 220,
+          height: 220,
+          colorDark: '#000000',
+          colorLight: '#ffffff',
+          correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.L : 1
+        });
+
+        // Generate download URL after QR is rendered
+        setTimeout(() => {
+          const qrImage = qrContainerRef.current.querySelector('img');
+          if (qrImage) {
+            setQrDataUrl(qrImage.src);
+          } else {
+            // Canvas fallback
+            const canvas = qrContainerRef.current.querySelector('canvas');
+            if (canvas) {
+              setQrDataUrl(canvas.toDataURL('image/png'));
+            }
+          }
+          setQrGenerated(true);
+        }, 500);
+      }
+    }, 100);
+  };
+
+  // Download QR code
+  const downloadQRCode = () => {
+    if (!qrDataUrl) return;
+
+    const link = document.createElement('a');
+    link.download = `jayenware-qr-login-${userData.email?.split('@')[0] || 'user'}.png`;
+    link.href = qrDataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast('QR code downloaded successfully!');
+  };
+
+  // Reset QR states when switching panels
+  const handlePanelSwitch = (panel) => {
+    setCurrentPanel(panel);
+    if (panel !== 'qr-generator') {
+      setQrPassword('');
+      setQrVerified(false);
+      setQrGenerated(false);
+      setQrDataUrl(null);
+      setQrError(null);
+    }
+  };
+
   if (loading) {
     return (
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '100px 16px 48px' }}>
@@ -229,28 +357,32 @@ export default function Account() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
           <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
-            {['profile', 'addresses'].map(panel => (
-              <button key={panel} onClick={() => setCurrentPanel(panel)} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-                padding: '14px 24px', borderRadius: 12, cursor: 'pointer',
-                fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif",
-                border: 'none', flex: 1, minWidth: 180,
-                background: currentPanel === panel ? '#1d1d1f' : '#f5f5f7',
-                color: currentPanel === panel ? '#fff' : '#1d1d1f',
+            {[
+              { key: 'profile', icon: 'user', label: 'Profile' },
+              { key: 'addresses', icon: 'location-dot', label: 'Location' },
+              { key: 'qr-generator', icon: 'qrcode', label: 'QR Generator' }
+            ].map(panel => (
+              <button key={panel.key} onClick={() => handlePanelSwitch(panel.key)} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+                fontSize: 14, fontWeight: 600, fontFamily: "'Inter', sans-serif",
+                border: 'none', flex: 1, minWidth: 140,
+                background: currentPanel === panel.key ? '#1d1d1f' : '#f5f5f7',
+                color: currentPanel === panel.key ? '#fff' : '#1d1d1f',
                 transition: 'all 0.25s ease'
               }}>
-                <i className={`fa-solid fa-${panel === 'profile' ? 'user' : 'location-dot'}`}></i>
-                {panel === 'profile' ? 'Profile' : 'Location'}
+                <i className={`fa-solid fa-${panel.icon}`} style={{ fontSize: 15 }}></i>
+                {panel.label}
               </button>
             ))}
             <button onClick={() => setShowLogoutModal(true)} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
-              padding: '14px 24px', borderRadius: 12, cursor: 'pointer',
-              fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif",
-              border: 'none', flex: 1, minWidth: 180,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              padding: '14px 20px', borderRadius: 12, cursor: 'pointer',
+              fontSize: 14, fontWeight: 600, fontFamily: "'Inter', sans-serif",
+              border: 'none', flex: 1, minWidth: 140,
               background: '#fff0ef', color: '#ff3b30'
             }}>
-              <i className="fa-solid fa-right-from-bracket"></i> Sign Out
+              <i className="fa-solid fa-right-from-bracket" style={{ fontSize: 15 }}></i> Sign Out
             </button>
           </div>
 
@@ -354,39 +486,146 @@ export default function Account() {
                 </div>
               </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {toast && (
-        <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
-          <span>{toast.message}</span>
-        </div>
-      )}
+            {/* QR Generator Section */}
+            {currentPanel === 'qr-generator' && (
+              <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <div style={{ textAlign: 'center', marginBottom: 28 }}>
+                  <div style={{ 
+                    width: 64, height: 64, 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    borderRadius: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    margin: '0 auto 16px', color: '#fff', fontSize: 28
+                  }}>
+                    <i className="fa-solid fa-qrcode"></i>
+                  </div>
+                  <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px' }}>QR Login Generator</h2>
+                  <p style={{ fontSize: 14, color: '#86868b', margin: 0, lineHeight: 1.5 }}>
+                    Generate a QR code for quick login. Your email is pre-filled.<br />
+                    Enter your password to verify and generate the QR code.
+                  </p>
+                </div>
 
-      {showLogoutModal && (
-        <div onClick={() => setShowLogoutModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
-          <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', textAlign: 'center', maxWidth: 420, width: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
-            <div style={{ width: 80, height: 80, background: '#fff0ef', color: '#ff3b30', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, margin: '0 auto 24px' }}><i className="fa-solid fa-power-off"></i></div>
-            <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 24, fontWeight: 800, margin: '0 0 12px' }}>Sign Out</h2>
-            <p style={{ fontSize: 15, color: '#86868b', margin: '0 0 32px', lineHeight: 1.5 }}>Are you sure you want to sign out?</p>
-            <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-              <button onClick={() => setShowLogoutModal(false)} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#f5f5f7', color: '#1d1d1f' }}>Cancel</button>
-              <button onClick={handleLogout} style={{ flex: 1, padding: '14px 20px', borderRadius: 12, fontSize: 15, fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer', border: 'none', background: '#ff3b30', color: '#fff' }}>Yes, Sign Out</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
+                {/* Email Display */}
+                <div style={{ 
+                  background: '#f8f9fa', borderRadius: 12, padding: '16px 20px',
+                  display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20
+                }}>
+                  <div style={{ 
+                    width: 40, height: 40, borderRadius: 10,
+                    background: 'linear-gradient(135deg, #007aff, #005bb5)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#fff', flexShrink: 0
+                  }}>
+                    <i className="fa-solid fa-envelope" style={{ fontSize: 16 }}></i>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#86868b', marginBottom: 2 }}>Your Email</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: '#1d1d1f', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {userData.email || '—'}
+                    </div>
+                  </div>
+                  <div style={{ 
+                    background: '#e8f5e9', color: '#2e7d32',
+                    padding: '4px 10px', borderRadius: 50, fontSize: 10, fontWeight: 700,
+                    display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0
+                  }}>
+                    <i className="fa-solid fa-shield-halved" style={{ fontSize: 10 }}></i>
+                    AUTO-FILLED
+                  </div>
+                </div>
 
-function InfoField({ label, children }) {
-  return (
-    <div>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#86868b', marginBottom: 6 }}>{label}</label>
-      <div style={{ fontSize: 15, color: '#1d1d1f', fontWeight: 500, minHeight: 22 }}>{children}</div>
-    </div>
-  );
-}
+                {/* Password Input */}
+                {!qrVerified && (
+                  <div style={{ marginBottom: 20 }}>
+                    <label style={{ 
+                      display: 'block', fontSize: 13, fontWeight: 600, 
+                      color: '#1d1d1f', marginBottom: 8 
+                    }}>
+                      Verify Password <span style={{ color: '#ff3b30' }}>*</span>
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <input 
+                        type="password" 
+                        value={qrPassword}
+                        onChange={(e) => {
+                          setQrPassword(e.target.value);
+                          setQrError(null);
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') verifyPasswordForQR();
+                        }}
+                        placeholder="Enter your password to verify"
+                        style={{
+                          ...inputStyle,
+                          padding: '14px 16px',
+                          paddingRight: 50,
+                          borderColor: qrError ? '#ff3b30' : '#e5e5ea',
+                          fontSize: 15,
+                          borderRadius: 12
+                        }}
+                      />
+                      <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#86868b' }}>
+                        <i className="fa-solid fa-lock" style={{ fontSize: 14 }}></i>
+                      </div>
+                    </div>
+                    {qrError && (
+                      <div style={{ 
+                        display: 'flex', alignItems: 'center', gap: 6, 
+                        fontSize: 12, color: '#ff3b30', marginTop: 6 
+                      }}>
+                        <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i>
+                        <span>{qrError}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Verify Button or QR Display */}
+                {!qrVerified ? (
+                  <button 
+                    onClick={verifyPasswordForQR}
+                    disabled={qrVerifying || !qrPassword}
+                    style={{
+                      width: '100%', padding: '14px 24px',
+                      background: qrVerifying || !qrPassword ? '#a1a1a6' : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: '#fff', fontFamily: "'Inter', sans-serif",
+                      fontSize: 15, fontWeight: 600, border: 'none',
+                      borderRadius: 12, cursor: qrVerifying || !qrPassword ? 'not-allowed' : 'pointer',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                      transition: 'all 0.3s ease',
+                      boxShadow: qrVerifying || !qrPassword ? 'none' : '0 4px 15px rgba(102, 126, 234, 0.4)'
+                    }}
+                  >
+                    {qrVerifying ? (
+                      <>
+                        <span style={{ 
+                          width: 20, height: 20, 
+                          border: '2px solid rgba(255,255,255,0.3)', 
+                          borderTopColor: '#fff', borderRadius: '50%', 
+                          animation: 'spin 0.7s linear infinite' 
+                        }} />
+                        Verifying...
+                      </>
+                    ) : (
+                      <>
+                        <i className="fa-solid fa-shield-check"></i>
+                        Verify & Generate QR Code
+                      </>
+                    )}
+                  </button>
+                ) : (
+                  <div style={{ animation: 'fadeInUp 0.5s ease' }}>
+                    {/* Success Badge */}
+                    <div style={{
+                      background: '#e8f5e9', color: '#2e7d32',
+                      padding: '10px 16px', borderRadius: 12,
+                      display: 'flex', alignItems: 'center', gap: 8,
+                      fontSize: 13, fontWeight: 600, marginBottom: 24
+                    }}>
+                      <i className="fa-solid fa-circle-check" style={{ fontSize: 16 }}></i>
+                      Password verified successfully!
+                    </div>
+
+                    {/* QR Code Display */}
+                    <div style={{
