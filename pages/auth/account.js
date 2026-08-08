@@ -32,10 +32,11 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
       background: '#ffffff',
       position: 'relative',
       overflow: 'hidden',
-      border: '1px solid #d1d5db',
-      borderRadius: 0,
+      borderRadius: 16,
       fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      boxSizing: 'border-box'
+      boxSizing: 'border-box',
+      boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+      margin: '12px'
     }}>
       {/* ===== TOP DARK HEADER ===== */}
       <div style={{
@@ -46,13 +47,14 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
         alignItems: 'center',
         justifyContent: 'space-between',
         padding: '0 32px',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        borderRadius: '16px 16px 0 0'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <img 
             src="/logo.png" 
             alt="J" 
-            style={{ width: 32, height: 32, borderRadius: 0, flexShrink: 0 }}
+            style={{ width: 32, height: 32, borderRadius: 6, flexShrink: 0 }}
             crossOrigin="anonymous"
           />
           <span style={{ 
@@ -65,25 +67,15 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
             JABIYEN
           </span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ 
-            color: 'rgba(255,255,255,0.6)', 
-            fontSize: 10, 
-            fontWeight: 600, 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.15em'
-          }}>
-            Digital Auth Card
-          </span>
-          {/* Chip icon */}
-          <div style={{ 
-            width: 36, 
-            height: 26, 
-            background: 'linear-gradient(135deg, #c9a84c, #e8c547, #c9a84c)',
-            borderRadius: 4,
-            flexShrink: 0
-          }} />
-        </div>
+        <span style={{ 
+          color: 'rgba(255,255,255,0.6)', 
+          fontSize: 10, 
+          fontWeight: 600, 
+          textTransform: 'uppercase', 
+          letterSpacing: '0.15em'
+        }}>
+          Digital Auth Card
+        </span>
       </div>
 
       {/* ===== WHITE BODY ===== */}
@@ -103,7 +95,6 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
           paddingBottom: 20,
           borderBottom: '1px solid #e5e5ea'
         }}>
-          {/* Avatar */}
           <div style={{
             width: 48,
             height: 48,
@@ -116,7 +107,7 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
             fontWeight: 700,
             flexShrink: 0,
             fontFamily: "'Manrope', sans-serif",
-            borderRadius: 0
+            borderRadius: 10
           }}>
             {getInitials()}
           </div>
@@ -147,7 +138,6 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
           gap: 32,
           alignItems: 'center'
         }}>
-          {/* Left: Info Grid */}
           <div style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
@@ -178,22 +168,24 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
             </div>
           </div>
 
-          {/* Right: QR Code */}
           <div style={{
             width: 105,
             height: 105,
             minWidth: 105,
             minHeight: 105,
             background: '#ffffff',
-            border: '1px solid #d4d4d8',
+            border: '1px solid #e5e5ea',
+            borderRadius: 12,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0
+            flexShrink: 0,
+            padding: 4,
+            boxSizing: 'border-box'
           }}>
             <div ref={qrContainerRef} style={{ 
-              width: 105, 
-              height: 105,
+              width: 95, 
+              height: 95,
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center'
@@ -212,7 +204,6 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
           </div>
         </div>
 
-        {/* QR Label */}
         <div style={{ 
           textAlign: 'right', 
           marginTop: 4 
@@ -238,6 +229,7 @@ function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef
         height: 34,
         background: '#fafafa',
         borderTop: '1px solid #e5e5ea',
+        borderRadius: '0 0 16px 16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -286,7 +278,6 @@ export default function Account() {
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Card Auth states
   const [qrPassword, setQrPassword] = useState('');
   const [qrVerifying, setQrVerifying] = useState(false);
   const [qrVerified, setQrVerified] = useState(false);
@@ -495,8 +486,8 @@ export default function Account() {
       if (qrContainerRef.current && window.QRCode) {
         new window.QRCode(qrContainerRef.current, {
           text: qrData,
-          width: 105,
-          height: 105,
+          width: 95,
+          height: 95,
           colorDark: '#000000',
           colorLight: '#ffffff',
           correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.H : 2
@@ -514,14 +505,12 @@ export default function Account() {
     try {
       const canvas = await window.html2canvas(cardRef.current, {
         scale: 3,
-        backgroundColor: '#ffffff',
+        backgroundColor: null,
         useCORS: true,
         allowTaint: true,
         logging: false,
-        width: 600,
-        height: 340,
-        windowWidth: 600,
-        windowHeight: 340
+        width: 624,
+        height: 364
       });
       const imgUrl = canvas.toDataURL('image/png');
       setCardImageUrl(imgUrl);
@@ -595,7 +584,6 @@ export default function Account() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-          {/* Navigation Tabs */}
           <div style={{ background: '#fff', borderRadius: 16, padding: 16, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', display: 'flex', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
             {[
               { key: 'profile', icon: 'user', label: 'Profile' },
@@ -627,7 +615,6 @@ export default function Account() {
           </div>
 
           <div style={{ minHeight: 400 }}>
-            {/* ===== PROFILE PANEL ===== */}
             {currentPanel === 'profile' && (
               <div>
                 <div style={{ background: '#fff', borderRadius: 16, padding: '32px 24px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)', textAlign: 'center', marginBottom: 20 }}>
@@ -690,7 +677,6 @@ export default function Account() {
               </div>
             )}
 
-            {/* ===== ADDRESSES PANEL ===== */}
             {currentPanel === 'addresses' && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.03)', border: '1.5px solid #007aff', position: 'relative' }}>
                 <span style={{ position: 'absolute', top: 12, right: 12, background: '#007aff', color: '#fff', fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 50, textTransform: 'uppercase' }}>Primary</span>
@@ -729,17 +715,17 @@ export default function Account() {
               </div>
             )}
 
-            {/* ===== JABIYEN CARD AUTH PANEL ===== */}
             {currentPanel === 'card-auth' && (
               <div style={{ background: '#fff', borderRadius: 16, padding: 32, boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                 <div style={{ textAlign: 'center', marginBottom: 28 }}>
                   <div style={{ 
                     width: 56, height: 56, 
                     background: '#0f0f0f',
+                    borderRadius: 12,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     margin: '0 auto 16px'
                   }}>
-                    <img src="/logo.png" alt="J" style={{ width: 28, height: 28 }} crossOrigin="anonymous" />
+                    <img src="/logo.png" alt="J" style={{ width: 28, height: 28, borderRadius: 6 }} crossOrigin="anonymous" />
                   </div>
                   <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 22, fontWeight: 700, margin: '0 0 6px', color: '#0f0f0f' }}>JABIYEN Card Auth</h2>
                   <p style={{ fontSize: 14, color: '#71717a', margin: 0 }}>
@@ -747,7 +733,6 @@ export default function Account() {
                   </p>
                 </div>
 
-                {/* Password Form */}
                 {!qrVerified && (
                   <div style={{ maxWidth: 400, margin: '0 auto' }}>
                     <div style={{ marginBottom: 20 }}>
@@ -804,14 +789,15 @@ export default function Account() {
                   </div>
                 )}
 
-                {/* Card Display */}
                 {qrVerified && (
                   <div style={{ animation: 'fadeInUp 0.6s ease' }}>
                     <div style={{ 
                       display: 'flex', 
                       justifyContent: 'center', 
                       marginBottom: 24,
-                      overflow: 'auto'
+                      padding: '20px',
+                      background: '#fafafa',
+                      borderRadius: 20
                     }}>
                       <div ref={cardRef}>
                         <JABIYENCard 
@@ -825,7 +811,6 @@ export default function Account() {
                       </div>
                     </div>
 
-                    {/* Download Button */}
                     <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
                       <button
                         onClick={downloadCard}
@@ -867,7 +852,6 @@ export default function Account() {
                   </div>
                 )}
 
-                {/* Security Note */}
                 <div style={{
                   marginTop: 32, padding: '14px 16px',
                   background: '#fef3c7', borderRadius: 12,
@@ -885,7 +869,6 @@ export default function Account() {
         </div>
       </div>
 
-      {/* Toast */}
       {toast && (
         <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#dc2626' : '#0f0f0f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
@@ -893,7 +876,6 @@ export default function Account() {
         </div>
       )}
 
-      {/* Logout Modal */}
       {showLogoutModal && (
         <div onClick={() => setShowLogoutModal(false)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}>
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: 24, padding: '40px 32px', textAlign: 'center', maxWidth: 420, width: '90%', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
