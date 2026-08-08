@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { Html5Qrcode } from 'html5-qrcode';
 
 const inputStyle = {
   width: '100%', padding: '12px 16px',
@@ -26,10 +25,14 @@ export default function SignIn() {
   const [touched, setTouched] = useState({});
   
   // QR Scanner states
-  const [showScanner, setShowScanner] = useState(false);
-  const [scanning, setScanning] = useState(false);
-  const scannerRef = useRef(null);
-  const html5QrCodeRef = useRef(null);
+  const [showQRScanner, setShowQRScanner] = useState(false);
+  const [qrScanning, setQrScanning] = useState(false);
+  const [qrError, setQrError] = useState(null);
+  const [cameraPermission, setCameraPermission] = useState(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+  const animationFrameRef = useRef(null);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -38,9 +41,19 @@ export default function SignIn() {
     else if (msg === 'password_reset') showToast('Password reset successfully! Please sign in.', 'success');
     else if (msg === 'session_expired') showToast('Your session has expired. Please sign in again.', 'error');
     
-    // Cleanup scanner on unmount
+    // Load QR library dynamically
+    if (!window.jsQR) {
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js';
+      script.async = true;
+      document.head.appendChild(script);
+    }
+    
     return () => {
-      stopScanner();
+      stopCamera();
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
     };
   }, []);
 
@@ -93,95 +106,17 @@ export default function SignIn() {
     }
   };
 
-  // QR Code Scanner Functions
-  const startScanner = async () => {
-    setShowScanner(true);
-    setScanning(true);
-    
-    try {
-      // Initialize scanner
-      html5QrCodeRef.current = new Html5Qrcode("qr-reader");
-      
-      await html5QrCodeRef.current.start(
-        { facingMode: "environment" }, // Rear camera
-        {
-          fps: 10,
-          qrbox: { width: 250, height: 250 },
-        },
-        onScanSuccess,
-        onScanFailure
-      );
-    } catch (err) {
-      console.error('Failed to start scanner:', err);
-      showToast('Failed to start camera. Please check permissions.', 'error');
-      stopScanner();
-    }
-  };
-
-  const stopScanner = () => {
-    if (html5QrCodeRef.current) {
-      html5QrCodeRef.current.stop()
-        .then(() => {
-          html5QrCodeRef.current.clear();
-          console.log('Scanner stopped');
-        })
-        .catch(err => console.error('Error stopping scanner:', err));
-    }
-    setShowScanner(false);
-    setScanning(false);
-  };
-
-  const onScanSuccess = async (decodedText) => {
-    stopScanner();
-    
-    try {
-      // Try to parse QR code data as JSON
-      let credentials;
-      try {
-        credentials = JSON.parse(decodedText);
-      } catch {
-        // If not JSON, try to parse as query string format
-        const params = new URLSearchParams(decodedText);
-        credentials = {
-          email: params.get('email'),
-          password: params.get('password')
-        };
-      }
-
-      if (!credentials.email || !credentials.password) {
-        showToast('Invalid QR code format. Missing email or password.', 'error');
-        return;
-      }
-
-      // Set the credentials
-      setEmail(credentials.email);
-      setPassword(credentials.password);
-      
-      showToast('Credentials scanned successfully! Signing in...', 'success');
-      
-      // Auto sign in
-      await performSignIn(credentials.email, credentials.password);
-      
-    } catch (err) {
-      showToast('Failed to process QR code. Invalid format.', 'error');
-    }
-  };
-
-  const onScanFailure = (error) => {
-    // QR scan failure is normal during scanning process
-    // We don't need to show this to users
-  };
-
-  const performSignIn = async (emailToUse, passwordToUse) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     setAlert(null);
 
-    const emailErr = validateEmail(emailToUse);
-    const passErr = validatePassword(passwordToUse);
+    const emailErr = validateEmail(email);
+    const passErr = validatePassword(password);
     setTouched({ email: true, password: true });
     setErrors({ email: emailErr, password: passErr });
 
     if (emailErr || passErr) {
-      showToast('Invalid credentials from QR code', 'error');
+      showToast('Please fill in all required fields', 'error');
       return;
     }
 
@@ -191,7 +126,7 @@ export default function SignIn() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailToUse.trim(), password: passwordToUse })
+        body: JSON.stringify({ email: email.trim(), password })
       });
 
       const result = await res.json();
@@ -217,11 +152,6 @@ export default function SignIn() {
     }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await performSignIn(email, password);
-  };
-
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
     try {
@@ -233,13 +163,199 @@ export default function SignIn() {
     }
   };
 
+  // Parse QR code data for credentials
+  const parseQRCredentials = (data) => {
+    try {
+      // Try JSON format: {"email":"user@example.com","password":"pass123"}
+      const parsed = JSON.parse(data);
+      if (parsed.email && parsed.password) {
+        return { email: parsed.email, password: parsed.password };
+      }
+    } catch (e) {
+      // Try URL format: email=user@example.com&password=pass123
+      const params = new URLSearchParams(data);
+      const email = params.get('email');
+      const password = params.get('password');
+      if (email && password) {
+        return { email, password };
+      }
+      
+      // Try basic format: email:password
+      const parts = data.split(':');
+      if (parts.length === 2 && parts[0].includes('@')) {
+        return { email: parts[0], password: parts[1] };
+      }
+    }
+    return null;
+  };
+
+  // Process scanned QR data
+  const processQRData = (data) => {
+    if (!data) return;
+    
+    const credentials = parseQRCredentials(data);
+    if (credentials) {
+      setEmail(credentials.email);
+      setPassword(credentials.password);
+      setTouched({ email: true, password: true });
+      setErrors({});
+      setAlert(null);
+      stopCamera();
+      setShowQRScanner(false);
+      showToast('Credentials loaded from QR code!', 'success');
+      
+      // Auto-submit after a short delay
+      setTimeout(() => {
+        handleSubmit(new Event('submit'));
+      }, 500);
+    } else {
+      setQrError('Invalid QR code format. Expected email and password.');
+      showToast('Invalid QR code format', 'error');
+      setTimeout(() => setQrError(null), 3000);
+    }
+  };
+
+  // Start camera for QR scanning
+  const startCamera = async () => {
+    setQrError(null);
+    setQrScanning(true);
+    
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } }
+      });
+      
+      streamRef.current = stream;
+      setCameraPermission('granted');
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+        scanQRCode();
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+      setCameraPermission('denied');
+      setQrScanning(false);
+      
+      if (err.name === 'NotAllowedError') {
+        setQrError('Camera access denied. Please allow camera access or upload a QR image.');
+      } else if (err.name === 'NotFoundError') {
+        setQrError('No camera found. Please upload a QR image instead.');
+      } else {
+        setQrError('Failed to access camera. Please upload a QR image.');
+      }
+    }
+  };
+
+  // Stop camera
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    setQrScanning(false);
+  };
+
+  // Scan QR code from video stream
+  const scanQRCode = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+    
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      
+      if (window.jsQR) {
+        const code = window.jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: 'dontInvert',
+        });
+        
+        if (code) {
+          processQRData(code.data);
+          return;
+        }
+      }
+    }
+    
+    animationFrameRef.current = requestAnimationFrame(scanQRCode);
+  };
+
+  // Handle QR image upload from gallery
+  const handleQRImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    setQrError(null);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        
+        const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        
+        if (window.jsQR) {
+          const code = window.jsQR(imageData.data, imageData.width, imageData.height, {
+            inversionAttempts: 'dontInvert',
+          });
+          
+          if (code) {
+            processQRData(code.data);
+            stopCamera();
+            setShowQRScanner(false);
+          } else {
+            setQrError('No QR code found in the image. Please try another image.');
+            showToast('No QR code detected', 'error');
+          }
+        } else {
+          setQrError('QR scanner is loading. Please try again.');
+        }
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+    
+    // Reset file input
+    e.target.value = '';
+  };
+
+  // Open QR scanner
+  const openQRScanner = () => {
+    setShowQRScanner(true);
+    setTimeout(() => {
+      startCamera();
+    }, 300);
+  };
+
+  // Close QR scanner
+  const closeQRScanner = () => {
+    stopCamera();
+    setShowQRScanner(false);
+    setQrError(null);
+    setCameraPermission(null);
+  };
+
   return (
     <>
       <Head>
         <title>Sign In | JAYENWARE</title>
         <meta name="description" content="Sign in to your JAYENWARE account" />
-        {/* Add html5-qrcode library */}
-        <script src="https://unpkg.com/html5-qrcode" async></script>
       </Head>
 
       <div style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
@@ -251,90 +367,24 @@ export default function SignIn() {
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Sign in to continue your journey</p>
           </div>
 
-          {/* QR Code Scanner Button */}
+          {/* QR Code Login Button */}
           <button 
-            onClick={startScanner}
-            disabled={showScanner}
+            onClick={openQRScanner}
             style={{
               width: '100%', padding: '12px 24px',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #007aff, #5856d6)',
               color: '#fff',
               border: 'none', borderRadius: 12,
-              fontSize: 15, fontWeight: 500, cursor: showScanner ? 'not-allowed' : 'pointer',
+              fontSize: 15, fontWeight: 600, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              fontFamily: "'Inter', sans-serif", marginBottom: 16,
+              fontFamily: "'Inter', sans-serif", marginBottom: 20,
               transition: 'all 0.2s ease',
-              opacity: showScanner ? 0.6 : 1
+              boxShadow: '0 2px 8px rgba(0,122,255,0.3)'
             }}
           >
             <i className="fa-solid fa-qrcode" style={{ fontSize: 18 }}></i>
-            Scan QR Code to Sign In
+            Scan QR Code to Login
           </button>
-
-          {/* QR Scanner Modal */}
-          {showScanner && (
-            <div style={{
-              position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-              background: 'rgba(0,0,0,0.8)', zIndex: 1000,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              padding: 20
-            }}>
-              <div style={{
-                background: '#fff', borderRadius: 24,
-                padding: '24px', maxWidth: 400, width: '100%',
-                boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-              }}>
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between',
-                  alignItems: 'center', marginBottom: 16
-                }}>
-                  <h3 style={{
-                    fontFamily: "var(--font-heading), 'Manrope', sans-serif",
-                    fontSize: 18, fontWeight: 700, color: '#1d1d1f', margin: 0
-                  }}>
-                    Scan QR Code
-                  </h3>
-                  <button
-                    onClick={stopScanner}
-                    style={{
-                      background: 'none', border: 'none',
-                      color: '#86868b', cursor: 'pointer',
-                      fontSize: 20, padding: 4
-                    }}
-                  >
-                    <i className="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-                
-                <div id="qr-reader" ref={scannerRef} style={{
-                  width: '100%', borderRadius: 12, overflow: 'hidden',
-                  marginBottom: 16
-                }}></div>
-                
-                <p style={{
-                  fontSize: 13, color: '#86868b', textAlign: 'center', margin: 0
-                }}>
-                  Position the QR code within the frame to scan
-                </p>
-                
-                {scanning && (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    gap: 8, marginTop: 12
-                  }}>
-                    <div style={{
-                      width: 20, height: 20,
-                      border: '2px solid #e5e5ea',
-                      borderTopColor: '#1d1d1f',
-                      borderRadius: '50%',
-                      animation: 'spin 0.7s linear infinite'
-                    }}></div>
-                    <span style={{ fontSize: 13, color: '#86868b' }}>Scanning...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
 
           {/* Google Sign-In Button */}
           <button onClick={handleGoogleSignIn} disabled={googleLoading} style={{
@@ -431,6 +481,135 @@ export default function SignIn() {
         </div>
       </div>
 
+      {/* QR Scanner Modal */}
+      {showQRScanner && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '20px', animation: 'fadeIn 0.3s ease'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: 20, padding: '28px 24px',
+            maxWidth: 400, width: '100%', position: 'relative',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
+          }}>
+            {/* Close Button */}
+            <button onClick={closeQRScanner} style={{
+              position: 'absolute', top: 12, right: 12,
+              background: 'rgba(0,0,0,0.05)', border: 'none',
+              width: 36, height: 36, borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: '#1d1d1f', fontSize: 16,
+              transition: 'all 0.2s ease'
+            }}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 style={{ 
+              fontFamily: "var(--font-heading), 'Manrope', sans-serif",
+              fontSize: 18, fontWeight: 700, color: '#1d1d1f',
+              margin: '0 0 6px', textAlign: 'center'
+            }}>
+              Scan QR Code
+            </h3>
+            <p style={{
+              fontSize: 13, color: '#86868b', textAlign: 'center',
+              margin: '0 0 20px'
+            }}>
+              Point your camera at a QR code with login credentials
+            </p>
+
+            {/* Camera View */}
+            <div style={{
+              width: '100%', aspectRatio: '1/1',
+              background: '#000', borderRadius: 16,
+              overflow: 'hidden', position: 'relative',
+              marginBottom: 16
+            }}>
+              <video 
+                ref={videoRef}
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                playsInline
+                muted
+              />
+              <canvas ref={canvasRef} style={{ display: 'none' }} />
+              
+              {/* Scanning Overlay */}
+              {qrScanning && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}>
+                  <div style={{
+                    width: '70%', height: '70%',
+                    border: '2px solid rgba(0,122,255,0.6)',
+                    borderRadius: 12,
+                    boxShadow: '0 0 0 9999px rgba(0,0,0,0.4)',
+                    animation: 'scanPulse 2s ease-in-out infinite'
+                  }} />
+                </div>
+              )}
+
+              {/* Camera Permission Denied */}
+              {cameraPermission === 'denied' && (
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  background: 'rgba(0,0,0,0.8)', padding: 20
+                }}>
+                  <div style={{ textAlign: 'center', color: '#fff' }}>
+                    <i className="fa-solid fa-camera-slash" style={{ fontSize: 40, marginBottom: 12, opacity: 0.7 }}></i>
+                    <p style={{ fontSize: 14, margin: '0 0 8px', opacity: 0.9 }}>Camera access denied</p>
+                    <p style={{ fontSize: 12, opacity: 0.6, margin: 0 }}>Use the upload option below</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Error Message */}
+            {qrError && (
+              <div style={{
+                background: '#fff0ef', border: '1px solid #ffd1cf',
+                borderRadius: 10, padding: '10px 14px',
+                fontSize: 12, color: '#cc1a14',
+                display: 'flex', alignItems: 'center', gap: 8,
+                marginBottom: 16
+              }}>
+                <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 14, flexShrink: 0 }}></i>
+                <span>{qrError}</span>
+              </div>
+            )}
+
+            {/* Upload QR from Gallery */}
+            <div style={{ textAlign: 'center' }}>
+              <label style={{
+                display: 'inline-flex', alignItems: 'center', gap: 8,
+                padding: '10px 20px', borderRadius: 10,
+                background: '#f5f5f7', color: '#1d1d1f',
+                fontSize: 14, fontWeight: 500, cursor: 'pointer',
+                fontFamily: "'Inter', sans-serif",
+                transition: 'all 0.2s ease'
+              }}>
+                <i className="fa-solid fa-image"></i>
+                Upload QR from Gallery
+                <input 
+                  type="file" 
+                  accept="image/*"
+                  onChange={handleQRImageUpload}
+                  style={{ display: 'none' }}
+                />
+              </label>
+              <p style={{
+                fontSize: 11, color: '#86868b', marginTop: 8
+              }}>
+                Supports PNG, JPG, or any image with a QR code
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {toast && (
         <div style={{ position: 'fixed', top: 24, left: '50%', transform: 'translateX(-50%)', background: toast.type === 'error' ? '#ff3b30' : '#1d1d1f', color: '#fff', padding: '14px 24px', borderRadius: 50, fontSize: 14, fontWeight: 500, zIndex: 9999, boxShadow: '0 12px 40px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
@@ -441,12 +620,8 @@ export default function SignIn() {
       <style jsx>{`
         @keyframes cardSlideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { to { transform: rotate(360deg); } }
-        #qr-reader {
-          border: 2px solid #e5e5ea;
-        }
-        #qr-reader video {
-          border-radius: 8px;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes scanPulse { 0%, 100% { border-color: rgba(0,122,255,0.6); } 50% { border-color: rgba(0,122,255,1); } }
       `}</style>
     </>
   );
