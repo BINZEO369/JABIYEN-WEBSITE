@@ -272,7 +272,6 @@ const VideoSection = ({ videos }) => {
           onEnded={() => setPlayingIndex(null)}
         />
 
-        {/* Text Overlay */}
         <div
           className="video-text-center"
           style={{
@@ -345,7 +344,6 @@ const VideoSection = ({ videos }) => {
           )}
         </div>
 
-        {/* Play Indicator */}
         <div
           className="video-play-indicator"
           style={{
@@ -371,7 +369,6 @@ const VideoSection = ({ videos }) => {
           <i className="fa-solid fa-play" style={{ fontSize: '20px', color: 'white', marginLeft: '2px' }} />
         </div>
 
-        {/* Sound Controls */}
         <div
           className="video-sound-control"
           style={{
@@ -678,6 +675,7 @@ export default function ProductPage() {
   const [notFound, setNotFound] = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [barcodeSvg, setBarcodeSvg] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const buySectionRef = useRef(null);
   const heroRef = useRef(null);
@@ -725,7 +723,7 @@ export default function ProductPage() {
     [productVariants]
   );
 
-  // Select Color
+  // 🔥 FIXED: Select Color - এখন সঠিকভাবে ইমেজ পরিবর্তন হবে
   const selectColor = useCallback(
     (colorId) => {
       setSelectedColorId(colorId);
@@ -735,6 +733,7 @@ export default function ProductPage() {
       const color = productColors.find((c) => c.id == colorId);
       if (color && color.color_image) {
         setActiveImage(color.color_image);
+        setIsZoomed(false); // জুম রিসেট
       }
     },
     [productColors]
@@ -751,7 +750,7 @@ export default function ProductPage() {
     [selectedColorId, getVariant]
   );
 
-  // Select Thumbnail
+  // 🔥 FIXED: Select Thumbnail - জুম রিসেট হবে
   const selectThumbnail = useCallback((imageSrc) => {
     setActiveImage(imageSrc);
     setIsZoomed(false);
@@ -859,22 +858,34 @@ export default function ProductPage() {
     }
   }, []);
 
-  // Zoom handlers
+  // 🔥 FIXED: Zoom handlers - ওয়েবসাইট নড়াচড়া করবে না
   const handleMouseMove = useCallback((e) => {
-    if (!heroRef.current) return;
+    if (!heroRef.current || isDragging) return;
     const rect = heroRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setZoomOrigin({ x, y });
     setIsZoomed(true);
-  }, []);
+  }, [isDragging]);
 
   const handleMouseLeave = useCallback(() => {
     setIsZoomed(false);
+    setIsDragging(false);
+  }, []);
+
+  const handleMouseDown = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
+
+  const handleTouchStart = useCallback(() => {
+    setIsDragging(false);
   }, []);
 
   const handleTouchMove = useCallback((e) => {
-    e.preventDefault();
     if (!heroRef.current) return;
     const rect = heroRef.current.getBoundingClientRect();
     const x = ((e.touches[0].clientX - rect.left) / rect.width) * 100;
@@ -1151,8 +1162,11 @@ export default function ProductPage() {
               <div
                 ref={heroRef}
                 className={`product-hero${isZoomed ? ' zoomed' : ''}`}
+                onMouseDown={handleMouseDown}
+                onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
+                onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 style={{
@@ -1168,20 +1182,24 @@ export default function ProductPage() {
                   overflow: 'hidden',
                   cursor: isZoomed ? 'zoom-out' : 'zoom-in',
                   transition: 'background 0.3s ease',
+                  touchAction: 'none',
                 }}
               >
                 <img
                   src={activeImage}
                   alt={currentProduct.title || ''}
+                  draggable="false"
                   style={{
                     width: '100%',
                     height: '100%',
                     objectFit: 'contain',
-                    transition: 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
-                    transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
+                    transition: isZoomed ? 'none' : 'transform 0.3s ease',
+                    transform: isZoomed ? `scale(2.5)` : 'scale(1)',
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-                    willChange: 'transform',
                     filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.08))',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
                   }}
                   onError={(e) => {
                     e.target.src = '/logo.png';
@@ -1212,6 +1230,7 @@ export default function ProductPage() {
                     className={`thumbnail-item${activeImage === thumb.src ? ' active' : ''}`}
                     alt="thumb"
                     loading="lazy"
+                    draggable="false"
                     style={{
                       width: '72px',
                       height: '72px',
@@ -2063,6 +2082,7 @@ export default function ProductPage() {
             overflow: hidden;
             cursor: zoom-in;
             transition: background 0.3s ease;
+            -webkit-overflow-scrolling: touch;
           }
 
           .product-hero img {
@@ -2070,11 +2090,13 @@ export default function ProductPage() {
             height: 100%;
             object-fit: contain;
             transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
-            will-change: transform;
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.08));
           }
 
-          .product-hero.zoomed img { transform: scale(2.5); }
+          .product-hero.zoomed img { 
+            transform: scale(2.5) !important;
+            transition: none !important;
+          }
 
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
