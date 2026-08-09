@@ -675,7 +675,6 @@ export default function ProductPage() {
   const [notFound, setNotFound] = useState(false);
   const [stickyVisible, setStickyVisible] = useState(false);
   const [barcodeSvg, setBarcodeSvg] = useState(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   const buySectionRef = useRef(null);
   const heroRef = useRef(null);
@@ -723,17 +722,22 @@ export default function ProductPage() {
     [productVariants]
   );
 
-  // 🔥 FIXED: Select Color - এখন সঠিকভাবে ইমেজ পরিবর্তন হবে
+  // 🔥 COMPLETELY FIXED: Select Color with proper image update
   const selectColor = useCallback(
     (colorId) => {
+      console.log('selectColor called with:', colorId);
       setSelectedColorId(colorId);
       setSelectedSizeId(null);
       setSelectedVariant(null);
+      setIsZoomed(false);
 
-      const color = productColors.find((c) => c.id == colorId);
+      // Find the selected color
+      const color = productColors.find((c) => c.id === colorId);
+      console.log('Found color:', color);
+      
       if (color && color.color_image) {
+        console.log('Setting active image to:', color.color_image);
         setActiveImage(color.color_image);
-        setIsZoomed(false); // জুম রিসেট
       }
     },
     [productColors]
@@ -744,14 +748,16 @@ export default function ProductPage() {
     (sizeId) => {
       setSelectedSizeId(sizeId);
       if (selectedColorId && sizeId) {
-        setSelectedVariant(getVariant(selectedColorId, sizeId));
+        const variant = getVariant(selectedColorId, sizeId);
+        setSelectedVariant(variant);
       }
     },
     [selectedColorId, getVariant]
   );
 
-  // 🔥 FIXED: Select Thumbnail - জুম রিসেট হবে
+  // 🔥 FIXED: Select Thumbnail
   const selectThumbnail = useCallback((imageSrc) => {
+    console.log('selectThumbnail called with:', imageSrc);
     setActiveImage(imageSrc);
     setIsZoomed(false);
   }, []);
@@ -858,31 +864,18 @@ export default function ProductPage() {
     }
   }, []);
 
-  // 🔥 FIXED: Zoom handlers - ওয়েবসাইট নড়াচড়া করবে না
+  // Zoom handlers
   const handleMouseMove = useCallback((e) => {
-    if (!heroRef.current || isDragging) return;
+    if (!heroRef.current) return;
     const rect = heroRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
     setZoomOrigin({ x, y });
     setIsZoomed(true);
-  }, [isDragging]);
+  }, []);
 
   const handleMouseLeave = useCallback(() => {
     setIsZoomed(false);
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseDown = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleTouchStart = useCallback(() => {
-    setIsDragging(false);
   }, []);
 
   const handleTouchMove = useCallback((e) => {
@@ -938,11 +931,13 @@ export default function ProductPage() {
         }
 
         setCurrentProduct(product);
+        console.log('Product loaded:', product);
 
         const images = product.images ? product.images.split(',').filter(Boolean) : [];
         if (images.length === 0 && product.img) images.push(product.img);
         setAllImages(images);
         setActiveImage(images[0] || '/logo.png');
+        console.log('Images set:', images);
 
         const [colors, variants, videos, banners] = await Promise.all([
           apiFetch(`/product-colors?slug=${encodeURIComponent(slug)}`),
@@ -950,6 +945,9 @@ export default function ProductPage() {
           apiFetch(`/product-videos?slug=${encodeURIComponent(slug)}`),
           apiFetch(`/product-banners?slug=${encodeURIComponent(slug)}`),
         ]);
+
+        console.log('Colors loaded:', colors);
+        console.log('Variants loaded:', variants);
 
         setProductColors(colors || []);
         setProductVariants(variants || []);
@@ -960,11 +958,11 @@ export default function ProductPage() {
           const colorIds = colors.map((c) => c.id);
           const sizes = await apiFetch(`/color-sizes?ids=${colorIds.join(',')}`);
           setColorSizes(sizes || []);
+          console.log('Sizes loaded:', sizes);
         } else {
           setColorSizes([]);
         }
 
-        // Update recent products
         if (typeof window !== 'undefined') {
           try {
             let recent = JSON.parse(localStorage.getItem('jayen_recent') || '[]');
@@ -1053,7 +1051,6 @@ export default function ProductPage() {
     .sort(() => 0.5 - Math.random())
     .slice(0, 4);
 
-  // Loading state
   if (loading || !router.isReady) {
     return (
       <>
@@ -1077,7 +1074,6 @@ export default function ProductPage() {
     );
   }
 
-  // Not found state
   if (notFound) {
     return (
       <>
@@ -1156,17 +1152,13 @@ export default function ProductPage() {
         )}
 
         <div className="desktop-layout" style={{ display: 'block' }}>
-          {/* Left Column - Images */}
           <div className="desktop-image-col">
             <div className="main-image-wrapper">
               <div
                 ref={heroRef}
                 className={`product-hero${isZoomed ? ' zoomed' : ''}`}
-                onMouseDown={handleMouseDown}
-                onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
-                onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
                 style={{
@@ -1185,7 +1177,9 @@ export default function ProductPage() {
                   touchAction: 'none',
                 }}
               >
+                {/* 🔥 KEY FIX: Using key prop to force re-render on image change */}
                 <img
+                  key={activeImage}
                   src={activeImage}
                   alt={currentProduct.title || ''}
                   draggable="false"
@@ -1194,7 +1188,7 @@ export default function ProductPage() {
                     height: '100%',
                     objectFit: 'contain',
                     transition: isZoomed ? 'none' : 'transform 0.3s ease',
-                    transform: isZoomed ? `scale(2.5)` : 'scale(1)',
+                    transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
                     filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.08))',
                     pointerEvents: 'none',
@@ -1208,7 +1202,6 @@ export default function ProductPage() {
               </div>
             </div>
 
-            {/* Thumbnails */}
             {thumbnails.length > 1 && (
               <div
                 className="thumbnail-grid no-scrollbar"
@@ -1268,7 +1261,6 @@ export default function ProductPage() {
             )}
           </div>
 
-          {/* Right Column - Product Info */}
           <div className="desktop-info-col">
             <div
               className="product-info-card"
@@ -1361,7 +1353,6 @@ export default function ProductPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                   <span
-                    id="variant-price-display"
                     style={{
                       fontSize: '30px',
                       fontWeight: 900,
@@ -1373,7 +1364,6 @@ export default function ProductPage() {
                   </span>
                   {displayOldPrice && (
                     <span
-                      id="variant-old-price-display"
                       style={{
                         fontSize: '16px',
                         color: '#86868b',
@@ -1387,7 +1377,6 @@ export default function ProductPage() {
                 </div>
                 <button
                   onClick={() => toggleWishlist(currentProduct.id)}
-                  data-wishlist-btn
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1426,7 +1415,6 @@ export default function ProductPage() {
                 }}
               >
                 <span
-                  id="stock-status-dot"
                   style={{
                     width: '8px',
                     height: '8px',
@@ -1441,7 +1429,6 @@ export default function ProductPage() {
                   }}
                 />
                 <span
-                  id="stock-status-text"
                   style={{
                     fontSize: '12px',
                     fontWeight: 600,
@@ -1470,11 +1457,9 @@ export default function ProductPage() {
                 }}
               />
 
-              {/* Variant Options */}
               {productColors.length > 0 && (
                 <CollapsibleSection icon="fa-palette" title="Color & Size">
                   <div style={{ padding: '10px 0 16px' }}>
-                    {/* Colors */}
                     <div style={{ marginBottom: '8px' }}>
                       <div
                         style={{
@@ -1512,7 +1497,10 @@ export default function ProductPage() {
                             <button
                               key={color.id}
                               className={`color-swatch-btn${isSelected ? ' selected' : ''}${!hasStock ? ' disabled' : ''}`}
-                              onClick={() => hasStock && selectColor(color.id)}
+                              onClick={() => {
+                                console.log('Color button clicked:', color.id, color.color_name);
+                                if (hasStock) selectColor(color.id);
+                              }}
                               title={`${color.color_name}${!hasStock ? ' (Out of Stock)' : ''}`}
                               disabled={!hasStock}
                               style={{
@@ -1583,7 +1571,6 @@ export default function ProductPage() {
                       </div>
                     </div>
 
-                    {/* Sizes */}
                     <div style={{ height: '12px' }} />
                     <div style={{ marginBottom: '8px' }}>
                       <div
@@ -1685,7 +1672,6 @@ export default function ProductPage() {
                       </div>
                     </div>
 
-                    {/* Variant Info Pill */}
                     {selectedVariant && (
                       <div
                         className="variant-info-pill"
@@ -1735,9 +1721,7 @@ export default function ProductPage() {
               )}
             </div>
 
-            {/* Buy Buttons */}
             <div
-              id="buy-section"
               ref={buySectionRef}
               style={{
                 display: 'grid',
@@ -1747,7 +1731,6 @@ export default function ProductPage() {
               }}
             >
               <button
-                id="add-to-bag-btn"
                 onClick={() => addToCartHandler(currentProduct.id)}
                 disabled={isOutOfStock && selectedVariant}
                 style={{
@@ -1769,7 +1752,6 @@ export default function ProductPage() {
                 Add to Bag
               </button>
               <button
-                id="buy-now-btn"
                 onClick={() => addToCartHandler(currentProduct.id, true)}
                 disabled={isOutOfStock && selectedVariant}
                 style={{
@@ -1794,9 +1776,7 @@ export default function ProductPage() {
             </div>
           </div>
 
-          {/* DESKTOP: Full Width Sections */}
           <div className="desktop-full-width-buttons">
-            {/* Specifications */}
             <CollapsibleSection icon="fa-sliders" title="Specifications">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', margin: '4px 0 16px' }}>
                 {currentProduct.fabric_type && (
@@ -1862,7 +1842,6 @@ export default function ProductPage() {
               </div>
             </CollapsibleSection>
 
-            {/* Description */}
             {currentProduct.description && (
               <CollapsibleSection icon="fa-align-left" title="Description">
                 <div
@@ -1886,7 +1865,6 @@ export default function ProductPage() {
               </CollapsibleSection>
             )}
 
-            {/* Barcode */}
             {(currentProduct.barcode) && (
               <CollapsibleSection
                 icon="fa-barcode"
@@ -1932,14 +1910,12 @@ export default function ProductPage() {
             <div style={{ height: '16px' }} />
           </div>
 
-          {/* Banner Section */}
           {productBanners.length > 0 && (
             <div className="mobile-banner-section full-width-section" style={{ marginTop: 0 }}>
               <BannerSection banners={productBanners} />
             </div>
           )}
 
-          {/* Video Section */}
           {productVideos.length > 0 && (
             <div className="mobile-video-section full-width-section" style={{ marginTop: '40px' }}>
               <VideoSection videos={productVideos} />
@@ -1949,7 +1925,6 @@ export default function ProductPage() {
           <div style={{ height: '40px' }} />
         </div>
 
-        {/* Complete the Look */}
         {relatedProducts.length > 0 && (
           <div style={{ padding: '40px 20px 60px', borderTop: '1px solid #f0f0f0' }}>
             <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#1d1d1f', marginBottom: '28px', textAlign: 'center', fontFamily: 'var(--font-heading)' }}>
@@ -1963,7 +1938,6 @@ export default function ProductPage() {
           </div>
         )}
 
-        {/* Sticky Add Bar */}
         <div
           className={`sticky-add-bar${stickyVisible ? ' active' : ''}`}
           style={{
@@ -2015,7 +1989,6 @@ export default function ProductPage() {
           </button>
         </div>
 
-        {/* Styles */}
         <style jsx global>{`
           :root {
             --primary: #1d1d1f;
@@ -2082,7 +2055,6 @@ export default function ProductPage() {
             overflow: hidden;
             cursor: zoom-in;
             transition: background 0.3s ease;
-            -webkit-overflow-scrolling: touch;
           }
 
           .product-hero img {
@@ -2154,15 +2126,6 @@ export default function ProductPage() {
               height: 320px;
               border-radius: 28px;
             }
-            .product-banner-card .banner-title {
-              font-size: 28px;
-            }
-            .product-banner-card .banner-subtitle {
-              font-size: 16px;
-            }
-            .product-banner-card .banner-overlay {
-              padding: 44px 40px;
-            }
           }
 
           @media (min-width: 1024px) {
@@ -2198,45 +2161,6 @@ export default function ProductPage() {
             .product-info-card {
               padding: 32px;
             }
-            .product-info-card .title-text {
-              font-size: 30px;
-            }
-            #variant-price-display {
-              font-size: 36px !important;
-            }
-            #variant-old-price-display {
-              font-size: 18px !important;
-            }
-            .color-swatch-btn {
-              width: 44px;
-              height: 44px;
-            }
-            .size-btn {
-              padding: 12px 22px;
-              font-size: 14px;
-              min-width: 52px;
-              border-radius: 14px;
-            }
-            #buy-section button {
-              padding: 20px !important;
-              font-size: 14px !important;
-              border-radius: 16px !important;
-            }
-            .thumbnail-item {
-              width: 80px;
-              height: 80px;
-            }
-            .detail-badge {
-              padding: 18px 22px;
-              font-size: 14px;
-            }
-            .detail-badge i {
-              font-size: 22px;
-            }
-            .toggle-btn {
-              padding: 20px 28px;
-              font-size: 13px;
-            }
             .full-width-section {
               grid-column: 1 / -1;
               width: 100%;
@@ -2251,18 +2175,6 @@ export default function ProductPage() {
             }
             .product-banner-card {
               height: 550px;
-            }
-            .product-banner-card .banner-title {
-              font-size: 32px;
-            }
-            .product-banner-card .banner-subtitle {
-              font-size: 18px;
-            }
-            .product-banner-card .banner-overlay {
-              padding: 60px 56px;
-            }
-            .product-banner-card .banner-link {
-              font-size: 15px;
             }
           }
         `}</style>
