@@ -500,8 +500,6 @@ const BannerSection = ({ banners }) => {
             transition: 'transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1)',
           }}
           onError={(e) => { e.target.style.display = 'none'; }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
         />
         <div
           className="banner-overlay"
@@ -610,16 +608,6 @@ const CollapsibleSection = ({ icon, title, children, onToggle }) => {
           fontFamily: 'var(--font-subtitle)',
           letterSpacing: '0.05em',
         }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
-          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-          e.currentTarget.style.transform = 'translateY(-1px)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'rgba(255,255,255,0.7)';
-          e.currentTarget.style.boxShadow = 'none';
-          e.currentTarget.style.transform = 'translateY(0)';
-        }}
       >
         <span>
           <i className={`fa-solid ${icon}`} /> &nbsp;{title}
@@ -722,22 +710,19 @@ export default function ProductPage() {
     [productVariants]
   );
 
-  // 🔥 COMPLETELY FIXED: Select Color with proper image update
+  // 🔥 FIXED: Select Color - ইমেজ পরিবর্তন হবে
   const selectColor = useCallback(
     (colorId) => {
       console.log('selectColor called with:', colorId);
       setSelectedColorId(colorId);
       setSelectedSizeId(null);
       setSelectedVariant(null);
-      setIsZoomed(false);
 
-      // Find the selected color
-      const color = productColors.find((c) => c.id === colorId);
-      console.log('Found color:', color);
-      
+      const color = productColors.find((c) => c.id == colorId);
       if (color && color.color_image) {
         console.log('Setting active image to:', color.color_image);
         setActiveImage(color.color_image);
+        setIsZoomed(false);
       }
     },
     [productColors]
@@ -746,21 +731,23 @@ export default function ProductPage() {
   // Select Size
   const selectSize = useCallback(
     (sizeId) => {
+      console.log('selectSize called with:', sizeId);
       setSelectedSizeId(sizeId);
       if (selectedColorId && sizeId) {
-        const variant = getVariant(selectedColorId, sizeId);
-        setSelectedVariant(variant);
+        setSelectedVariant(getVariant(selectedColorId, sizeId));
       }
     },
     [selectedColorId, getVariant]
   );
 
-  // 🔥 FIXED: Select Thumbnail
+  // 🔥 FIXED: Select Thumbnail - এখন কাজ করবে
   const selectThumbnail = useCallback((imageSrc) => {
     console.log('selectThumbnail called with:', imageSrc);
-    setActiveImage(imageSrc);
-    setIsZoomed(false);
-  }, []);
+    if (imageSrc && imageSrc !== activeImage) {
+      setActiveImage(imageSrc);
+      setIsZoomed(false);
+    }
+  }, [activeImage]);
 
   // Add to Cart Handler
   const addToCartHandler = useCallback(
@@ -931,13 +918,11 @@ export default function ProductPage() {
         }
 
         setCurrentProduct(product);
-        console.log('Product loaded:', product);
 
         const images = product.images ? product.images.split(',').filter(Boolean) : [];
         if (images.length === 0 && product.img) images.push(product.img);
         setAllImages(images);
         setActiveImage(images[0] || '/logo.png');
-        console.log('Images set:', images);
 
         const [colors, variants, videos, banners] = await Promise.all([
           apiFetch(`/product-colors?slug=${encodeURIComponent(slug)}`),
@@ -945,9 +930,6 @@ export default function ProductPage() {
           apiFetch(`/product-videos?slug=${encodeURIComponent(slug)}`),
           apiFetch(`/product-banners?slug=${encodeURIComponent(slug)}`),
         ]);
-
-        console.log('Colors loaded:', colors);
-        console.log('Variants loaded:', variants);
 
         setProductColors(colors || []);
         setProductVariants(variants || []);
@@ -958,11 +940,11 @@ export default function ProductPage() {
           const colorIds = colors.map((c) => c.id);
           const sizes = await apiFetch(`/color-sizes?ids=${colorIds.join(',')}`);
           setColorSizes(sizes || []);
-          console.log('Sizes loaded:', sizes);
         } else {
           setColorSizes([]);
         }
 
+        // Update recent products
         if (typeof window !== 'undefined') {
           try {
             let recent = JSON.parse(localStorage.getItem('jayen_recent') || '[]');
@@ -982,20 +964,6 @@ export default function ProductPage() {
     loadProduct();
   }, [slug, router.isReady]);
 
-  // Fix duplicate footer
-  useEffect(() => {
-    if (typeof window !== 'undefined' && !loading && !notFound) {
-      setTimeout(() => {
-        const allFooters = document.querySelectorAll('footer');
-        if (allFooters.length > 1) {
-          for (let i = 1; i < allFooters.length; i++) {
-            allFooters[i].style.display = 'none';
-          }
-        }
-      }, 500);
-    }
-  }, [loading, notFound]);
-
   // Computed values
   const selectedColor = productColors.find((c) => c.id == selectedColorId);
   const selectedSize = colorSizes.find((s) => s.id == selectedSizeId);
@@ -1008,8 +976,11 @@ export default function ProductPage() {
     }))
     .filter((item) => item.src);
 
+  // 🔥 FIXED: থাম্বনেইল তৈরি - প্রোডাক্ট ইমেজ + কালার ইমেজ
   const thumbnails = (() => {
     const combined = [];
+    
+    // প্রথমে প্রোডাক্টের ইমেজগুলো যোগ করি
     if (allImages.length) {
       allImages.forEach((img) => {
         if (img && !combined.find((item) => item.src === img)) {
@@ -1017,6 +988,8 @@ export default function ProductPage() {
         }
       });
     }
+    
+    // তারপর কালার ইমেজগুলো যোগ করি
     if (colorImagesData.length) {
       colorImagesData.forEach((colorImg) => {
         if (colorImg.src && !combined.find((item) => item.src === colorImg.src)) {
@@ -1024,6 +997,8 @@ export default function ProductPage() {
         }
       });
     }
+    
+    console.log('Thumbnails combined:', combined);
     return combined;
   })();
 
@@ -1051,6 +1026,7 @@ export default function ProductPage() {
     .sort(() => 0.5 - Math.random())
     .slice(0, 4);
 
+  // Loading state
   if (loading || !router.isReady) {
     return (
       <>
@@ -1074,6 +1050,7 @@ export default function ProductPage() {
     );
   }
 
+  // Not found state
   if (notFound) {
     return (
       <>
@@ -1152,6 +1129,7 @@ export default function ProductPage() {
         )}
 
         <div className="desktop-layout" style={{ display: 'block' }}>
+          {/* Left Column - Images */}
           <div className="desktop-image-col">
             <div className="main-image-wrapper">
               <div
@@ -1177,9 +1155,7 @@ export default function ProductPage() {
                   touchAction: 'none',
                 }}
               >
-                {/* 🔥 KEY FIX: Using key prop to force re-render on image change */}
                 <img
-                  key={activeImage}
                   src={activeImage}
                   alt={currentProduct.title || ''}
                   draggable="false"
@@ -1188,7 +1164,7 @@ export default function ProductPage() {
                     height: '100%',
                     objectFit: 'contain',
                     transition: isZoomed ? 'none' : 'transform 0.3s ease',
-                    transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
+                    transform: isZoomed ? `scale(2.5)` : 'scale(1)',
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
                     filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.08))',
                     pointerEvents: 'none',
@@ -1202,6 +1178,7 @@ export default function ProductPage() {
               </div>
             </div>
 
+            {/* 🔥 FIXED: Thumbnails - এখন ক্লিক করলে কাজ করবে */}
             {thumbnails.length > 1 && (
               <div
                 className="thumbnail-grid no-scrollbar"
@@ -1219,9 +1196,14 @@ export default function ProductPage() {
                   <img
                     key={index}
                     src={thumb.src}
-                    onClick={() => selectThumbnail(thumb.src)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('Thumbnail clicked:', thumb.src);
+                      selectThumbnail(thumb.src);
+                    }}
                     className={`thumbnail-item${activeImage === thumb.src ? ' active' : ''}`}
-                    alt="thumb"
+                    alt={thumb.colorName || `Image ${index + 1}`}
                     loading="lazy"
                     draggable="false"
                     style={{
@@ -1237,20 +1219,8 @@ export default function ProductPage() {
                       transition: 'all 0.3s',
                       opacity: activeImage === thumb.src ? 1 : 0.7,
                       boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (activeImage !== thumb.src) {
-                        e.currentTarget.style.opacity = '1';
-                        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)';
-                        e.currentTarget.style.transform = 'scale(1.05)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (activeImage !== thumb.src) {
-                        e.currentTarget.style.opacity = '0.7';
-                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.8)';
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }
+                      zIndex: 1,
+                      position: 'relative',
                     }}
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -1261,6 +1231,7 @@ export default function ProductPage() {
             )}
           </div>
 
+          {/* Right Column - Product Info */}
           <div className="desktop-info-col">
             <div
               className="product-info-card"
@@ -1353,6 +1324,7 @@ export default function ProductPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                   <span
+                    id="variant-price-display"
                     style={{
                       fontSize: '30px',
                       fontWeight: 900,
@@ -1364,6 +1336,7 @@ export default function ProductPage() {
                   </span>
                   {displayOldPrice && (
                     <span
+                      id="variant-old-price-display"
                       style={{
                         fontSize: '16px',
                         color: '#86868b',
@@ -1377,6 +1350,7 @@ export default function ProductPage() {
                 </div>
                 <button
                   onClick={() => toggleWishlist(currentProduct.id)}
+                  data-wishlist-btn
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1415,6 +1389,7 @@ export default function ProductPage() {
                 }}
               >
                 <span
+                  id="stock-status-dot"
                   style={{
                     width: '8px',
                     height: '8px',
@@ -1429,6 +1404,7 @@ export default function ProductPage() {
                   }}
                 />
                 <span
+                  id="stock-status-text"
                   style={{
                     fontSize: '12px',
                     fontWeight: 600,
@@ -1457,9 +1433,11 @@ export default function ProductPage() {
                 }}
               />
 
+              {/* Variant Options */}
               {productColors.length > 0 && (
                 <CollapsibleSection icon="fa-palette" title="Color & Size">
                   <div style={{ padding: '10px 0 16px' }}>
+                    {/* Colors */}
                     <div style={{ marginBottom: '8px' }}>
                       <div
                         style={{
@@ -1497,10 +1475,7 @@ export default function ProductPage() {
                             <button
                               key={color.id}
                               className={`color-swatch-btn${isSelected ? ' selected' : ''}${!hasStock ? ' disabled' : ''}`}
-                              onClick={() => {
-                                console.log('Color button clicked:', color.id, color.color_name);
-                                if (hasStock) selectColor(color.id);
-                              }}
+                              onClick={() => hasStock && selectColor(color.id)}
                               title={`${color.color_name}${!hasStock ? ' (Out of Stock)' : ''}`}
                               disabled={!hasStock}
                               style={{
@@ -1527,18 +1502,6 @@ export default function ProductPage() {
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 transform: isSelected ? 'scale(1.1)' : 'scale(1)',
-                              }}
-                              onMouseEnter={(e) => {
-                                if (hasStock && !isSelected) {
-                                  e.currentTarget.style.transform = 'scale(1.12)';
-                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.12)';
-                                }
-                              }}
-                              onMouseLeave={(e) => {
-                                if (hasStock && !isSelected) {
-                                  e.currentTarget.style.transform = 'scale(1)';
-                                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.08)';
-                                }
                               }}
                             >
                               <span
@@ -1571,6 +1534,7 @@ export default function ProductPage() {
                       </div>
                     </div>
 
+                    {/* Sizes */}
                     <div style={{ height: '12px' }} />
                     <div style={{ marginBottom: '8px' }}>
                       <div
@@ -1647,22 +1611,6 @@ export default function ProductPage() {
                                   textDecoration: !isAvailable ? 'line-through' : 'none',
                                   transform: isSelected ? 'translateY(-1px)' : 'none',
                                 }}
-                                onMouseEnter={(e) => {
-                                  if (isAvailable && !isSelected) {
-                                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)';
-                                    e.currentTarget.style.background = 'rgba(255,255,255,0.85)';
-                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
-                                    e.currentTarget.style.transform = 'translateY(-1px)';
-                                  }
-                                }}
-                                onMouseLeave={(e) => {
-                                  if (isAvailable && !isSelected) {
-                                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)';
-                                    e.currentTarget.style.background = 'rgba(255,255,255,0.6)';
-                                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)';
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                  }
-                                }}
                               >
                                 {size.size_name}
                               </button>
@@ -1672,6 +1620,7 @@ export default function ProductPage() {
                       </div>
                     </div>
 
+                    {/* Variant Info Pill */}
                     {selectedVariant && (
                       <div
                         className="variant-info-pill"
@@ -1721,7 +1670,9 @@ export default function ProductPage() {
               )}
             </div>
 
+            {/* Buy Buttons */}
             <div
+              id="buy-section"
               ref={buySectionRef}
               style={{
                 display: 'grid',
@@ -1731,6 +1682,7 @@ export default function ProductPage() {
               }}
             >
               <button
+                id="add-to-bag-btn"
                 onClick={() => addToCartHandler(currentProduct.id)}
                 disabled={isOutOfStock && selectedVariant}
                 style={{
@@ -1752,6 +1704,7 @@ export default function ProductPage() {
                 Add to Bag
               </button>
               <button
+                id="buy-now-btn"
                 onClick={() => addToCartHandler(currentProduct.id, true)}
                 disabled={isOutOfStock && selectedVariant}
                 style={{
@@ -1776,14 +1729,13 @@ export default function ProductPage() {
             </div>
           </div>
 
+          {/* DESKTOP: Full Width Sections */}
           <div className="desktop-full-width-buttons">
+            {/* Specifications */}
             <CollapsibleSection icon="fa-sliders" title="Specifications">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', margin: '4px 0 16px' }}>
                 {currentProduct.fabric_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}>
                     <i className="fa-solid fa-shirt" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
                     <div>
                       <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Fabric</span><br />
@@ -1792,10 +1744,7 @@ export default function ProductPage() {
                   </div>
                 )}
                 {currentProduct.gsm_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}>
                     <i className="fa-solid fa-weight-scale" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
                     <div>
                       <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>GSM</span><br />
@@ -1804,10 +1753,7 @@ export default function ProductPage() {
                   </div>
                 )}
                 {currentProduct.fit_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}>
                     <i className="fa-solid fa-ruler" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
                     <div>
                       <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Fit</span><br />
@@ -1816,10 +1762,7 @@ export default function ProductPage() {
                   </div>
                 )}
                 {currentProduct.gender && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}>
                     <i className="fa-solid fa-venus-mars" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
                     <div>
                       <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Gender</span><br />
@@ -1828,10 +1771,7 @@ export default function ProductPage() {
                   </div>
                 )}
                 {currentProduct.print_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
-                  >
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}>
                     <i className="fa-solid fa-palette" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
                     <div>
                       <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Print</span><br />
@@ -1842,6 +1782,7 @@ export default function ProductPage() {
               </div>
             </CollapsibleSection>
 
+            {/* Description */}
             {currentProduct.description && (
               <CollapsibleSection icon="fa-align-left" title="Description">
                 <div
@@ -1865,6 +1806,7 @@ export default function ProductPage() {
               </CollapsibleSection>
             )}
 
+            {/* Barcode */}
             {(currentProduct.barcode) && (
               <CollapsibleSection
                 icon="fa-barcode"
@@ -1910,12 +1852,14 @@ export default function ProductPage() {
             <div style={{ height: '16px' }} />
           </div>
 
+          {/* Banner Section */}
           {productBanners.length > 0 && (
             <div className="mobile-banner-section full-width-section" style={{ marginTop: 0 }}>
               <BannerSection banners={productBanners} />
             </div>
           )}
 
+          {/* Video Section */}
           {productVideos.length > 0 && (
             <div className="mobile-video-section full-width-section" style={{ marginTop: '40px' }}>
               <VideoSection videos={productVideos} />
@@ -1925,6 +1869,7 @@ export default function ProductPage() {
           <div style={{ height: '40px' }} />
         </div>
 
+        {/* Complete the Look */}
         {relatedProducts.length > 0 && (
           <div style={{ padding: '40px 20px 60px', borderTop: '1px solid #f0f0f0' }}>
             <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#1d1d1f', marginBottom: '28px', textAlign: 'center', fontFamily: 'var(--font-heading)' }}>
@@ -1938,6 +1883,7 @@ export default function ProductPage() {
           </div>
         )}
 
+        {/* Sticky Add Bar */}
         <div
           className={`sticky-add-bar${stickyVisible ? ' active' : ''}`}
           style={{
@@ -1989,6 +1935,7 @@ export default function ProductPage() {
           </button>
         </div>
 
+        {/* Styles */}
         <style jsx global>{`
           :root {
             --primary: #1d1d1f;
@@ -2055,12 +2002,13 @@ export default function ProductPage() {
             overflow: hidden;
             cursor: zoom-in;
             transition: background 0.3s ease;
+            -webkit-overflow-scrolling: touch;
           }
 
           .product-hero img {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            objectFit: 'contain';
             transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
             filter: drop-shadow(0 10px 30px rgba(0,0,0,0.08));
           }
@@ -2068,6 +2016,17 @@ export default function ProductPage() {
           .product-hero.zoomed img { 
             transform: scale(2.5) !important;
             transition: none !important;
+          }
+
+          .thumbnail-item {
+            cursor: pointer !important;
+            pointer-events: auto !important;
+          }
+
+          .thumbnail-item:hover {
+            opacity: 1 !important;
+            border-color: rgba(0,0,0,0.15) !important;
+            transform: scale(1.05) !important;
           }
 
           .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -2146,20 +2105,6 @@ export default function ProductPage() {
             }
             .product-hero img {
               max-height: 80vh;
-            }
-            .desktop-image-col {
-              position: relative;
-            }
-            .desktop-info-col {
-              max-width: 600px;
-            }
-            .main-image-wrapper {
-              width: 100% !important;
-              margin-left: 0 !important;
-              margin-right: 0 !important;
-            }
-            .product-info-card {
-              padding: 32px;
             }
             .full-width-section {
               grid-column: 1 / -1;
