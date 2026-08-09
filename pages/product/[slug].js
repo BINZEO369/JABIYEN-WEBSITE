@@ -57,6 +57,7 @@ const Toast = ({ message, type, onClose }) => {
         boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
         animation: 'fadeInUp 0.3s ease-out',
         whiteSpace: 'nowrap',
+        fontFamily: 'var(--font-body)',
       }}
     >
       {message}
@@ -110,6 +111,7 @@ const ProductCard = ({ product }) => {
         style={{
           background: 'rgba(255,255,255,0.7)',
           backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
           borderRadius: '16px',
           overflow: 'hidden',
           border: '1px solid rgba(0,0,0,0.06)',
@@ -141,6 +143,7 @@ const ProductCard = ({ product }) => {
               color: '#86868b',
               textTransform: 'uppercase',
               marginBottom: '4px',
+              fontFamily: 'var(--font-accent)',
             }}
           >
             {product.category || ''}
@@ -148,17 +151,18 @@ const ProductCard = ({ product }) => {
           <h3
             style={{
               fontSize: '14px',
-              fontWeight: 700,
+              fontWeight: 600,
               color: '#1d1d1f',
               marginBottom: '6px',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              fontFamily: 'var(--font-subtitle)',
             }}
           >
             {product.title || ''}
           </h3>
-          <span style={{ fontSize: '16px', fontWeight: 900 }}>৳ {product.price || 0}</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, fontFamily: 'var(--font-body)' }}>৳ {product.price || 0}</span>
         </div>
       </div>
     </Link>
@@ -268,7 +272,9 @@ const VideoSection = ({ videos }) => {
           onEnded={() => setPlayingIndex(null)}
         />
 
+        {/* Text Overlay */}
         <div
+          className="video-text-center"
           style={{
             position: 'absolute',
             top: '50%',
@@ -283,6 +289,7 @@ const VideoSection = ({ videos }) => {
         >
           {video.title && (
             <h3
+              className="video-title-main"
               style={{
                 color: 'white',
                 fontSize: '28px',
@@ -290,6 +297,7 @@ const VideoSection = ({ videos }) => {
                 lineHeight: 1.2,
                 margin: 0,
                 textShadow: '0 2px 12px rgba(0,0,0,0.4)',
+                fontFamily: 'var(--font-heading)',
               }}
             >
               {video.title}
@@ -297,12 +305,14 @@ const VideoSection = ({ videos }) => {
           )}
           {video.subtitle && (
             <p
+              className="video-subtitle-main"
               style={{
                 color: 'rgba(255,255,255,0.9)',
                 fontSize: '14px',
                 fontWeight: 400,
                 marginTop: '8px',
                 textShadow: '0 1px 6px rgba(0,0,0,0.4)',
+                fontFamily: 'var(--font-body)',
               }}
             >
               {video.subtitle}
@@ -313,6 +323,7 @@ const VideoSection = ({ videos }) => {
               href={video.click_link}
               target="_blank"
               rel="noopener"
+              className="video-link-clean"
               style={{
                 display: 'inline-block',
                 marginTop: '16px',
@@ -325,6 +336,7 @@ const VideoSection = ({ videos }) => {
                 transition: 'all 0.3s',
                 pointerEvents: 'auto',
                 textShadow: '0 1px 6px rgba(0,0,0,0.3)',
+                fontFamily: 'var(--font-body)',
               }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -333,7 +345,9 @@ const VideoSection = ({ videos }) => {
           )}
         </div>
 
+        {/* Play Indicator */}
         <div
+          className="video-play-indicator"
           style={{
             position: 'absolute',
             top: '50%',
@@ -344,6 +358,7 @@ const VideoSection = ({ videos }) => {
             borderRadius: '50%',
             background: 'rgba(0,0,0,0.3)',
             backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
             border: '1px solid rgba(255,255,255,0.2)',
             display: 'flex',
             alignItems: 'center',
@@ -356,7 +371,9 @@ const VideoSection = ({ videos }) => {
           <i className="fa-solid fa-play" style={{ fontSize: '20px', color: 'white', marginLeft: '2px' }} />
         </div>
 
+        {/* Sound Controls */}
         <div
+          className="video-sound-control"
           style={{
             position: 'absolute',
             bottom: '20px',
@@ -380,6 +397,7 @@ const VideoSection = ({ videos }) => {
               borderRadius: '50%',
               background: isMuted ? 'rgba(239,68,68,0.25)' : 'rgba(0,0,0,0.4)',
               backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
               border: isMuted
                 ? '1px solid rgba(239,68,68,0.3)'
                 : '1px solid rgba(255,255,255,0.2)',
@@ -407,6 +425,7 @@ const VideoSection = ({ videos }) => {
               borderRadius: '50%',
               background: 'rgba(0,0,0,0.4)',
               backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
               border: '1px solid rgba(255,255,255,0.2)',
               color: 'white',
               cursor: 'pointer',
@@ -464,6 +483,14 @@ const BannerSection = ({ banners }) => {
           transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
           boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
         }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-3px)';
+          e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.15)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
+        }}
       >
         <img
           src={banner.banner_url}
@@ -476,8 +503,11 @@ const BannerSection = ({ banners }) => {
             transition: 'transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1)',
           }}
           onError={(e) => { e.target.style.display = 'none'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
         />
         <div
+          className="banner-overlay"
           style={{
             position: 'absolute',
             inset: 0,
@@ -491,6 +521,7 @@ const BannerSection = ({ banners }) => {
         >
           {banner.title && (
             <h3
+              className="banner-title"
               style={{
                 color: 'white',
                 fontSize: '24px',
@@ -505,10 +536,13 @@ const BannerSection = ({ banners }) => {
           )}
           {banner.subtitle && (
             <p
+              className="banner-subtitle"
               style={{
                 color: 'rgba(255,255,255,0.85)',
                 fontSize: '15px',
                 textShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 400,
               }}
             >
               {banner.subtitle}
@@ -516,6 +550,7 @@ const BannerSection = ({ banners }) => {
           )}
           {hasLink && (
             <span
+              className="banner-link"
               style={{
                 color: 'white',
                 fontSize: '13px',
@@ -527,6 +562,8 @@ const BannerSection = ({ banners }) => {
                 display: 'inline-block',
                 width: 'fit-content',
                 textShadow: '0 1px 4px rgba(0,0,0,0.2)',
+                fontFamily: 'var(--font-accent)',
+                fontWeight: 600,
               }}
             >
               {linkText} ↗
@@ -557,6 +594,7 @@ const CollapsibleSection = ({ icon, title, children, onToggle }) => {
         style={{
           background: 'rgba(255,255,255,0.7)',
           backdropFilter: 'blur(15px)',
+          WebkitBackdropFilter: 'blur(15px)',
           border: '1px solid rgba(0,0,0,0.06)',
           borderRadius: '14px',
           padding: '18px 22px',
@@ -572,6 +610,18 @@ const CollapsibleSection = ({ icon, title, children, onToggle }) => {
           textAlign: 'left',
           color: '#1d1d1f',
           fontWeight: 600,
+          fontFamily: 'var(--font-subtitle)',
+          letterSpacing: '0.05em',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+          e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+          e.currentTarget.style.transform = 'translateY(-1px)';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.7)';
+          e.currentTarget.style.boxShadow = 'none';
+          e.currentTarget.style.transform = 'translateY(0)';
         }}
       >
         <span>
@@ -995,46 +1045,72 @@ export default function ProductPage() {
   // Loading state
   if (loading || !router.isReady) {
     return (
-      <main style={{ flexGrow: 1 }}>
-        <SkeletonLoader />
-      </main>
+      <>
+        <Head>
+          <title>Loading... | JAYENWARE</title>
+          <meta name="description" content="Discover detailed product specifications, fabric, fit, and more at JAYENWARE." />
+          <meta name="theme-color" content="#1d1d1f" />
+          <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
+          <link rel="apple-touch-icon" href="/logo.png" />
+          <link rel="canonical" href="https://www.jayenware.shop/product/" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+          <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+          <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js" />
+        </Head>
+        <main style={{ flexGrow: 1 }}>
+          <SkeletonLoader />
+        </main>
+      </>
     );
   }
 
   // Not found state
   if (notFound) {
     return (
-      <main style={{ flexGrow: 1 }}>
-        <div style={{ textAlign: 'center', padding: '100px 20px' }}>
-          <i
-            className="fa-solid fa-box-open"
-            style={{ fontSize: '64px', color: '#e5e5e5', marginBottom: '20px' }}
-          />
-          <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1d1d1f', marginBottom: '8px' }}>
-            Product Not Found
-          </h2>
-          <p style={{ color: '#6b7280', marginBottom: '28px' }}>
-            The product you're looking for doesn't exist or has been removed.
-          </p>
-          <Link
-            href="/products"
-            style={{
-              display: 'inline-block',
-              padding: '14px 36px',
-              background: '#1d1d1f',
-              color: 'white',
-              borderRadius: '9999px',
-              fontWeight: 700,
-              textTransform: 'uppercase',
-              letterSpacing: '1px',
-              fontSize: '12px',
-              textDecoration: 'none',
-            }}
-          >
-            Browse Products
-          </Link>
-        </div>
-      </main>
+      <>
+        <Head>
+          <title>Product Not Found | JAYENWARE</title>
+          <meta name="description" content="Product not found at JAYENWARE." />
+          <meta name="theme-color" content="#1d1d1f" />
+          <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
+          <link rel="apple-touch-icon" href="/logo.png" />
+          <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+        </Head>
+        <main style={{ flexGrow: 1 }}>
+          <div style={{ textAlign: 'center', padding: '100px 20px' }}>
+            <i
+              className="fa-solid fa-box-open"
+              style={{ fontSize: '64px', color: '#e5e5e5', marginBottom: '20px' }}
+            />
+            <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1d1d1f', marginBottom: '8px', fontFamily: 'var(--font-heading)' }}>
+              Product Not Found
+            </h2>
+            <p style={{ color: '#6b7280', marginBottom: '28px', fontFamily: 'var(--font-body)' }}>
+              The product you're looking for doesn't exist or has been removed.
+            </p>
+            <Link
+              href="/products"
+              style={{
+                display: 'inline-block',
+                padding: '14px 36px',
+                background: '#1d1d1f',
+                color: 'white',
+                borderRadius: '9999px',
+                fontWeight: 700,
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                fontSize: '12px',
+                textDecoration: 'none',
+                fontFamily: 'var(--font-body)',
+              }}
+            >
+              Browse Products
+            </Link>
+          </div>
+        </main>
+      </>
     );
   }
 
@@ -1048,7 +1124,15 @@ export default function ProductPage() {
           name="description"
           content={(currentProduct.description || currentProduct.title || '').substring(0, 155) + '...'}
         />
+        <meta name="theme-color" content="#1d1d1f" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="canonical" href={`https://www.jayenware.shop/product/${slug}`} />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+        <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js" />
       </Head>
 
       <main style={{ flexGrow: 1 }}>
@@ -1066,7 +1150,7 @@ export default function ProductPage() {
             <div className="main-image-wrapper">
               <div
                 ref={heroRef}
-                className={`product-hero ${isZoomed ? 'zoomed' : ''}`}
+                className={`product-hero${isZoomed ? ' zoomed' : ''}`}
                 onMouseMove={handleMouseMove}
                 onMouseLeave={handleMouseLeave}
                 onTouchMove={handleTouchMove}
@@ -1082,7 +1166,7 @@ export default function ProductPage() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   overflow: 'hidden',
-                  cursor: 'zoom-in',
+                  cursor: isZoomed ? 'zoom-out' : 'zoom-in',
                   transition: 'background 0.3s ease',
                 }}
               >
@@ -1096,6 +1180,7 @@ export default function ProductPage() {
                     transition: 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
                     transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
                     transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
+                    willChange: 'transform',
                     filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.08))',
                   }}
                   onError={(e) => {
@@ -1116,6 +1201,7 @@ export default function ProductPage() {
                   marginTop: '12px',
                   overflowX: 'auto',
                   padding: '4px 0 8px',
+                  WebkitOverflowScrolling: 'touch',
                 }}
               >
                 {thumbnails.map((thumb, index) => (
@@ -1123,7 +1209,7 @@ export default function ProductPage() {
                     key={index}
                     src={thumb.src}
                     onClick={() => selectThumbnail(thumb.src)}
-                    className={`thumbnail-item ${activeImage === thumb.src ? 'active' : ''}`}
+                    className={`thumbnail-item${activeImage === thumb.src ? ' active' : ''}`}
                     alt="thumb"
                     loading="lazy"
                     style={{
@@ -1132,14 +1218,27 @@ export default function ProductPage() {
                       objectFit: 'cover',
                       borderRadius: '14px',
                       cursor: 'pointer',
-                      border:
-                        activeImage === thumb.src
-                          ? '2px solid #1d1d1f'
-                          : '2px solid rgba(255,255,255,0.8)',
+                      border: activeImage === thumb.src
+                        ? '2px solid #1d1d1f'
+                        : '2px solid rgba(255,255,255,0.8)',
                       flexShrink: 0,
                       transition: 'all 0.3s',
                       opacity: activeImage === thumb.src ? 1 : 0.7,
                       boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (activeImage !== thumb.src) {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.borderColor = 'rgba(0,0,0,0.15)';
+                        e.currentTarget.style.transform = 'scale(1.05)';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (activeImage !== thumb.src) {
+                        e.currentTarget.style.opacity = '0.7';
+                        e.currentTarget.style.borderColor = 'rgba(255,255,255,0.8)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }
                     }}
                     onError={(e) => {
                       e.target.style.display = 'none';
@@ -1157,6 +1256,7 @@ export default function ProductPage() {
               style={{
                 background: 'rgba(255,255,255,0.7)',
                 backdropFilter: 'blur(30px)',
+                WebkitBackdropFilter: 'blur(30px)',
                 borderRadius: '24px',
                 padding: '20px',
                 marginBottom: '16px',
@@ -1175,6 +1275,9 @@ export default function ProductPage() {
                   fontWeight: 700,
                   display: 'inline-block',
                   marginBottom: '10px',
+                  fontFamily: 'var(--font-accent)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
                 }}
               >
                 {currentProduct.category || 'Product'}
@@ -1192,6 +1295,9 @@ export default function ProductPage() {
                     fontWeight: 700,
                     display: 'inline-block',
                     marginBottom: '10px',
+                    fontFamily: 'var(--font-accent)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
                   }}
                 >
                   {currentProduct.subcategory}
@@ -1206,6 +1312,7 @@ export default function ProductPage() {
                   color: '#1d1d1f',
                   marginBottom: '4px',
                   lineHeight: 1.2,
+                  fontFamily: 'var(--font-heading)',
                 }}
               >
                 {currentProduct.title || ''}
@@ -1218,6 +1325,7 @@ export default function ProductPage() {
                     color: '#6b7280',
                     margin: '8px 0 0',
                     lineHeight: 1.6,
+                    fontFamily: 'var(--font-body)',
                   }}
                 >
                   {currentProduct.short_description}
@@ -1234,20 +1342,24 @@ export default function ProductPage() {
               >
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                   <span
+                    id="variant-price-display"
                     style={{
                       fontSize: '30px',
                       fontWeight: 900,
                       color: '#1d1d1f',
+                      fontFamily: 'var(--font-body)',
                     }}
                   >
                     ৳ {displayPrice}
                   </span>
                   {displayOldPrice && (
                     <span
+                      id="variant-old-price-display"
                       style={{
                         fontSize: '16px',
                         color: '#86868b',
                         textDecoration: 'line-through',
+                        fontFamily: 'var(--font-body)',
                       }}
                     >
                       ৳ {displayOldPrice}
@@ -1256,6 +1368,7 @@ export default function ProductPage() {
                 </div>
                 <button
                   onClick={() => toggleWishlist(currentProduct.id)}
+                  data-wishlist-btn
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -1267,9 +1380,11 @@ export default function ProductPage() {
                     fontWeight: 700,
                     background: 'rgba(255,255,255,0.6)',
                     backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
                     cursor: 'pointer',
                     color: '#1d1d1f',
                     transition: 'all 0.3s',
+                    fontFamily: 'var(--font-accent)',
                   }}
                 >
                   <i
@@ -1292,6 +1407,7 @@ export default function ProductPage() {
                 }}
               >
                 <span
+                  id="stock-status-dot"
                   style={{
                     width: '8px',
                     height: '8px',
@@ -1306,9 +1422,11 @@ export default function ProductPage() {
                   }}
                 />
                 <span
+                  id="stock-status-text"
                   style={{
                     fontSize: '12px',
                     fontWeight: 600,
+                    fontFamily: 'var(--font-subtitle)',
                     color: selectedVariant
                       ? isOutOfStock
                         ? '#ef4444'
@@ -1325,6 +1443,7 @@ export default function ProductPage() {
               </div>
 
               <div
+                className="divider"
                 style={{
                   height: '1px',
                   background: 'rgba(0,0,0,0.06)',
@@ -1347,17 +1466,19 @@ export default function ProductPage() {
                         }}
                       >
                         <span
+                          className="section-label"
                           style={{
                             fontWeight: 700,
                             textTransform: 'uppercase',
                             letterSpacing: '0.1em',
                             fontSize: '10px',
                             color: '#86868b',
+                            fontFamily: 'var(--font-accent)',
                           }}
                         >
                           Color
                         </span>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#1d1d1f' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#1d1d1f', fontFamily: 'var(--font-subtitle)' }}>
                           {selectedColor?.color_name || 'Select'}
                         </span>
                       </div>
@@ -1367,40 +1488,54 @@ export default function ProductPage() {
                             productVariants.filter(
                               (v) => v.color_id == color.id && v.is_active && v.stock > 0
                             ).length > 0;
+                          const isSelected = selectedColorId === color.id;
                           return (
                             <button
                               key={color.id}
-                              className={`color-swatch-btn ${selectedColorId === color.id ? 'selected' : ''} ${!hasStock ? 'disabled' : ''}`}
-                              onClick={() => selectColor(color.id)}
+                              className={`color-swatch-btn${isSelected ? ' selected' : ''}${!hasStock ? ' disabled' : ''}`}
+                              onClick={() => hasStock && selectColor(color.id)}
                               title={`${color.color_name}${!hasStock ? ' (Out of Stock)' : ''}`}
                               disabled={!hasStock}
                               style={{
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: '50%',
-                                border:
-                                  selectedColorId === color.id
-                                    ? '2px solid #1d1d1f'
-                                    : '2px solid rgba(0,0,0,0.12)',
+                                border: isSelected
+                                  ? '2px solid #1d1d1f'
+                                  : '2px solid rgba(0,0,0,0.12)',
                                 cursor: hasStock ? 'pointer' : 'not-allowed',
                                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                 position: 'relative',
                                 flexShrink: 0,
-                                background: 'rgba(255,255,255,0.6)',
-                                backdropFilter: 'blur(10px)',
+                                background: isSelected ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.6)',
+                                backdropFilter: isSelected ? 'blur(20px)' : 'blur(10px)',
+                                WebkitBackdropFilter: isSelected ? 'blur(20px)' : 'blur(10px)',
                                 padding: '3px',
                                 outline: 'none',
-                                boxShadow:
-                                  selectedColorId === color.id
-                                    ? '0 0 0 4px rgba(29,29,31,0.1), 0 4px 16px rgba(0,0,0,0.14)'
-                                    : '0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.08)',
+                                boxShadow: isSelected
+                                  ? '0 0 0 4px rgba(29,29,31,0.1), 0 4px 16px rgba(0,0,0,0.14), inset 0 0 0 1px rgba(0,0,0,0.1)'
+                                  : '0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.08)',
                                 opacity: !hasStock ? 0.3 : 1,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                              }}
+                              onMouseEnter={(e) => {
+                                if (hasStock && !isSelected) {
+                                  e.currentTarget.style.transform = 'scale(1.12)';
+                                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.12)';
+                                }
+                              }}
+                              onMouseLeave={(e) => {
+                                if (hasStock && !isSelected) {
+                                  e.currentTarget.style.transform = 'scale(1)';
+                                  e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.08)';
+                                }
                               }}
                             >
                               <span
+                                className="swatch-color"
                                 style={{
                                   width: '100%',
                                   height: '100%',
@@ -1441,66 +1576,86 @@ export default function ProductPage() {
                         }}
                       >
                         <span
+                          className="section-label"
                           style={{
                             fontWeight: 700,
                             textTransform: 'uppercase',
                             letterSpacing: '0.1em',
                             fontSize: '10px',
                             color: '#86868b',
+                            fontFamily: 'var(--font-accent)',
                           }}
                         >
                           Size
                         </span>
-                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#1d1d1f' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#1d1d1f', fontFamily: 'var(--font-subtitle)' }}>
                           {selectedSize?.size_name || 'Select'}
                         </span>
                       </div>
                       <div className="no-scrollbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {!selectedColorId ? (
-                          <p style={{ fontSize: '12px', color: '#9ca3af', padding: '6px 0' }}>
+                          <p style={{ fontSize: '12px', color: '#9ca3af', padding: '6px 0', fontFamily: 'var(--font-body)' }}>
                             Choose a color first
                           </p>
                         ) : availableSizesForColor.length === 0 ? (
-                          <p style={{ fontSize: '12px', color: '#9ca3af', padding: '8px 0' }}>
+                          <p style={{ fontSize: '12px', color: '#9ca3af', padding: '8px 0', fontFamily: 'var(--font-body)' }}>
                             No sizes available
                           </p>
                         ) : (
                           availableSizesForColor.map((size) => {
                             const variant = getVariant(selectedColorId, size.id);
                             const isAvailable = variant && variant.stock > 0 && variant.is_active;
+                            const isSelected = selectedSizeId === size.id;
                             return (
                               <button
                                 key={size.id}
-                                className={`size-btn ${selectedSizeId === size.id ? 'selected' : ''} ${!isAvailable ? 'disabled' : ''}`}
+                                className={`size-btn${isSelected ? ' selected' : ''}${!isAvailable ? ' disabled' : ''}`}
                                 onClick={() => isAvailable && selectSize(size.id)}
                                 disabled={!isAvailable}
                                 style={{
                                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                                   cursor: isAvailable ? 'pointer' : 'not-allowed',
-                                  border:
-                                    selectedSizeId === size.id
-                                      ? '1px solid #1d1d1f'
-                                      : '1px solid rgba(0,0,0,0.08)',
+                                  border: isSelected
+                                    ? '1px solid #1d1d1f'
+                                    : '1px solid rgba(0,0,0,0.08)',
                                   borderRadius: '12px',
                                   padding: '10px 18px',
                                   fontWeight: 600,
                                   fontSize: '13px',
-                                  background:
-                                    selectedSizeId === size.id
-                                      ? '#1d1d1f'
-                                      : isAvailable
-                                      ? 'rgba(255,255,255,0.6)'
-                                      : 'rgba(245,245,247,0.5)',
-                                  color: selectedSizeId === size.id ? 'white' : '#1d1d1f',
+                                  fontFamily: 'var(--font-subtitle)',
+                                  background: isSelected
+                                    ? '#1d1d1f'
+                                    : isAvailable
+                                    ? 'rgba(255,255,255,0.6)'
+                                    : 'rgba(245,245,247,0.5)',
+                                  backdropFilter: 'blur(10px)',
+                                  WebkitBackdropFilter: 'blur(10px)',
+                                  color: isSelected ? 'white' : '#1d1d1f',
                                   minWidth: '48px',
                                   textAlign: 'center',
                                   flexShrink: 0,
-                                  boxShadow:
-                                    selectedSizeId === size.id
-                                      ? '0 4px 12px rgba(0,0,0,0.12)'
-                                      : '0 1px 3px rgba(0,0,0,0.03)',
+                                  boxShadow: isSelected
+                                    ? '0 4px 12px rgba(0,0,0,0.12)'
+                                    : '0 1px 3px rgba(0,0,0,0.03)',
                                   opacity: !isAvailable ? 0.3 : 1,
                                   textDecoration: !isAvailable ? 'line-through' : 'none',
+                                  transform: isSelected ? 'translateY(-1px)' : 'none',
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (isAvailable && !isSelected) {
+                                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.2)';
+                                    e.currentTarget.style.background = 'rgba(255,255,255,0.85)';
+                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.06)';
+                                    e.currentTarget.style.transform = 'translateY(-1px)';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (isAvailable && !isSelected) {
+                                    e.currentTarget.style.borderColor = 'rgba(0,0,0,0.08)';
+                                    e.currentTarget.style.background = 'rgba(255,255,255,0.6)';
+                                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)';
+                                    e.currentTarget.style.transform = 'translateY(0)';
+                                  }
                                 }}
                               >
                                 {size.size_name}
@@ -1514,6 +1669,7 @@ export default function ProductPage() {
                     {/* Variant Info Pill */}
                     {selectedVariant && (
                       <div
+                        className="variant-info-pill"
                         style={{
                           background: 'rgba(0,0,0,0.03)',
                           borderRadius: '14px',
@@ -1525,6 +1681,8 @@ export default function ProductPage() {
                           alignItems: 'center',
                           gap: '10px',
                           flexWrap: 'wrap',
+                          fontFamily: 'var(--font-subtitle)',
+                          fontWeight: 500,
                         }}
                       >
                         {selectedVariant.sku && (
@@ -1537,7 +1695,7 @@ export default function ProductPage() {
                         )}
                         {selectedVariant.barcode && (
                           <>
-                            <span style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>|</span>
+                            <span className="separator" style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>|</span>
                             <span style={{ fontWeight: 700 }}>Barcode</span>
                             <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
                               {selectedVariant.barcode}
@@ -1546,7 +1704,7 @@ export default function ProductPage() {
                         )}
                         {selectedVariant.weight && (
                           <>
-                            <span style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>|</span>
+                            <span className="separator" style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>|</span>
                             <span style={{ fontWeight: 700 }}>Weight</span>
                             {selectedVariant.weight}g
                           </>
@@ -1560,6 +1718,7 @@ export default function ProductPage() {
 
             {/* Buy Buttons */}
             <div
+              id="buy-section"
               ref={buySectionRef}
               style={{
                 display: 'grid',
@@ -1569,6 +1728,7 @@ export default function ProductPage() {
               }}
             >
               <button
+                id="add-to-bag-btn"
                 onClick={() => addToCartHandler(currentProduct.id)}
                 disabled={isOutOfStock && selectedVariant}
                 style={{
@@ -1579,8 +1739,9 @@ export default function ProductPage() {
                   borderRadius: '16px',
                   fontWeight: 700,
                   fontSize: '13px',
+                  fontFamily: 'var(--font-body)',
+                  letterSpacing: '0.05em',
                   cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-                  letterSpacing: '0.3px',
                   transition: 'all 0.3s',
                   boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                   opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
@@ -1589,18 +1750,21 @@ export default function ProductPage() {
                 Add to Bag
               </button>
               <button
+                id="buy-now-btn"
                 onClick={() => addToCartHandler(currentProduct.id, true)}
                 disabled={isOutOfStock && selectedVariant}
                 style={{
                   padding: '18px',
                   background: 'rgba(255,255,255,0.7)',
                   backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
                   border: '1.5px solid rgba(0,0,0,0.1)',
                   borderRadius: '16px',
                   fontWeight: 700,
                   fontSize: '13px',
+                  fontFamily: 'var(--font-body)',
+                  letterSpacing: '0.05em',
                   cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-                  letterSpacing: '0.3px',
                   transition: 'all 0.3s',
                   color: '#1d1d1f',
                   opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
@@ -1617,33 +1781,63 @@ export default function ProductPage() {
             <CollapsibleSection icon="fa-sliders" title="Specifications">
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', margin: '4px 0 16px' }}>
                 {currentProduct.fabric_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
                     <i className="fa-solid fa-shirt" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Fabric</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.fabric_type}</span></div>
+                    <div>
+                      <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Fabric</span><br />
+                      <span style={{ fontWeight: 700, fontFamily: 'var(--font-body)' }}>{currentProduct.fabric_type}</span>
+                    </div>
                   </div>
                 )}
                 {currentProduct.gsm_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
                     <i className="fa-solid fa-weight-scale" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>GSM</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.gsm_type}</span></div>
+                    <div>
+                      <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>GSM</span><br />
+                      <span style={{ fontWeight: 700, fontFamily: 'var(--font-body)' }}>{currentProduct.gsm_type}</span>
+                    </div>
                   </div>
                 )}
                 {currentProduct.fit_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
                     <i className="fa-solid fa-ruler" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Fit</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.fit_type}</span></div>
+                    <div>
+                      <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Fit</span><br />
+                      <span style={{ fontWeight: 700, fontFamily: 'var(--font-body)' }}>{currentProduct.fit_type}</span>
+                    </div>
                   </div>
                 )}
                 {currentProduct.gender && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
                     <i className="fa-solid fa-venus-mars" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Gender</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.gender}</span></div>
+                    <div>
+                      <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Gender</span><br />
+                      <span style={{ fontWeight: 700, fontFamily: 'var(--font-body)' }}>{currentProduct.gender}</span>
+                    </div>
                   </div>
                 )}
                 {currentProduct.print_type && (
-                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', WebkitBackdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', fontFamily: 'var(--font-subtitle)' }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.9)'; e.currentTarget.style.boxShadow = '0 4px 16px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.7)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'; e.currentTarget.style.transform = 'translateY(0)'; }}
+                  >
                     <i className="fa-solid fa-palette" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Print</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.print_type}</span></div>
+                    <div>
+                      <span style={{ color: '#9ca3af', fontSize: '10px', fontFamily: 'var(--font-accent)' }}>Print</span><br />
+                      <span style={{ fontWeight: 700, fontFamily: 'var(--font-body)' }}>{currentProduct.print_type}</span>
+                    </div>
                   </div>
                 )}
               </div>
@@ -1652,7 +1846,22 @@ export default function ProductPage() {
             {/* Description */}
             {currentProduct.description && (
               <CollapsibleSection icon="fa-align-left" title="Description">
-                <div className="description-content" style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(10px)', padding: '20px', borderRadius: '16px', marginTop: '4px', marginBottom: '16px', fontSize: '14px', color: '#4b5563', border: '1px solid rgba(0,0,0,0.04)', lineHeight: 1.8 }}
+                <div
+                  className="description-content"
+                  style={{
+                    background: 'rgba(255,255,255,0.6)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    padding: '20px',
+                    borderRadius: '16px',
+                    marginTop: '4px',
+                    marginBottom: '16px',
+                    fontSize: '14px',
+                    color: '#4b5563',
+                    border: '1px solid rgba(0,0,0,0.04)',
+                    lineHeight: 1.8,
+                    fontFamily: 'var(--font-body)',
+                  }}
                   dangerouslySetInnerHTML={{ __html: currentProduct.description }}
                 />
               </CollapsibleSection>
@@ -1669,7 +1878,27 @@ export default function ProductPage() {
                   }
                 }}
               >
-                <div className="barcode-wrapper" style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(15px)', padding: '20px 12px 16px', borderRadius: '18px', border: '1px solid rgba(0,0,0,0.06)', marginTop: '4px', marginBottom: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '90px', maxWidth: '100%', overflowX: 'auto' }}>
+                <div
+                  className="barcode-wrapper"
+                  style={{
+                    background: 'rgba(255,255,255,0.8)',
+                    backdropFilter: 'blur(15px)',
+                    WebkitBackdropFilter: 'blur(15px)',
+                    padding: '20px 12px 16px',
+                    borderRadius: '18px',
+                    border: '1px solid rgba(0,0,0,0.06)',
+                    marginTop: '4px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: '90px',
+                    maxWidth: '100%',
+                    overflowX: 'auto',
+                    fontFamily: 'var(--font-body)',
+                  }}
+                >
                   {barcodeSvg ? (
                     <div dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
                   ) : (
@@ -1704,7 +1933,7 @@ export default function ProductPage() {
         {/* Complete the Look */}
         {relatedProducts.length > 0 && (
           <div style={{ padding: '40px 20px 60px', borderTop: '1px solid #f0f0f0' }}>
-            <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#1d1d1f', marginBottom: '28px', textAlign: 'center' }}>
+            <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#1d1d1f', marginBottom: '28px', textAlign: 'center', fontFamily: 'var(--font-heading)' }}>
               Complete the Look
             </h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '16px', maxWidth: '600px', margin: '0 auto' }}>
@@ -1717,7 +1946,7 @@ export default function ProductPage() {
 
         {/* Sticky Add Bar */}
         <div
-          className={`sticky-add-bar ${stickyVisible ? 'active' : ''}`}
+          className={`sticky-add-bar${stickyVisible ? ' active' : ''}`}
           style={{
             position: 'fixed',
             bottom: 0,
@@ -1725,6 +1954,7 @@ export default function ProductPage() {
             right: 0,
             background: 'rgba(255,255,255,0.85)',
             backdropFilter: 'blur(40px)',
+            WebkitBackdropFilter: 'blur(40px)',
             borderTop: '0.5px solid rgba(0,0,0,0.06)',
             padding: '14px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
             zIndex: 49,
@@ -1735,7 +1965,7 @@ export default function ProductPage() {
           }}
         >
           <div style={{ flexGrow: 1 }}>
-            <span style={{ fontSize: '20px', fontWeight: 900 }}>
+            <span style={{ fontSize: '20px', fontWeight: 900, fontFamily: 'var(--font-body)' }}>
               ৳ {selectedVariant?.price || currentProduct?.price || 0}
             </span>
           </div>
@@ -1746,12 +1976,15 @@ export default function ProductPage() {
               padding: '14px 32px',
               background: 'rgba(29,29,31,0.9)',
               backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
               color: 'white',
               border: '1px solid rgba(0,0,0,0.1)',
               borderRadius: '9999px',
               fontWeight: 700,
               textTransform: 'uppercase',
               fontSize: '13px',
+              fontFamily: 'var(--font-body)',
+              letterSpacing: '0.05em',
               cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
               whiteSpace: 'nowrap',
               transition: 'all 0.3s',
@@ -1766,10 +1999,34 @@ export default function ProductPage() {
         {/* Styles */}
         <style jsx global>{`
           :root {
+            --primary: #1d1d1f;
+            --accent: #86868b;
+            --soft: #f5f5f7;
+            --blue: #007aff;
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
             --font-body: 'Inter', sans-serif;
             --font-heading: 'Manrope', sans-serif;
             --font-subtitle: 'Sora', sans-serif;
             --font-accent: 'Manrope', sans-serif;
+          }
+
+          * {
+            -webkit-tap-highlight-color: transparent;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+
+          img { max-width: 100%; height: auto; display: block; }
+
+          body {
+            font-family: var(--font-body);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+          }
+
+          h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-heading);
           }
 
           .skeleton {
@@ -1793,29 +2050,31 @@ export default function ProductPage() {
             transform: scale(1.04);
           }
 
-          .toggle-btn:hover {
-            background: rgba(255,255,255,0.9);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            transform: translateY(-1px);
+          .product-hero {
+            position: relative;
+            width: 100%;
+            background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+            height: 60vh;
+            min-height: 400px;
+            max-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            cursor: zoom-in;
+            transition: background 0.3s ease;
           }
 
-          .detail-badge:hover {
-            background: rgba(255,255,255,0.9);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            transform: translateY(-2px);
+          .product-hero img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            will-change: transform;
+            filter: drop-shadow(0 10px 30px rgba(0,0,0,0.08));
           }
 
-          .size-btn:hover:not(.disabled):not(.selected) {
-            border-color: rgba(0,0,0,0.2);
-            background: rgba(255,255,255,0.85);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            transform: translateY(-1px);
-          }
-
-          .color-swatch-btn:hover:not(.disabled) {
-            transform: scale(1.12);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.12);
-          }
+          .product-hero.zoomed img { transform: scale(2.5); }
 
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -1826,11 +2085,45 @@ export default function ProductPage() {
             border-radius: 10px;
           }
 
+          .video-section.paused .video-play-indicator {
+            opacity: 1;
+          }
+
+          .video-link-clean:hover {
+            border-bottom-color: white;
+            padding-bottom: 4px;
+          }
+
+          .sound-btn:hover {
+            background: rgba(0,0,0,0.6);
+            border-color: rgba(255,255,255,0.35);
+            transform: scale(1.05);
+          }
+
+          .product-banner-card:hover img {
+            transform: scale(1.05);
+          }
+
+          .banner-link:hover {
+            border-bottom-color: white;
+            padding-bottom: 5px;
+          }
+
+          #components-footer + footer,
+          #components-footer ~ footer:not(#components-footer) {
+            display: none !important;
+          }
+
           @media (min-width: 768px) {
             .product-hero {
               height: 70vh;
               min-height: 500px;
               max-height: 800px;
+            }
+            .main-image-wrapper {
+              width: 100%;
+              margin-left: 0;
+              margin-right: 0;
             }
             .video-section {
               min-height: 480px;
@@ -1838,6 +2131,15 @@ export default function ProductPage() {
             .product-banner-card {
               height: 320px;
               border-radius: 28px;
+            }
+            .product-banner-card .banner-title {
+              font-size: 28px;
+            }
+            .product-banner-card .banner-subtitle {
+              font-size: 16px;
+            }
+            .product-banner-card .banner-overlay {
+              padding: 44px 40px;
             }
           }
 
@@ -1860,6 +2162,59 @@ export default function ProductPage() {
             .product-hero img {
               max-height: 80vh;
             }
+            .desktop-image-col {
+              position: relative;
+            }
+            .desktop-info-col {
+              max-width: 600px;
+            }
+            .main-image-wrapper {
+              width: 100% !important;
+              margin-left: 0 !important;
+              margin-right: 0 !important;
+            }
+            .product-info-card {
+              padding: 32px;
+            }
+            .product-info-card .title-text {
+              font-size: 30px;
+            }
+            #variant-price-display {
+              font-size: 36px !important;
+            }
+            #variant-old-price-display {
+              font-size: 18px !important;
+            }
+            .color-swatch-btn {
+              width: 44px;
+              height: 44px;
+            }
+            .size-btn {
+              padding: 12px 22px;
+              font-size: 14px;
+              min-width: 52px;
+              border-radius: 14px;
+            }
+            #buy-section button {
+              padding: 20px !important;
+              font-size: 14px !important;
+              border-radius: 16px !important;
+            }
+            .thumbnail-item {
+              width: 80px;
+              height: 80px;
+            }
+            .detail-badge {
+              padding: 18px 22px;
+              font-size: 14px;
+            }
+            .detail-badge i {
+              font-size: 22px;
+            }
+            .toggle-btn {
+              padding: 20px 28px;
+              font-size: 13px;
+            }
             .full-width-section {
               grid-column: 1 / -1;
               width: 100%;
@@ -1874,6 +2229,18 @@ export default function ProductPage() {
             }
             .product-banner-card {
               height: 550px;
+            }
+            .product-banner-card .banner-title {
+              font-size: 32px;
+            }
+            .product-banner-card .banner-subtitle {
+              font-size: 18px;
+            }
+            .product-banner-card .banner-overlay {
+              padding: 60px 56px;
+            }
+            .product-banner-card .banner-link {
+              font-size: 15px;
             }
           }
         `}</style>
