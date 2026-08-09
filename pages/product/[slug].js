@@ -1,6 +1,8 @@
-// Product.jsx
+// pages/product/[slug].js
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import Head from 'next/head';
 
 // ================================================================
 // API Helper Functions
@@ -18,21 +20,6 @@ async function apiFetch(endpoint) {
   } catch (e) {
     console.error('API Fetch Error:', e);
     return null;
-  }
-}
-
-async function apiPost(endpoint, body) {
-  try {
-    const response = await fetch(`${API_BASE}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    });
-    if (!response.ok) throw new Error(`API Error: ${response.status}`);
-    return await response.json();
-  } catch (e) {
-    console.error('API Post Error:', e);
-    throw e;
   }
 }
 
@@ -115,7 +102,7 @@ const ProductCard = ({ product }) => {
 
   return (
     <Link
-      to={`/product/${slug}`}
+      href={`/product/${slug}`}
       className="product-card"
       style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
     >
@@ -215,7 +202,6 @@ const VideoSection = ({ videos }) => {
     if (!video) return;
 
     if (video.paused) {
-      // Pause all other videos
       videoRefs.current.forEach((v, i) => {
         if (i !== index && v && !v.paused) {
           v.pause();
@@ -232,7 +218,8 @@ const VideoSection = ({ videos }) => {
   if (!videos || videos.length === 0) return null;
 
   return videos.map((video, index) => {
-    const videoId = `product-video-${index}`;
+    const isPlaying = playingIndex === index;
+    const isMuted = mutedStates[index] !== false;
     const hasLink = video.click_link && video.click_link.trim() !== '';
     const linkText = hasLink
       ? (() => {
@@ -247,8 +234,6 @@ const VideoSection = ({ videos }) => {
           }
         })()
       : '';
-    const isPlaying = playingIndex === index;
-    const isMuted = mutedStates[index] !== false;
 
     return (
       <div
@@ -271,7 +256,6 @@ const VideoSection = ({ videos }) => {
       >
         <video
           ref={(el) => (videoRefs.current[index] = el)}
-          id={videoId}
           src={video.video_url}
           playsInline
           muted
@@ -284,7 +268,6 @@ const VideoSection = ({ videos }) => {
           onEnded={() => setPlayingIndex(null)}
         />
 
-        {/* Text Overlay */}
         <div
           style={{
             position: 'absolute',
@@ -350,7 +333,6 @@ const VideoSection = ({ videos }) => {
           )}
         </div>
 
-        {/* Play Indicator */}
         <div
           style={{
             position: 'absolute',
@@ -374,7 +356,6 @@ const VideoSection = ({ videos }) => {
           <i className="fa-solid fa-play" style={{ fontSize: '20px', color: 'white', marginLeft: '2px' }} />
         </div>
 
-        {/* Sound Controls */}
         <div
           style={{
             position: 'absolute',
@@ -560,9 +541,8 @@ const BannerSection = ({ banners }) => {
 // ================================================================
 // Collapsible Section Component
 // ================================================================
-const CollapsibleSection = ({ id, icon, title, children, defaultOpen = false, onToggle }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-  const contentRef = useRef(null);
+const CollapsibleSection = ({ icon, title, children, onToggle }) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   const toggle = () => {
     setIsOpen(!isOpen);
@@ -606,7 +586,6 @@ const CollapsibleSection = ({ id, icon, title, children, defaultOpen = false, on
         />
       </button>
       <div
-        ref={contentRef}
         className="collapse-section"
         style={{
           maxHeight: isOpen ? '2000px' : 0,
@@ -621,10 +600,11 @@ const CollapsibleSection = ({ id, icon, title, children, defaultOpen = false, on
 };
 
 // ================================================================
-// MAIN PRODUCT COMPONENT
+// MAIN PRODUCT PAGE COMPONENT (Next.js Pages Router)
 // ================================================================
-const Product = () => {
-  const { slug } = useParams();
+export default function ProductPage() {
+  const router = useRouter();
+  const { slug } = router.query;
 
   // State
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -649,21 +629,17 @@ const Product = () => {
   const [stickyVisible, setStickyVisible] = useState(false);
   const [barcodeSvg, setBarcodeSvg] = useState(null);
 
-  const stickyBarRef = useRef(null);
   const buySectionRef = useRef(null);
   const heroRef = useRef(null);
 
-  // ================================================================
   // Show Toast
-  // ================================================================
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
   }, []);
 
-  // ================================================================
   // Load wishlist from localStorage
-  // ================================================================
   useEffect(() => {
+    if (typeof window === 'undefined') return;
     try {
       const saved = JSON.parse(localStorage.getItem('jayen_wishlist') || '[]');
       setWishlist(saved);
@@ -672,9 +648,7 @@ const Product = () => {
     }
   }, []);
 
-  // ================================================================
   // Toggle Wishlist
-  // ================================================================
   const toggleWishlist = useCallback(
     (productId) => {
       let updated;
@@ -686,14 +660,14 @@ const Product = () => {
         showToast('Added to wishlist! ❤️');
       }
       setWishlist(updated);
-      localStorage.setItem('jayen_wishlist', JSON.stringify(updated));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('jayen_wishlist', JSON.stringify(updated));
+      }
     },
     [wishlist, showToast]
   );
 
-  // ================================================================
   // Get variant by color and size
-  // ================================================================
   const getVariant = useCallback(
     (colorId, sizeId) => {
       return productVariants.find((v) => v.color_id == colorId && v.size_id == sizeId) || null;
@@ -701,9 +675,7 @@ const Product = () => {
     [productVariants]
   );
 
-  // ================================================================
   // Select Color
-  // ================================================================
   const selectColor = useCallback(
     (colorId) => {
       setSelectedColorId(colorId);
@@ -718,9 +690,7 @@ const Product = () => {
     [productColors]
   );
 
-  // ================================================================
   // Select Size
-  // ================================================================
   const selectSize = useCallback(
     (sizeId) => {
       setSelectedSizeId(sizeId);
@@ -731,17 +701,13 @@ const Product = () => {
     [selectedColorId, getVariant]
   );
 
-  // ================================================================
   // Select Thumbnail
-  // ================================================================
   const selectThumbnail = useCallback((imageSrc) => {
     setActiveImage(imageSrc);
     setIsZoomed(false);
   }, []);
 
-  // ================================================================
   // Add to Cart Handler
-  // ================================================================
   const addToCartHandler = useCallback(
     (productId, buyNow = false) => {
       const product = allProducts.find((p) => p.id == productId);
@@ -798,14 +764,13 @@ const Product = () => {
         quantity: 1,
       };
 
-      // Dispatch to global cart
-      if (window.addToCart) {
+      if (typeof window !== 'undefined' && window.addToCart) {
         window.addToCart(productId, productData);
       }
       showToast('Added to Bag! 🎉', 'success');
 
       if (buyNow) {
-        window.location.href = '/checkout';
+        router.push('/checkout');
       }
     },
     [
@@ -816,12 +781,11 @@ const Product = () => {
       selectedColorId,
       selectedSizeId,
       showToast,
+      router,
     ]
   );
 
-  // ================================================================
-  // Generate Barcode SVG
-  // ================================================================
+  // Generate Barcode
   const generateBarcode = useCallback((barcodeText) => {
     if (!barcodeText || typeof window === 'undefined' || !window.JsBarcode) {
       return;
@@ -845,9 +809,7 @@ const Product = () => {
     }
   }, []);
 
-  // ================================================================
   // Zoom handlers
-  // ================================================================
   const handleMouseMove = useCallback((e) => {
     if (!heroRef.current) return;
     const rect = heroRef.current.getBoundingClientRect();
@@ -875,10 +837,10 @@ const Product = () => {
     setIsZoomed(false);
   }, []);
 
-  // ================================================================
   // Scroll handler for sticky bar
-  // ================================================================
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
     const handleScroll = () => {
       if (buySectionRef.current) {
         const rect = buySectionRef.current.getBoundingClientRect();
@@ -890,10 +852,10 @@ const Product = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ================================================================
   // Load Product Data
-  // ================================================================
   useEffect(() => {
+    if (!slug || !router.isReady) return;
+
     const loadProduct = async () => {
       setLoading(true);
       setNotFound(false);
@@ -916,13 +878,11 @@ const Product = () => {
 
         setCurrentProduct(product);
 
-        // Set images
         const images = product.images ? product.images.split(',').filter(Boolean) : [];
         if (images.length === 0 && product.img) images.push(product.img);
         setAllImages(images);
         setActiveImage(images[0] || '/logo.png');
 
-        // Fetch related data
         const [colors, variants, videos, banners] = await Promise.all([
           apiFetch(`/product-colors?slug=${encodeURIComponent(slug)}`),
           apiFetch(`/product-variants?slug=${encodeURIComponent(slug)}`),
@@ -944,18 +904,12 @@ const Product = () => {
         }
 
         // Update recent products
-        try {
-          let recent = JSON.parse(localStorage.getItem('jayen_recent') || '[]');
-          recent = [product.id.toString(), ...recent.filter((id) => id != product.id)].slice(0, 8);
-          localStorage.setItem('jayen_recent', JSON.stringify(recent));
-        } catch {}
-
-        // Update meta
-        document.title = `${product.title || 'Product'} | JAYENWARE`;
-        const metaDesc = document.querySelector('meta[name="description"]');
-        if (metaDesc) {
-          metaDesc.content =
-            (product.description || product.title || '').substring(0, 155) + '...';
+        if (typeof window !== 'undefined') {
+          try {
+            let recent = JSON.parse(localStorage.getItem('jayen_recent') || '[]');
+            recent = [product.id.toString(), ...recent.filter((id) => id != product.id)].slice(0, 8);
+            localStorage.setItem('jayen_recent', JSON.stringify(recent));
+          } catch {}
         }
 
         setLoading(false);
@@ -966,16 +920,12 @@ const Product = () => {
       }
     };
 
-    if (slug) {
-      loadProduct();
-    }
-  }, [slug]);
+    loadProduct();
+  }, [slug, router.isReady]);
 
-  // ================================================================
   // Fix duplicate footer
-  // ================================================================
   useEffect(() => {
-    if (!loading && !notFound) {
+    if (typeof window !== 'undefined' && !loading && !notFound) {
       setTimeout(() => {
         const allFooters = document.querySelectorAll('footer');
         if (allFooters.length > 1) {
@@ -987,9 +937,7 @@ const Product = () => {
     }
   }, [loading, notFound]);
 
-  // ================================================================
   // Computed values
-  // ================================================================
   const selectedColor = productColors.find((c) => c.id == selectedColorId);
   const selectedSize = colorSizes.find((s) => s.id == selectedSizeId);
 
@@ -1038,17 +986,14 @@ const Product = () => {
   })();
 
   const displayOldPrice = selectedVariant?.old_price || currentProduct?.old_price || null;
-
   const isOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
 
   const relatedProducts = [...allProducts.filter((p) => p.id !== currentProduct?.id)]
     .sort(() => 0.5 - Math.random())
     .slice(0, 4);
 
-  // ================================================================
-  // Render
-  // ================================================================
-  if (loading) {
+  // Loading state
+  if (loading || !router.isReady) {
     return (
       <main style={{ flexGrow: 1 }}>
         <SkeletonLoader />
@@ -1056,6 +1001,7 @@ const Product = () => {
     );
   }
 
+  // Not found state
   if (notFound) {
     return (
       <main style={{ flexGrow: 1 }}>
@@ -1071,7 +1017,7 @@ const Product = () => {
             The product you're looking for doesn't exist or has been removed.
           </p>
           <Link
-            to="/products"
+            href="/products"
             style={{
               display: 'inline-block',
               padding: '14px 36px',
@@ -1095,144 +1041,134 @@ const Product = () => {
   if (!currentProduct) return null;
 
   return (
-    <main style={{ flexGrow: 1 }}>
-      {toast && (
-        <Toast
-          message={toast.message}
-          type={toast.type}
-          onClose={() => setToast(null)}
+    <>
+      <Head>
+        <title>{currentProduct.title || 'Product'} | JAYENWARE</title>
+        <meta
+          name="description"
+          content={(currentProduct.description || currentProduct.title || '').substring(0, 155) + '...'}
         />
-      )}
+        <link rel="canonical" href={`https://www.jayenware.shop/product/${slug}`} />
+      </Head>
 
-      <div className="desktop-layout" style={{ display: 'block' }}>
-        {/* Left Column - Images */}
-        <div className="desktop-image-col">
-          <div className="main-image-wrapper">
-            <div
-              ref={heroRef}
-              className={`product-hero ${isZoomed ? 'zoomed' : ''}`}
-              onMouseMove={handleMouseMove}
-              onMouseLeave={handleMouseLeave}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
-              style={{
-                position: 'relative',
-                width: '100%',
-                background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
-                height: '60vh',
-                minHeight: '400px',
-                maxHeight: '600px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                overflow: 'hidden',
-                cursor: 'zoom-in',
-                transition: 'background 0.3s ease',
-              }}
-            >
-              <img
-                id="product-hero-image"
-                src={activeImage}
-                alt={currentProduct.title || ''}
+      <main style={{ flexGrow: 1 }}>
+        {toast && (
+          <Toast
+            message={toast.message}
+            type={toast.type}
+            onClose={() => setToast(null)}
+          />
+        )}
+
+        <div className="desktop-layout" style={{ display: 'block' }}>
+          {/* Left Column - Images */}
+          <div className="desktop-image-col">
+            <div className="main-image-wrapper">
+              <div
+                ref={heroRef}
+                className={`product-hero ${isZoomed ? 'zoomed' : ''}`}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
                 style={{
+                  position: 'relative',
                   width: '100%',
-                  height: '100%',
-                  objectFit: 'contain',
-                  transition: 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
-                  transform: isZoomed
-                    ? `scale(2.5)`
-                    : 'scale(1)',
-                  transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-                  filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.08))',
+                  background: 'linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%)',
+                  height: '60vh',
+                  minHeight: '400px',
+                  maxHeight: '600px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                  cursor: 'zoom-in',
+                  transition: 'background 0.3s ease',
                 }}
-                onError={(e) => {
-                  e.target.src = '/logo.png';
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Thumbnails */}
-          {thumbnails.length > 1 && (
-            <div
-              className="thumbnail-grid no-scrollbar"
-              style={{
-                display: 'flex',
-                flexWrap: 'nowrap',
-                gap: '10px',
-                marginTop: '12px',
-                overflowX: 'auto',
-                padding: '4px 0 8px',
-              }}
-            >
-              {thumbnails.map((thumb, index) => (
+              >
                 <img
-                  key={index}
-                  src={thumb.src}
-                  onClick={() => selectThumbnail(thumb.src)}
-                  className={`thumbnail-item ${activeImage === thumb.src ? 'active' : ''}`}
-                  alt="thumb"
-                  loading="lazy"
+                  src={activeImage}
+                  alt={currentProduct.title || ''}
                   style={{
-                    width: '72px',
-                    height: '72px',
-                    objectFit: 'cover',
-                    borderRadius: '14px',
-                    cursor: 'pointer',
-                    border:
-                      activeImage === thumb.src
-                        ? '2px solid #1d1d1f'
-                        : '2px solid rgba(255,255,255,0.8)',
-                    flexShrink: 0,
-                    transition: 'all 0.3s',
-                    opacity: activeImage === thumb.src ? 1 : 0.7,
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'contain',
+                    transition: 'transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1)',
+                    transform: isZoomed ? 'scale(2.5)' : 'scale(1)',
+                    transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
+                    filter: 'drop-shadow(0 10px 30px rgba(0,0,0,0.08))',
                   }}
                   onError={(e) => {
-                    e.target.style.display = 'none';
+                    e.target.src = '/logo.png';
                   }}
                 />
-              ))}
+              </div>
             </div>
-          )}
-        </div>
 
-        {/* Right Column - Product Info */}
-        <div className="desktop-info-col">
-          <div
-            className="product-info-card"
-            style={{
-              background: 'rgba(255,255,255,0.7)',
-              backdropFilter: 'blur(30px)',
-              borderRadius: '24px',
-              padding: '20px',
-              marginBottom: '16px',
-              border: '1px solid rgba(0,0,0,0.04)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.04)',
-            }}
-          >
-            <span
-              className="variant-pill"
+            {/* Thumbnails */}
+            {thumbnails.length > 1 && (
+              <div
+                className="thumbnail-grid no-scrollbar"
+                style={{
+                  display: 'flex',
+                  flexWrap: 'nowrap',
+                  gap: '10px',
+                  marginTop: '12px',
+                  overflowX: 'auto',
+                  padding: '4px 0 8px',
+                }}
+              >
+                {thumbnails.map((thumb, index) => (
+                  <img
+                    key={index}
+                    src={thumb.src}
+                    onClick={() => selectThumbnail(thumb.src)}
+                    className={`thumbnail-item ${activeImage === thumb.src ? 'active' : ''}`}
+                    alt="thumb"
+                    loading="lazy"
+                    style={{
+                      width: '72px',
+                      height: '72px',
+                      objectFit: 'cover',
+                      borderRadius: '14px',
+                      cursor: 'pointer',
+                      border:
+                        activeImage === thumb.src
+                          ? '2px solid #1d1d1f'
+                          : '2px solid rgba(255,255,255,0.8)',
+                      flexShrink: 0,
+                      transition: 'all 0.3s',
+                      opacity: activeImage === thumb.src ? 1 : 0.7,
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                    }}
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Right Column - Product Info */}
+          <div className="desktop-info-col">
+            <div
+              className="product-info-card"
               style={{
-                background: 'rgba(0,122,255,0.08)',
-                color: '#007aff',
-                padding: '6px 14px',
-                borderRadius: '20px',
-                fontSize: '11px',
-                fontWeight: 700,
-                display: 'inline-block',
-                marginBottom: '10px',
+                background: 'rgba(255,255,255,0.7)',
+                backdropFilter: 'blur(30px)',
+                borderRadius: '24px',
+                padding: '20px',
+                marginBottom: '16px',
+                border: '1px solid rgba(0,0,0,0.04)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.04)',
               }}
             >
-              {currentProduct.category || 'Product'}
-            </span>
-            {currentProduct.subcategory && (
               <span
                 className="variant-pill"
                 style={{
-                  background: 'rgba(134,135,139,0.08)',
-                  color: '#86868b',
-                  marginLeft: '8px',
+                  background: 'rgba(0,122,255,0.08)',
+                  color: '#007aff',
                   padding: '6px 14px',
                   borderRadius: '20px',
                   fontSize: '11px',
@@ -1241,991 +1177,707 @@ const Product = () => {
                   marginBottom: '10px',
                 }}
               >
-                {currentProduct.subcategory}
+                {currentProduct.category || 'Product'}
               </span>
-            )}
-
-            <h1
-              className="title-text"
-              style={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: '#1d1d1f',
-                marginBottom: '4px',
-                lineHeight: 1.2,
-              }}
-            >
-              {currentProduct.title || ''}
-            </h1>
-
-            {currentProduct.short_description && (
-              <p
-                style={{
-                  fontSize: '14px',
-                  color: '#6b7280',
-                  margin: '8px 0 0',
-                  lineHeight: 1.6,
-                }}
-              >
-                {currentProduct.short_description}
-              </p>
-            )}
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'baseline',
-                justifyContent: 'space-between',
-                marginTop: '18px',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+              {currentProduct.subcategory && (
                 <span
-                  id="variant-price-display"
+                  className="variant-pill"
                   style={{
-                    fontSize: '30px',
-                    fontWeight: 900,
-                    color: '#1d1d1f',
+                    background: 'rgba(134,135,139,0.08)',
+                    color: '#86868b',
+                    marginLeft: '8px',
+                    padding: '6px 14px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    display: 'inline-block',
+                    marginBottom: '10px',
                   }}
                 >
-                  ৳ {displayPrice}
+                  {currentProduct.subcategory}
                 </span>
-                {displayOldPrice && (
+              )}
+
+              <h1
+                className="title-text"
+                style={{
+                  fontSize: '24px',
+                  fontWeight: 700,
+                  color: '#1d1d1f',
+                  marginBottom: '4px',
+                  lineHeight: 1.2,
+                }}
+              >
+                {currentProduct.title || ''}
+              </h1>
+
+              {currentProduct.short_description && (
+                <p
+                  style={{
+                    fontSize: '14px',
+                    color: '#6b7280',
+                    margin: '8px 0 0',
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {currentProduct.short_description}
+                </p>
+              )}
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  marginTop: '18px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
                   <span
-                    id="variant-old-price-display"
                     style={{
-                      fontSize: '16px',
-                      color: '#86868b',
-                      textDecoration: 'line-through',
+                      fontSize: '30px',
+                      fontWeight: 900,
+                      color: '#1d1d1f',
                     }}
                   >
-                    ৳ {displayOldPrice}
+                    ৳ {displayPrice}
                   </span>
-                )}
+                  {displayOldPrice && (
+                    <span
+                      style={{
+                        fontSize: '16px',
+                        color: '#86868b',
+                        textDecoration: 'line-through',
+                      }}
+                    >
+                      ৳ {displayOldPrice}
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => toggleWishlist(currentProduct.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '10px 16px',
+                    border: '1px solid rgba(0,0,0,0.08)',
+                    borderRadius: '9999px',
+                    fontSize: '10px',
+                    fontWeight: 700,
+                    background: 'rgba(255,255,255,0.6)',
+                    backdropFilter: 'blur(10px)',
+                    cursor: 'pointer',
+                    color: '#1d1d1f',
+                    transition: 'all 0.3s',
+                  }}
+                >
+                  <i
+                    className={`fa-${wishlist.includes(currentProduct.id) ? 'solid' : 'regular'} fa-heart`}
+                    style={{
+                      color: wishlist.includes(currentProduct.id) ? '#ef4444' : '#86868b',
+                      fontSize: '14px',
+                    }}
+                  />{' '}
+                  {wishlist.includes(currentProduct.id) ? 'Saved' : 'Save'}
+                </button>
               </div>
-              <button
-                onClick={() => toggleWishlist(currentProduct.id)}
-                data-wishlist-btn
+
+              <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  padding: '10px 16px',
-                  border: '1px solid rgba(0,0,0,0.08)',
-                  borderRadius: '9999px',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  background: 'rgba(255,255,255,0.6)',
-                  backdropFilter: 'blur(10px)',
-                  cursor: 'pointer',
-                  color: '#1d1d1f',
-                  transition: 'all 0.3s',
+                  gap: '10px',
+                  marginTop: '12px',
                 }}
               >
-                <i
-                  className={`fa-${wishlist.includes(currentProduct.id) ? 'solid' : 'regular'} fa-heart`}
+                <span
                   style={{
-                    color: wishlist.includes(currentProduct.id) ? '#ef4444' : '#86868b',
-                    fontSize: '14px',
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
+                    background: selectedVariant
+                      ? isOutOfStock
+                        ? '#ef4444'
+                        : '#22c55e'
+                      : '#f59e0b',
+                    display: 'inline-block',
+                    flexShrink: 0,
                   }}
-                />{' '}
-                {wishlist.includes(currentProduct.id) ? 'Saved' : 'Save'}
-              </button>
-            </div>
-
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginTop: '12px',
-              }}
-            >
-              <span
-                id="stock-status-dot"
-                style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: selectedVariant
+                />
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    color: selectedVariant
+                      ? isOutOfStock
+                        ? '#ef4444'
+                        : '#16a34a'
+                      : '#d97706',
+                  }}
+                >
+                  {selectedVariant
                     ? isOutOfStock
-                      ? '#ef4444'
-                      : '#22c55e'
-                    : '#f59e0b',
-                  display: 'inline-block',
-                  flexShrink: 0,
+                      ? 'Out of Stock'
+                      : 'In Stock'
+                    : 'Select options'}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  height: '1px',
+                  background: 'rgba(0,0,0,0.06)',
+                  margin: '16px 0',
                 }}
               />
-              <span
-                id="stock-status-text"
-                style={{
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: selectedVariant
-                    ? isOutOfStock
-                      ? '#ef4444'
-                      : '#16a34a'
-                    : '#d97706',
-                }}
-              >
-                {selectedVariant
-                  ? isOutOfStock
-                    ? 'Out of Stock'
-                    : 'In Stock'
-                  : 'Select options'}
-              </span>
-            </div>
 
-            <div
-              className="divider"
-              style={{
-                height: '1px',
-                background: 'rgba(0,0,0,0.06)',
-                margin: '16px 0',
-              }}
-            />
-
-            {/* Variant Options */}
-            {productColors.length > 0 && (
-              <CollapsibleSection
-                id="variant-collapse"
-                icon="fa-palette"
-                title="Color & Size"
-              >
-                <div style={{ padding: '10px 0 16px' }}>
-                  {/* Colors */}
-                  <div style={{ marginBottom: '8px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '12px',
-                      }}
-                    >
-                      <span
-                        className="section-label"
+              {/* Variant Options */}
+              {productColors.length > 0 && (
+                <CollapsibleSection icon="fa-palette" title="Color & Size">
+                  <div style={{ padding: '10px 0 16px' }}>
+                    {/* Colors */}
+                    <div style={{ marginBottom: '8px' }}>
+                      <div
                         style={{
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.1em',
-                          fontSize: '10px',
-                          color: '#86868b',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '12px',
                         }}
                       >
-                        Color
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          color: '#1d1d1f',
-                        }}
-                      >
-                        {selectedColor?.color_name || 'Select'}
-                      </span>
-                    </div>
-                    <div
-                      className="no-scrollbar"
-                      style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}
-                    >
-                      {productColors.map((color) => {
-                        const hasStock =
-                          productVariants.filter(
-                            (v) =>
-                              v.color_id == color.id && v.is_active && v.stock > 0
-                          ).length > 0;
-                        return (
-                          <button
-                            key={color.id}
-                            className={`color-swatch-btn ${selectedColorId === color.id ? 'selected' : ''} ${!hasStock ? 'disabled' : ''}`}
-                            data-color-id={color.id}
-                            onClick={() => selectColor(color.id)}
-                            title={`${color.color_name}${!hasStock ? ' (Out of Stock)' : ''}`}
-                            disabled={!hasStock}
-                            style={{
-                              width: '40px',
-                              height: '40px',
-                              borderRadius: '50%',
-                              border:
-                                selectedColorId === color.id
-                                  ? '2px solid #1d1d1f'
-                                  : '2px solid rgba(0,0,0,0.12)',
-                              cursor: hasStock ? 'pointer' : 'not-allowed',
-                              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                              position: 'relative',
-                              flexShrink: 0,
-                              background: 'rgba(255,255,255,0.6)',
-                              backdropFilter: 'blur(10px)',
-                              padding: '3px',
-                              outline: 'none',
-                              boxShadow:
-                                selectedColorId === color.id
-                                  ? '0 0 0 4px rgba(29,29,31,0.1), 0 4px 16px rgba(0,0,0,0.14)'
-                                  : '0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.08)',
-                              opacity: !hasStock ? 0.3 : 1,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <span
-                              className="swatch-color"
-                              style={{
-                                width: '100%',
-                                height: '100%',
-                                borderRadius: '50%',
-                                display: 'block',
-                                background: color.color_code || '#ccc',
-                                boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
-                              }}
-                            />
-                            {!hasStock && (
-                              <span
-                                style={{
-                                  position: 'absolute',
-                                  top: '50%',
-                                  left: '-5%',
-                                  width: '110%',
-                                  height: '2px',
-                                  background: '#ef4444',
-                                  transform: 'rotate(-45deg)',
-                                }}
-                              />
-                            )}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Sizes */}
-                  <div style={{ height: '12px' }} />
-                  <div style={{ marginBottom: '8px' }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        marginBottom: '12px',
-                      }}
-                    >
-                      <span
-                        className="section-label"
-                        style={{
-                          fontWeight: 700,
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.1em',
-                          fontSize: '10px',
-                          color: '#86868b',
-                        }}
-                      >
-                        Size
-                      </span>
-                      <span
-                        style={{
-                          fontSize: '13px',
-                          fontWeight: 600,
-                          color: '#1d1d1f',
-                        }}
-                      >
-                        {selectedSize?.size_name || 'Select'}
-                      </span>
-                    </div>
-                    <div
-                      id="size-buttons-container"
-                      className="no-scrollbar"
-                      style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}
-                    >
-                      {!selectedColorId ? (
-                        <p style={{ fontSize: '12px', color: '#9ca3af', padding: '6px 0' }}>
-                          Choose a color first
-                        </p>
-                      ) : availableSizesForColor.length === 0 ? (
-                        <p style={{ fontSize: '12px', color: '#9ca3af', padding: '8px 0' }}>
-                          No sizes available
-                        </p>
-                      ) : (
-                        availableSizesForColor.map((size) => {
-                          const variant = getVariant(selectedColorId, size.id);
-                          const isAvailable = variant && variant.stock > 0 && variant.is_active;
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.1em',
+                            fontSize: '10px',
+                            color: '#86868b',
+                          }}
+                        >
+                          Color
+                        </span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#1d1d1f' }}>
+                          {selectedColor?.color_name || 'Select'}
+                        </span>
+                      </div>
+                      <div className="no-scrollbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                        {productColors.map((color) => {
+                          const hasStock =
+                            productVariants.filter(
+                              (v) => v.color_id == color.id && v.is_active && v.stock > 0
+                            ).length > 0;
                           return (
                             <button
-                              key={size.id}
-                              data-size-id={size.id}
-                              className={`size-btn ${selectedSizeId === size.id ? 'selected' : ''} ${!isAvailable ? 'disabled' : ''}`}
-                              onClick={() => isAvailable && selectSize(size.id)}
-                              disabled={!isAvailable}
+                              key={color.id}
+                              className={`color-swatch-btn ${selectedColorId === color.id ? 'selected' : ''} ${!hasStock ? 'disabled' : ''}`}
+                              onClick={() => selectColor(color.id)}
+                              title={`${color.color_name}${!hasStock ? ' (Out of Stock)' : ''}`}
+                              disabled={!hasStock}
                               style={{
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                cursor: isAvailable ? 'pointer' : 'not-allowed',
+                                width: '40px',
+                                height: '40px',
+                                borderRadius: '50%',
                                 border:
-                                  selectedSizeId === size.id
-                                    ? '1px solid #1d1d1f'
-                                    : '1px solid rgba(0,0,0,0.08)',
-                                borderRadius: '12px',
-                                padding: '10px 18px',
-                                fontWeight: 600,
-                                fontSize: '13px',
-                                background:
-                                  selectedSizeId === size.id
-                                    ? '#1d1d1f'
-                                    : isAvailable
-                                    ? 'rgba(255,255,255,0.6)'
-                                    : 'rgba(245,245,247,0.5)',
-                                color:
-                                  selectedSizeId === size.id ? 'white' : '#1d1d1f',
-                                minWidth: '48px',
-                                textAlign: 'center',
+                                  selectedColorId === color.id
+                                    ? '2px solid #1d1d1f'
+                                    : '2px solid rgba(0,0,0,0.12)',
+                                cursor: hasStock ? 'pointer' : 'not-allowed',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                position: 'relative',
                                 flexShrink: 0,
+                                background: 'rgba(255,255,255,0.6)',
+                                backdropFilter: 'blur(10px)',
+                                padding: '3px',
+                                outline: 'none',
                                 boxShadow:
-                                  selectedSizeId === size.id
-                                    ? '0 4px 12px rgba(0,0,0,0.12)'
-                                    : '0 1px 3px rgba(0,0,0,0.03)',
-                                opacity: !isAvailable ? 0.3 : 1,
-                                textDecoration: !isAvailable ? 'line-through' : 'none',
+                                  selectedColorId === color.id
+                                    ? '0 0 0 4px rgba(29,29,31,0.1), 0 4px 16px rgba(0,0,0,0.14)'
+                                    : '0 2px 8px rgba(0,0,0,0.06), inset 0 0 0 1px rgba(0,0,0,0.08)',
+                                opacity: !hasStock ? 0.3 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                               }}
                             >
-                              {size.size_name}
+                              <span
+                                style={{
+                                  width: '100%',
+                                  height: '100%',
+                                  borderRadius: '50%',
+                                  display: 'block',
+                                  background: color.color_code || '#ccc',
+                                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
+                                }}
+                              />
+                              {!hasStock && (
+                                <span
+                                  style={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    left: '-5%',
+                                    width: '110%',
+                                    height: '2px',
+                                    background: '#ef4444',
+                                    transform: 'rotate(-45deg)',
+                                  }}
+                                />
+                              )}
                             </button>
                           );
-                        })
-                      )}
+                        })}
+                      </div>
                     </div>
+
+                    {/* Sizes */}
+                    <div style={{ height: '12px' }} />
+                    <div style={{ marginBottom: '8px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '12px',
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.1em',
+                            fontSize: '10px',
+                            color: '#86868b',
+                          }}
+                        >
+                          Size
+                        </span>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: '#1d1d1f' }}>
+                          {selectedSize?.size_name || 'Select'}
+                        </span>
+                      </div>
+                      <div className="no-scrollbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {!selectedColorId ? (
+                          <p style={{ fontSize: '12px', color: '#9ca3af', padding: '6px 0' }}>
+                            Choose a color first
+                          </p>
+                        ) : availableSizesForColor.length === 0 ? (
+                          <p style={{ fontSize: '12px', color: '#9ca3af', padding: '8px 0' }}>
+                            No sizes available
+                          </p>
+                        ) : (
+                          availableSizesForColor.map((size) => {
+                            const variant = getVariant(selectedColorId, size.id);
+                            const isAvailable = variant && variant.stock > 0 && variant.is_active;
+                            return (
+                              <button
+                                key={size.id}
+                                className={`size-btn ${selectedSizeId === size.id ? 'selected' : ''} ${!isAvailable ? 'disabled' : ''}`}
+                                onClick={() => isAvailable && selectSize(size.id)}
+                                disabled={!isAvailable}
+                                style={{
+                                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                  cursor: isAvailable ? 'pointer' : 'not-allowed',
+                                  border:
+                                    selectedSizeId === size.id
+                                      ? '1px solid #1d1d1f'
+                                      : '1px solid rgba(0,0,0,0.08)',
+                                  borderRadius: '12px',
+                                  padding: '10px 18px',
+                                  fontWeight: 600,
+                                  fontSize: '13px',
+                                  background:
+                                    selectedSizeId === size.id
+                                      ? '#1d1d1f'
+                                      : isAvailable
+                                      ? 'rgba(255,255,255,0.6)'
+                                      : 'rgba(245,245,247,0.5)',
+                                  color: selectedSizeId === size.id ? 'white' : '#1d1d1f',
+                                  minWidth: '48px',
+                                  textAlign: 'center',
+                                  flexShrink: 0,
+                                  boxShadow:
+                                    selectedSizeId === size.id
+                                      ? '0 4px 12px rgba(0,0,0,0.12)'
+                                      : '0 1px 3px rgba(0,0,0,0.03)',
+                                  opacity: !isAvailable ? 0.3 : 1,
+                                  textDecoration: !isAvailable ? 'line-through' : 'none',
+                                }}
+                              >
+                                {size.size_name}
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Variant Info Pill */}
+                    {selectedVariant && (
+                      <div
+                        style={{
+                          background: 'rgba(0,0,0,0.03)',
+                          borderRadius: '14px',
+                          padding: '14px 18px',
+                          marginTop: '14px',
+                          fontSize: '12px',
+                          color: '#1d1d1f',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          flexWrap: 'wrap',
+                        }}
+                      >
+                        {selectedVariant.sku && (
+                          <>
+                            <span style={{ fontWeight: 700 }}>SKU</span>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              {selectedVariant.sku}
+                            </span>
+                          </>
+                        )}
+                        {selectedVariant.barcode && (
+                          <>
+                            <span style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>|</span>
+                            <span style={{ fontWeight: 700 }}>Barcode</span>
+                            <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
+                              {selectedVariant.barcode}
+                            </span>
+                          </>
+                        )}
+                        {selectedVariant.weight && (
+                          <>
+                            <span style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>|</span>
+                            <span style={{ fontWeight: 700 }}>Weight</span>
+                            {selectedVariant.weight}g
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
+                </CollapsibleSection>
+              )}
+            </div>
 
-                  {/* Variant Info Pill */}
-                  {selectedVariant && (
-                    <div
-                      id="variant-info-pill"
-                      className="variant-info-pill"
-                      style={{
-                        background: 'rgba(0,0,0,0.03)',
-                        borderRadius: '14px',
-                        padding: '14px 18px',
-                        marginTop: '14px',
-                        fontSize: '12px',
-                        color: '#1d1d1f',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '10px',
-                        flexWrap: 'wrap',
-                      }}
-                    >
-                      {selectedVariant.sku && (
-                        <>
-                          <span style={{ fontWeight: 700 }}>SKU</span>
-                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                            {selectedVariant.sku}
-                          </span>
-                        </>
-                      )}
-                      {selectedVariant.barcode && (
-                        <>
-                          <span className="separator" style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>
-                            |
-                          </span>
-                          <span style={{ fontWeight: 700 }}>Barcode</span>
-                          <span style={{ fontFamily: 'monospace', fontSize: '12px' }}>
-                            {selectedVariant.barcode}
-                          </span>
-                        </>
-                      )}
-                      {selectedVariant.weight && (
-                        <>
-                          <span className="separator" style={{ color: '#d1d5db', fontSize: '18px', fontWeight: 300 }}>
-                            |
-                          </span>
-                          <span style={{ fontWeight: 700 }}>Weight</span>
-                          {selectedVariant.weight}g
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </CollapsibleSection>
-            )}
-          </div>
-
-          {/* Buy Buttons */}
-          <div
-            id="buy-section"
-            ref={buySectionRef}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '12px',
-              margin: '14px 0 24px',
-            }}
-          >
-            <button
-              id="add-to-bag-btn"
-              onClick={() => addToCartHandler(currentProduct.id)}
-              disabled={isOutOfStock && selectedVariant}
-              style={{
-                padding: '18px',
-                background: '#1d1d1f',
-                color: 'white',
-                border: 'none',
-                borderRadius: '16px',
-                fontWeight: 700,
-                fontSize: '13px',
-                cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-                letterSpacing: '0.3px',
-                transition: 'all 0.3s',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
-              }}
-            >
-              Add to Bag
-            </button>
-            <button
-              id="buy-now-btn"
-              onClick={() => addToCartHandler(currentProduct.id, true)}
-              disabled={isOutOfStock && selectedVariant}
-              style={{
-                padding: '18px',
-                background: 'rgba(255,255,255,0.7)',
-                backdropFilter: 'blur(20px)',
-                border: '1.5px solid rgba(0,0,0,0.1)',
-                borderRadius: '16px',
-                fontWeight: 700,
-                fontSize: '13px',
-                cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-                letterSpacing: '0.3px',
-                transition: 'all 0.3s',
-                color: '#1d1d1f',
-                opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
-              }}
-            >
-              Buy Now
-            </button>
-          </div>
-        </div>
-
-        {/* DESKTOP: Full Width Sections */}
-        <div className="desktop-full-width-buttons">
-          {/* Specifications */}
-          <CollapsibleSection id="specs-collapse" icon="fa-sliders" title="Specifications">
+            {/* Buy Buttons */}
             <div
+              ref={buySectionRef}
               style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: '12px',
-                margin: '4px 0 16px',
+                margin: '14px 0 24px',
               }}
             >
-              {currentProduct.fabric_type && (
-                <div
-                  className="detail-badge"
-                  style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    backdropFilter: 'blur(15px)',
-                    borderRadius: '14px',
-                    padding: '14px 16px',
-                    fontSize: '13px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <i className="fa-solid fa-shirt" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                  <div>
-                    <span style={{ color: '#9ca3af', fontSize: '10px' }}>Fabric</span>
-                    <br />
-                    <span style={{ fontWeight: 700 }}>{currentProduct.fabric_type}</span>
-                  </div>
-                </div>
-              )}
-              {currentProduct.gsm_type && (
-                <div
-                  className="detail-badge"
-                  style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    backdropFilter: 'blur(15px)',
-                    borderRadius: '14px',
-                    padding: '14px 16px',
-                    fontSize: '13px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <i className="fa-solid fa-weight-scale" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                  <div>
-                    <span style={{ color: '#9ca3af', fontSize: '10px' }}>GSM</span>
-                    <br />
-                    <span style={{ fontWeight: 700 }}>{currentProduct.gsm_type}</span>
-                  </div>
-                </div>
-              )}
-              {currentProduct.fit_type && (
-                <div
-                  className="detail-badge"
-                  style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    backdropFilter: 'blur(15px)',
-                    borderRadius: '14px',
-                    padding: '14px 16px',
-                    fontSize: '13px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <i className="fa-solid fa-ruler" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                  <div>
-                    <span style={{ color: '#9ca3af', fontSize: '10px' }}>Fit</span>
-                    <br />
-                    <span style={{ fontWeight: 700 }}>{currentProduct.fit_type}</span>
-                  </div>
-                </div>
-              )}
-              {currentProduct.gender && (
-                <div
-                  className="detail-badge"
-                  style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    backdropFilter: 'blur(15px)',
-                    borderRadius: '14px',
-                    padding: '14px 16px',
-                    fontSize: '13px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <i className="fa-solid fa-venus-mars" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                  <div>
-                    <span style={{ color: '#9ca3af', fontSize: '10px' }}>Gender</span>
-                    <br />
-                    <span style={{ fontWeight: 700 }}>{currentProduct.gender}</span>
-                  </div>
-                </div>
-              )}
-              {currentProduct.print_type && (
-                <div
-                  className="detail-badge"
-                  style={{
-                    background: 'rgba(255,255,255,0.7)',
-                    backdropFilter: 'blur(15px)',
-                    borderRadius: '14px',
-                    padding: '14px 16px',
-                    fontSize: '13px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px',
-                    border: '1px solid rgba(0,0,0,0.06)',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
-                  }}
-                >
-                  <i className="fa-solid fa-palette" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
-                  <div>
-                    <span style={{ color: '#9ca3af', fontSize: '10px' }}>Print</span>
-                    <br />
-                    <span style={{ fontWeight: 700 }}>{currentProduct.print_type}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </CollapsibleSection>
-
-          {/* Description */}
-          {currentProduct.description && (
-            <CollapsibleSection id="desc-collapse" icon="fa-align-left" title="Description">
-              <div
-                className="description-content"
+              <button
+                onClick={() => addToCartHandler(currentProduct.id)}
+                disabled={isOutOfStock && selectedVariant}
                 style={{
-                  background: 'rgba(255,255,255,0.6)',
-                  backdropFilter: 'blur(10px)',
-                  padding: '20px',
+                  padding: '18px',
+                  background: '#1d1d1f',
+                  color: 'white',
+                  border: 'none',
                   borderRadius: '16px',
-                  marginTop: '4px',
-                  marginBottom: '16px',
-                  fontSize: '14px',
-                  color: '#4b5563',
-                  border: '1px solid rgba(0,0,0,0.04)',
-                  lineHeight: 1.8,
-                }}
-                dangerouslySetInnerHTML={{ __html: currentProduct.description }}
-              />
-            </CollapsibleSection>
-          )}
-
-          {/* Barcode */}
-          {(currentProduct.barcode) && (
-            <CollapsibleSection
-              id="barcode-collapse"
-              icon="fa-barcode"
-              title="Barcode"
-              onToggle={(open) => {
-                if (open && !barcodeGenerated && currentProduct.barcode) {
-                  generateBarcode(currentProduct.barcode);
-                }
-              }}
-            >
-              <div
-                className="barcode-wrapper"
-                style={{
-                  background: 'rgba(255,255,255,0.8)',
-                  backdropFilter: 'blur(15px)',
-                  padding: '20px 12px 16px',
-                  borderRadius: '18px',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  marginTop: '4px',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  minHeight: '90px',
-                  maxWidth: '100%',
-                  overflowX: 'auto',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
+                  letterSpacing: '0.3px',
+                  transition: 'all 0.3s',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                  opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
                 }}
               >
-                {barcodeSvg ? (
-                  <div dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
-                ) : (
-                  <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '24px' }}>
-                    Click to generate barcode
-                  </p>
+                Add to Bag
+              </button>
+              <button
+                onClick={() => addToCartHandler(currentProduct.id, true)}
+                disabled={isOutOfStock && selectedVariant}
+                style={{
+                  padding: '18px',
+                  background: 'rgba(255,255,255,0.7)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1.5px solid rgba(0,0,0,0.1)',
+                  borderRadius: '16px',
+                  fontWeight: 700,
+                  fontSize: '13px',
+                  cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
+                  letterSpacing: '0.3px',
+                  transition: 'all 0.3s',
+                  color: '#1d1d1f',
+                  opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
+                }}
+              >
+                Buy Now
+              </button>
+            </div>
+          </div>
+
+          {/* DESKTOP: Full Width Sections */}
+          <div className="desktop-full-width-buttons">
+            {/* Specifications */}
+            <CollapsibleSection icon="fa-sliders" title="Specifications">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', margin: '4px 0 16px' }}>
+                {currentProduct.fabric_type && (
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <i className="fa-solid fa-shirt" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
+                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Fabric</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.fabric_type}</span></div>
+                  </div>
+                )}
+                {currentProduct.gsm_type && (
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <i className="fa-solid fa-weight-scale" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
+                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>GSM</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.gsm_type}</span></div>
+                  </div>
+                )}
+                {currentProduct.fit_type && (
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <i className="fa-solid fa-ruler" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
+                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Fit</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.fit_type}</span></div>
+                  </div>
+                )}
+                {currentProduct.gender && (
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <i className="fa-solid fa-venus-mars" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
+                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Gender</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.gender}</span></div>
+                  </div>
+                )}
+                {currentProduct.print_type && (
+                  <div className="detail-badge" style={{ background: 'rgba(255,255,255,0.7)', backdropFilter: 'blur(15px)', borderRadius: '14px', padding: '14px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '12px', border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                    <i className="fa-solid fa-palette" style={{ fontSize: '20px', color: '#1d1d1f', width: '28px', textAlign: 'center' }} />
+                    <div><span style={{ color: '#9ca3af', fontSize: '10px' }}>Print</span><br /><span style={{ fontWeight: 700 }}>{currentProduct.print_type}</span></div>
+                  </div>
                 )}
               </div>
             </CollapsibleSection>
+
+            {/* Description */}
+            {currentProduct.description && (
+              <CollapsibleSection icon="fa-align-left" title="Description">
+                <div className="description-content" style={{ background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(10px)', padding: '20px', borderRadius: '16px', marginTop: '4px', marginBottom: '16px', fontSize: '14px', color: '#4b5563', border: '1px solid rgba(0,0,0,0.04)', lineHeight: 1.8 }}
+                  dangerouslySetInnerHTML={{ __html: currentProduct.description }}
+                />
+              </CollapsibleSection>
+            )}
+
+            {/* Barcode */}
+            {(currentProduct.barcode) && (
+              <CollapsibleSection
+                icon="fa-barcode"
+                title="Barcode"
+                onToggle={(open) => {
+                  if (open && !barcodeGenerated && currentProduct.barcode) {
+                    generateBarcode(currentProduct.barcode);
+                  }
+                }}
+              >
+                <div className="barcode-wrapper" style={{ background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(15px)', padding: '20px 12px 16px', borderRadius: '18px', border: '1px solid rgba(0,0,0,0.06)', marginTop: '4px', marginBottom: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '90px', maxWidth: '100%', overflowX: 'auto' }}>
+                  {barcodeSvg ? (
+                    <div dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
+                  ) : (
+                    <p style={{ color: '#9ca3af', fontSize: '13px', textAlign: 'center', padding: '24px' }}>
+                      Click to generate barcode
+                    </p>
+                  )}
+                </div>
+              </CollapsibleSection>
+            )}
+
+            <div style={{ height: '16px' }} />
+          </div>
+
+          {/* Banner Section */}
+          {productBanners.length > 0 && (
+            <div className="mobile-banner-section full-width-section" style={{ marginTop: 0 }}>
+              <BannerSection banners={productBanners} />
+            </div>
           )}
 
-          <div style={{ height: '16px' }} />
+          {/* Video Section */}
+          {productVideos.length > 0 && (
+            <div className="mobile-video-section full-width-section" style={{ marginTop: '40px' }}>
+              <VideoSection videos={productVideos} />
+            </div>
+          )}
+
+          <div style={{ height: '40px' }} />
         </div>
 
-        {/* Banner Section */}
-        {productBanners.length > 0 && (
-          <div className="mobile-banner-section full-width-section" style={{ marginTop: 0 }}>
-            <BannerSection banners={productBanners} />
+        {/* Complete the Look */}
+        {relatedProducts.length > 0 && (
+          <div style={{ padding: '40px 20px 60px', borderTop: '1px solid #f0f0f0' }}>
+            <h3 style={{ fontSize: '22px', fontWeight: 700, color: '#1d1d1f', marginBottom: '28px', textAlign: 'center' }}>
+              Complete the Look
+            </h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2,1fr)', gap: '16px', maxWidth: '600px', margin: '0 auto' }}>
+              {relatedProducts.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Video Section */}
-        {productVideos.length > 0 && (
-          <div className="mobile-video-section full-width-section" style={{ marginTop: '40px' }}>
-            <VideoSection videos={productVideos} />
-          </div>
-        )}
-
-        <div style={{ height: '40px' }} />
-      </div>
-
-      {/* Complete the Look */}
-      {relatedProducts.length > 0 && (
+        {/* Sticky Add Bar */}
         <div
+          className={`sticky-add-bar ${stickyVisible ? 'active' : ''}`}
           style={{
-            padding: '40px 20px 60px',
-            borderTop: '1px solid #f0f0f0',
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            background: 'rgba(255,255,255,0.85)',
+            backdropFilter: 'blur(40px)',
+            borderTop: '0.5px solid rgba(0,0,0,0.06)',
+            padding: '14px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
+            zIndex: 49,
+            display: stickyVisible ? 'flex' : 'none',
+            alignItems: 'center',
+            gap: '16px',
+            boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
           }}
         >
-          <h3
-            style={{
-              fontSize: '22px',
-              fontWeight: 700,
-              color: '#1d1d1f',
-              marginBottom: '28px',
-              textAlign: 'center',
-            }}
-          >
-            Complete the Look
-          </h3>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2,1fr)',
-              gap: '16px',
-              maxWidth: '600px',
-              margin: '0 auto',
-            }}
-          >
-            {relatedProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
+          <div style={{ flexGrow: 1 }}>
+            <span style={{ fontSize: '20px', fontWeight: 900 }}>
+              ৳ {selectedVariant?.price || currentProduct?.price || 0}
+            </span>
           </div>
+          <button
+            onClick={() => addToCartHandler(currentProduct.id)}
+            disabled={isOutOfStock && selectedVariant}
+            style={{
+              padding: '14px 32px',
+              background: 'rgba(29,29,31,0.9)',
+              backdropFilter: 'blur(20px)',
+              color: 'white',
+              border: '1px solid rgba(0,0,0,0.1)',
+              borderRadius: '9999px',
+              fontWeight: 700,
+              textTransform: 'uppercase',
+              fontSize: '13px',
+              cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.3s',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
+            }}
+          >
+            Add to Bag
+          </button>
         </div>
-      )}
 
-      {/* Sticky Add Bar */}
-      <div
-        ref={stickyBarRef}
-        className={`sticky-add-bar ${stickyVisible ? 'active' : ''}`}
-        style={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          background: 'rgba(255,255,255,0.85)',
-          backdropFilter: 'blur(40px)',
-          borderTop: '0.5px solid rgba(0,0,0,0.06)',
-          padding: '14px 20px calc(14px + env(safe-area-inset-bottom, 0px))',
-          zIndex: 49,
-          display: stickyVisible ? 'flex' : 'none',
-          alignItems: 'center',
-          gap: '16px',
-          boxShadow: '0 -4px 20px rgba(0,0,0,0.06)',
-        }}
-      >
-        <div style={{ flexGrow: 1 }}>
-          <span style={{ fontSize: '20px', fontWeight: 900 }}>
-            ৳ {selectedVariant?.price || currentProduct?.price || 0}
-          </span>
-        </div>
-        <button
-          onClick={() => addToCartHandler(currentProduct.id)}
-          disabled={isOutOfStock && selectedVariant}
-          style={{
-            padding: '14px 32px',
-            background: 'rgba(29,29,31,0.9)',
-            backdropFilter: 'blur(20px)',
-            color: 'white',
-            border: '1px solid rgba(0,0,0,0.1)',
-            borderRadius: '9999px',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            fontSize: '13px',
-            cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-            whiteSpace: 'nowrap',
-            transition: 'all 0.3s',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-            opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
-          }}
-        >
-          Add to Bag
-        </button>
-      </div>
-
-      {/* Styles */}
-      <style>{`
-        :root {
-          --font-body: 'Inter', sans-serif;
-          --font-heading: 'Manrope', sans-serif;
-          --font-subtitle: 'Sora', sans-serif;
-          --font-accent: 'Manrope', sans-serif;
-        }
-
-        .skeleton {
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-          background-size: 200% 100%;
-          animation: shimmer 1.5s infinite;
-          border-radius: 8px;
-        }
-
-        @keyframes shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        .product-card:hover .product-image {
-          transform: scale(1.04);
-        }
-
-        .toggle-btn:hover {
-          background: rgba(255,255,255,0.9);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-          transform: translateY(-1px);
-        }
-
-        .detail-badge:hover {
-          background: rgba(255,255,255,0.9);
-          box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-          transform: translateY(-2px);
-        }
-
-        .size-btn:hover:not(.disabled):not(.selected) {
-          border-color: rgba(0,0,0,0.2);
-          background: rgba(255,255,255,0.85);
-          box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-          transform: translateY(-1px);
-        }
-
-        .color-swatch-btn:hover:not(.disabled) {
-          transform: scale(1.12);
-          box-shadow: 0 4px 12px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.12);
-        }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .thumbnail-grid::-webkit-scrollbar { height: 3px; }
-        .thumbnail-grid::-webkit-scrollbar-thumb {
-          background: rgba(0,0,0,0.1);
-          border-radius: 10px;
-        }
-
-        @media (min-width: 768px) {
-          .product-hero {
-            height: 70vh;
-            min-height: 500px;
-            max-height: 800px;
-          }
-          .video-section {
-            min-height: 480px;
-          }
-          .product-banner-card {
-            height: 320px;
-            border-radius: 28px;
-          }
-          .product-banner-card .banner-title {
-            font-size: 28px;
-          }
-          .product-banner-card .banner-subtitle {
-            font-size: 16px;
-          }
-          .product-banner-card .banner-overlay {
-            padding: 44px 40px;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .desktop-layout {
-            display: grid !important;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-            align-items: start;
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 40px;
+        {/* Styles */}
+        <style jsx global>{`
+          :root {
+            --font-body: 'Inter', sans-serif;
+            --font-heading: 'Manrope', sans-serif;
+            --font-subtitle: 'Sora', sans-serif;
+            --font-accent: 'Manrope', sans-serif;
           }
 
-          .product-hero {
-            height: auto;
-            min-height: 500px;
-            max-height: none;
-            border-radius: 24px;
+          .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
           }
 
-          .product-hero img {
-            max-height: 80vh;
+          @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
           }
 
-          .desktop-image-col {
-            position: relative;
+          @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
           }
 
-          .desktop-info-col {
-            max-width: 600px;
+          .product-card:hover .product-image {
+            transform: scale(1.04);
           }
 
-          .main-image-wrapper {
-            width: 100% !important;
-            margin-left: 0 !important;
-            margin-right: 0 !important;
+          .toggle-btn:hover {
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
           }
 
-          .product-info-card {
-            padding: 32px;
+          .detail-badge:hover {
+            background: rgba(255,255,255,0.9);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            transform: translateY(-2px);
           }
 
-          .product-info-card .title-text {
-            font-size: 30px;
+          .size-btn:hover:not(.disabled):not(.selected) {
+            border-color: rgba(0,0,0,0.2);
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            transform: translateY(-1px);
           }
 
-          #variant-price-display {
-            font-size: 36px !important;
+          .color-swatch-btn:hover:not(.disabled) {
+            transform: scale(1.12);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12), inset 0 0 0 1px rgba(0,0,0,0.12);
           }
 
-          .color-swatch-btn {
-            width: 44px !important;
-            height: 44px !important;
+          .no-scrollbar::-webkit-scrollbar { display: none; }
+          .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+          .thumbnail-grid::-webkit-scrollbar { height: 3px; }
+          .thumbnail-grid::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
           }
 
-          .size-btn {
-            padding: 12px 22px !important;
-            font-size: 14px !important;
-            min-width: 52px !important;
-            border-radius: 14px !important;
+          @media (min-width: 768px) {
+            .product-hero {
+              height: 70vh;
+              min-height: 500px;
+              max-height: 800px;
+            }
+            .video-section {
+              min-height: 480px;
+            }
+            .product-banner-card {
+              height: 320px;
+              border-radius: 28px;
+            }
           }
 
-          #buy-section button {
-            padding: 20px !important;
-            font-size: 14px !important;
-            border-radius: 16px !important;
+          @media (min-width: 1024px) {
+            .desktop-layout {
+              display: grid !important;
+              grid-template-columns: 1fr 1fr;
+              gap: 40px;
+              align-items: start;
+              max-width: 1400px;
+              margin: 0 auto;
+              padding: 40px;
+            }
+            .product-hero {
+              height: auto;
+              min-height: 500px;
+              max-height: none;
+              border-radius: 24px;
+            }
+            .product-hero img {
+              max-height: 80vh;
+            }
+            .full-width-section {
+              grid-column: 1 / -1;
+              width: 100%;
+              margin-top: 20px;
+            }
+            .mobile-video-section, .mobile-banner-section, .desktop-full-width-buttons {
+              grid-column: 1 / -1;
+              width: 100%;
+            }
+            .video-section {
+              min-height: 560px;
+            }
+            .product-banner-card {
+              height: 550px;
+            }
           }
-
-          .thumbnail-item {
-            width: 80px !important;
-            height: 80px !important;
-          }
-
-          .detail-badge {
-            padding: 18px 22px !important;
-            font-size: 14px !important;
-          }
-
-          .detail-badge i {
-            font-size: 22px !important;
-          }
-
-          .toggle-btn {
-            padding: 20px 28px !important;
-            font-size: 13px !important;
-          }
-
-          .full-width-section {
-            grid-column: 1 / -1;
-            width: 100%;
-            margin-top: 20px;
-          }
-
-          .mobile-video-section {
-            grid-column: 1 / -1;
-            width: 100%;
-          }
-
-          .mobile-banner-section {
-            grid-column: 1 / -1;
-            width: 100%;
-          }
-
-          .desktop-full-width-buttons {
-            grid-column: 1 / -1;
-            width: 100%;
-          }
-
-          .video-section {
-            min-height: 560px;
-          }
-
-          .product-banner-card {
-            height: 550px;
-          }
-
-          .product-banner-card .banner-title {
-            font-size: 32px;
-          }
-
-          .product-banner-card .banner-subtitle {
-            font-size: 18px;
-          }
-
-          .product-banner-card .banner-overlay {
-            padding: 60px 56px;
-          }
-
-          .product-banner-card .banner-link {
-            font-size: 15px;
-          }
-        }
-      `}</style>
-    </main>
+        `}</style>
+      </main>
+    </>
   );
-};
-
-export default Product;
+}
