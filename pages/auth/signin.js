@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { startAuthentication } from '@simplewebauthn/browser';
 import Head from 'next/head';
 import Link from 'next/link';
 
@@ -44,6 +45,9 @@ export default function SignIn() {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [showEmailForm, setShowEmailForm] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyError, setPasskeyError] = useState(null);
+  const [manualToken, setManualToken] = useState('');
   
   // QR Scanner states
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -129,6 +133,17 @@ export default function SignIn() {
     }
   };
 
+  const recordProjectAccess = async (accessToken, eventType) => {
+    if (!accessToken) return;
+    try {
+      await fetch('/api/project-access/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ project_key: 'jabiyen', client_key: 'website', event_type: eventType, outcome: 'success', metadata: { source: 'jabiyen-website' } })
+      });
+    } catch { /* audit recording must not interrupt sign-in */ }
+  };
+
   const loginWithCredentials = async (emailVal, passwordVal) => {
     try {
       const res = await fetch('/api/auth/login', {
@@ -148,7 +163,10 @@ export default function SignIn() {
       }
 
       const payload = result.data || result;
-      if (payload.session) saveSession(payload.session);
+      if (payload.session) {
+        saveSession(payload.session);
+        await recordProjectAccess(payload.session.access_token, 'token_verified');
+      }
 
       return { 
         success: true, 
@@ -200,6 +218,39 @@ export default function SignIn() {
   };
 
   // QR codes contain a one-time Central Auth token, never an email/password pair.
+  const loginWithPasskey = async () => {
+    setPasskeyLoading(true);
+    setPasskeyError(null);
+    try {
+      const optionsResponse = await fetch('/api/auth/passkey/options', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const optionsResult = await optionsResponse.json().catch(() => ({}));
+      if (!optionsResponse.ok) throw new Error(apiErrorMessage(optionsResult, 'Passkey sign-in is unavailable.'));
+      const optionsPayload = optionsResult.data || optionsResult;
+      const response = await startAuthentication({ optionsJSON: optionsPayload.options });
+      const verifyResponse = await fetch('/api/auth/passkey/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge_id: optionsPayload.challenge_id, challenge: optionsPayload.options.challenge, response })
+      });
+      const verifyResult = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok) throw new Error(apiErrorMessage(verifyResult, 'Passkey sign-in failed.'));
+      const payload = verifyResult.data || verifyResult;
+      if (!payload.session?.access_token) throw new Error('Central Auth did not return a sign-in session.');
+      saveSession(payload.session);
+      await recordProjectAccess(payload.session.access_token, 'token_verified');
+      window.location.href = '/auth/account';
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Passkey sign-in was cancelled.';
+        setPasskeyError(message.includes('NotAllowedError') ? 'No JABIYEN passkey was selected, or verification was cancelled. Sign in with Central Auth first, then add a passkey under Account → Biometric Sign-In.' : message);
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
+
   const parseQRToken = (data) => {
     const raw = String(data || '').trim();
     if (!raw) return null;
@@ -228,7 +279,10 @@ export default function SignIn() {
       const result = await res.json().catch(() => ({}));
       if (!res.ok) return { success: false, error: apiErrorMessage(result, 'Invalid or expired login token') };
       const payload = result.data || result;
-      if (payload.session) saveSession(payload.session);
+      if (payload.session) {
+        saveSession(payload.session);
+        await recordProjectAccess(payload.session.access_token, 'token_verified');
+      }
       return { success: true, redirect: result.redirect || '/auth/account', data: result };
     } catch (err) {
       return { success: false, error: err.message || 'Network error. Please check your connection.' };
@@ -443,6 +497,17 @@ export default function SignIn() {
             <span style={{ flex: 1, textAlign: 'center' }}>JABIYEN Card Auth</span>
           </button>
 
+          <button
+            type="button"
+            onClick={loginWithPasskey}
+            disabled={passkeyLoading || loading || qrLoginLoading}
+            style={{ ...socialButtonStyle, background: passkeyLoading ? '#f5f5f7' : '#fff' }}
+          >
+            <i className="fa-solid fa-fingerprint" style={{ width: 20, fontSize: 17, color: '#5f6368' }}></i>
+            <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Waiting for biometric verification…' : 'Sign in with fingerprint / Face ID'}</span>
+          </button>
+          {passkeyError && <p role="alert" style={{ margin: '-8px 0 16px', fontSize: 12, color: '#b91c1c', textAlign: 'center' }}>{passkeyError}</p>}
+
           {/* ===== CONTINUE WITH EMAIL ===== */}
           {!showEmailForm ? (
             <button 
@@ -629,7 +694,7 @@ export default function SignIn() {
               fontSize: 18, fontWeight: 700, color: '#1d1d1f',
               margin: '0 0 6px', textAlign: 'center'
             }}>
-              {qrSuccess ? 'Login Successful!' : qrLoginLoading ? 'Signing In...' : 'JABIYEN Card Auth'}
+              {qrSuccess ? 'Login Successful!' : qrLoginLoading ? 'Signing In...' : 'Central Auth token sign-in'}
             </h3>
             <p style={{
               fontSize: 13, color: '#86868b', textAlign: 'center',
@@ -799,6 +864,27 @@ export default function SignIn() {
                 }}>
                   Supports PNG, JPG, or any image containing a Central Auth token
                 </p>
+              </div>
+            )}
+            {!qrSuccess && (
+              <div style={{ marginTop: 18, borderTop: '1px solid #eee', paddingTop: 16 }}>
+                <label htmlFor="manual-login-token" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 7 }}>Or paste a one-time Central Auth token</label>
+                <input
+                  id="manual-login-token"
+                  value={manualToken}
+                  onChange={(event) => setManualToken(event.target.value)}
+                  onKeyDown={(event) => { if (event.key === 'Enter' && manualToken.trim()) void processQRData(manualToken); }}
+                  autoComplete="one-time-code"
+                  placeholder="Paste token"
+                  style={{ ...inputStyle, fontSize: 13, padding: '10px 12px' }}
+                  disabled={qrLoginLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => void processQRData(manualToken)}
+                  disabled={!manualToken.trim() || qrLoginLoading}
+                  style={{ width: '100%', marginTop: 9, border: 0, borderRadius: 10, padding: '11px 14px', background: !manualToken.trim() || qrLoginLoading ? '#a1a1a6' : '#1d1d1f', color: '#fff', fontWeight: 600, cursor: !manualToken.trim() || qrLoginLoading ? 'not-allowed' : 'pointer' }}
+                >Continue with token</button>
               </div>
             )}
           </div>
