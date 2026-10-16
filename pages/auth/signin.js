@@ -141,7 +141,8 @@ export default function SignIn() {
         };
       }
 
-      if (result.session) saveSession(result.session);
+      const payload = result.data || result;
+      if (payload.session) saveSession(payload.session);
 
       return { 
         success: true, 
@@ -194,15 +195,8 @@ export default function SignIn() {
 
   const handleGoogleSignIn = async () => {
     setGoogleLoading(true);
-    try {
-      const SUPABASE_URL = 'https://eiueitoxxqzkolsouuzy.supabase.co';
-      window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/account')}`;
-    } catch (err) {
-      showToast('Failed to connect Google Sign-In', 'error');
-      setGoogleLoading(false);
-    }
+    window.location.href = `https://auth-binzeo.vercel.app/signin?provider=google&redirect=${encodeURIComponent(window.location.origin + '/auth/account')}`;
   };
-
   // Parse QR code data for credentials
   const parseQRCredentials = (data) => {
     try {

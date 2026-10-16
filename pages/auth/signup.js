@@ -103,9 +103,7 @@ export default function SignUp() {
   };
 
   const handleSocialSignIn = (provider) => {
-    const SUPABASE_URL = 'https://eiueitoxxqzkolsouuzy.supabase.co';
-    const redirectTo = encodeURIComponent(window.location.origin + '/auth/account');
-    window.location.href = `${SUPABASE_URL}/auth/v1/authorize?provider=${provider}&redirect_to=${redirectTo}`;
+    window.location.href = `https://auth-binzeo.vercel.app/signin?provider=${encodeURIComponent(provider)}&redirect=${encodeURIComponent(window.location.origin + '/auth/account')}`;
   };
 
   const getBorderColor = (id) => {
