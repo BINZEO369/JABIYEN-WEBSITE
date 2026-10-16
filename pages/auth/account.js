@@ -60,8 +60,8 @@ export default function Account() {
     try {
       const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` };
       const [profileRes, addressesRes] = await Promise.all([
-        fetch('/api/user/profile', { headers }),
-        fetch('/api/user/addresses', { headers })
+        fetch('/api/user/profile', { headers, cache: 'no-store' }),
+        fetch('/api/user/addresses', { headers, cache: 'no-store' })
       ]);
       if (!profileRes.ok) {
         if (profileRes.status === 401) {
@@ -116,9 +116,11 @@ export default function Account() {
     };
     window.addEventListener('focus', refreshWhenVisible);
     document.addEventListener('visibilitychange', refreshWhenVisible);
+    const refreshTimer = window.setInterval(refreshWhenVisible, 60_000);
     return () => {
       window.removeEventListener('focus', refreshWhenVisible);
       document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.clearInterval(refreshTimer);
     };
   }, [fetchUserData]);
 
