@@ -344,8 +344,9 @@ export default function Account() {
         throw new Error('Failed to load');
       }
       const result = await res.json();
-      const profile = result.profile || {};
-      const user = result.user || {};
+      const payload = result.data || result;
+      const profile = payload.profile || {};
+      const user = payload.user || {};
       const metadata = user.user_metadata || {};
       const appMetadata = user.app_metadata || {};
       setUserData({
@@ -389,7 +390,13 @@ export default function Account() {
   }, [fetchUserData]);
 
   const handleLogout = async () => {
-    try { await fetch('/api/auth/logout', { method: 'POST' }); } catch (e) {}
+    try {
+      const token = getToken();
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+    } catch (e) {}
     localStorage.removeItem('jayenware_session');
     router.push('/');
   };
@@ -399,9 +406,13 @@ export default function Account() {
     const token = getToken();
     try {
       const res = await fetch('/api/user/profile', {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ first_name: userData.first_name, last_name: userData.last_name, phone: userData.phone })
+        body: JSON.stringify({
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          display_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim(),
+        })
       });
       if (!res.ok) throw new Error();
       showToast('Profile updated successfully!');
@@ -417,13 +428,9 @@ export default function Account() {
     const token = getToken();
     try {
       const res = await fetch('/api/user/profile', {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          address_line1: userData.address_line1, address_line2: userData.address_line2,
-          city: userData.city, state: userData.state,
-          postal_code: userData.postal_code, country: userData.country
-        })
+        body: JSON.stringify({ country_code: userData.country || undefined })
       });
       if (!res.ok) throw new Error();
       showToast('Address updated successfully!');

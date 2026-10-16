@@ -6,7 +6,9 @@ const AUTH_SIGNUP_URL = 'https://auth-binzeo.vercel.app/signup';
 export default function SignUpRedirect() {
   const redirectToAuthSignup = () => {
     if (typeof window === 'undefined') return;
-    const returnUrl = `${window.location.origin}/auth/account`;
+    // Credentials and account creation belong exclusively to Central Auth.
+    // Return to JABIYEN's Central-session sign-in screen after verification.
+    const returnUrl = `${window.location.origin}/auth/signin?message=signup_success`;
     window.location.replace(`${AUTH_SIGNUP_URL}?redirect=${encodeURIComponent(returnUrl)}`);
   };
 
