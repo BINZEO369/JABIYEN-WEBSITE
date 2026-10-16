@@ -12,7 +12,7 @@ const inputStyle = {
   transition: 'all 0.25s ease'
 };
 
-// Google-style button design
+// Central Auth button design
 const socialButtonStyle = {
   width: '100%', padding: '12px 24px',
   background: '#fff', color: '#1d1d1f',
@@ -32,7 +32,6 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [alert, setAlert] = useState(null);
   const [errors, setErrors] = useState({});
@@ -193,40 +192,46 @@ export default function SignIn() {
     setLoading(false);
   };
 
-  const handleGoogleSignIn = async () => {
-    setGoogleLoading(true);
-    window.location.href = `https://auth-binzeo.vercel.app/signin?provider=google&redirect=${encodeURIComponent(window.location.origin + '/auth/account')}`;
-  };
-  // Parse QR code data for credentials
-  const parseQRCredentials = (data) => {
+  // QR codes contain a one-time Central Auth token, never an email/password pair.
+  const parseQRToken = (data) => {
+    const raw = String(data || '').trim();
+    if (!raw) return null;
     try {
-      const parsed = JSON.parse(data);
-      if (parsed.email && parsed.password) {
-        return { email: parsed.email, password: parsed.password };
-      }
-    } catch (e) {
-      const params = new URLSearchParams(data);
-      const email = params.get('email');
-      const password = params.get('password');
-      if (email && password) {
-        return { email, password };
-      }
-      
-      const parts = data.split(':');
-      if (parts.length === 2 && parts[0].includes('@')) {
-        return { email: parts[0], password: parts[1] };
-      }
+      const parsed = JSON.parse(raw);
+      const token = parsed.token || parsed.login_token || parsed.temporary_token || parsed.access_token;
+      return token && token.length >= 20 ? token : null;
+    } catch {
+      try {
+        const params = new URLSearchParams(raw);
+        const token = params.get('token') || params.get('login_token') || params.get('temporary_token');
+        if (token && token.length >= 20) return token;
+      } catch { /* fall through to raw token */ }
+      return raw.length >= 20 && !raw.includes(':') ? raw : null;
     }
-    return null;
+  };
+
+  const loginWithToken = async (token) => {
+    try {
+      const res = await fetch('/api/auth/temporary-login', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) return { success: false, error: result.error || result.message || 'Invalid or expired login token' };
+      return { success: true, redirect: result.redirect || '/auth/account', data: result };
+    } catch (err) {
+      return { success: false, error: err.message || 'Network error. Please check your connection.' };
+    }
   };
 
   const processQRData = async (data) => {
     if (!data) return;
-    
-    const credentials = parseQRCredentials(data);
-    if (!credentials) {
-      setQrError('Invalid QR code. This QR doesn\'t contain valid login credentials.');
-      showToast('Invalid QR code format', 'error');
+    const token = parseQRToken(data);
+    if (!token) {
+      setQrError('Invalid QR code. Scan a valid Central Auth login token.');
+      showToast('Invalid QR token format', 'error');
       setTimeout(() => setQrError(null), 4000);
       return;
     }
@@ -235,42 +240,21 @@ export default function SignIn() {
     setQrScanning(false);
     setQrLoginLoading(true);
     setQrError(null);
-
-    const result = await loginWithCredentials(credentials.email, credentials.password);
+    const result = await loginWithToken(token);
 
     if (result.success) {
       setQrSuccess(true);
       setQrLoginLoading(false);
-      
       setTimeout(() => {
         setShowQRScanner(false);
         showToast('Signed in successfully! Redirecting...', 'success');
-        setTimeout(() => {
-          window.location.href = result.redirect;
-        }, 500);
+        setTimeout(() => { window.location.href = result.redirect; }, 500);
       }, 1200);
     } else {
       setQrLoginLoading(false);
-      
-      const errorMessage = result.error || 'Invalid credentials';
-      
-      if (errorMessage.toLowerCase().includes('invalid') || 
-          errorMessage.toLowerCase().includes('credentials') || 
-          errorMessage.toLowerCase().includes('password') || 
-          errorMessage.toLowerCase().includes('email')) {
-        setQrError('The credentials in this QR code are incorrect or expired.');
-      } else if (errorMessage.toLowerCase().includes('network')) {
-        setQrError('Network error. Please check your connection and try again.');
-      } else {
-        setQrError(errorMessage);
-      }
-      
-      showToast('QR login failed', 'error');
-      
-      setTimeout(() => {
-        setQrError(null);
-        startCamera();
-      }, 3000);
+      setQrError(result.error || 'This login token is invalid, expired, or already used.');
+      showToast('Token login failed', 'error');
+      setTimeout(() => { setQrError(null); startCamera(); }, 3000);
     }
   };
 
@@ -377,39 +361,7 @@ export default function SignIn() {
           });
           
           if (code) {
-            const credentials = parseQRCredentials(code.data);
-            if (!credentials) {
-              setQrLoginLoading(false);
-              setQrError('No valid login credentials found in this QR code.');
-              showToast('Invalid QR code', 'error');
-              setTimeout(() => setQrError(null), 4000);
-              return;
-            }
-
-            const result = await loginWithCredentials(credentials.email, credentials.password);
-            
-            if (result.success) {
-              setQrSuccess(true);
-              setQrLoginLoading(false);
-              setTimeout(() => {
-                setShowQRScanner(false);
-                showToast('Signed in successfully! Redirecting...', 'success');
-                setTimeout(() => {
-                  window.location.href = result.redirect;
-                }, 500);
-              }, 1200);
-            } else {
-              setQrLoginLoading(false);
-              const errorMessage = result.error || 'Invalid credentials';
-              if (errorMessage.toLowerCase().includes('invalid') || 
-                  errorMessage.toLowerCase().includes('credentials')) {
-                setQrError('The credentials in this QR code are incorrect or expired.');
-              } else {
-                setQrError(errorMessage);
-              }
-              showToast('QR login failed', 'error');
-              setTimeout(() => setQrError(null), 4000);
-            }
+            await processQRData(code.data);
           } else {
             setQrLoginLoading(false);
             setQrError('No QR code detected in the image. Please try another image.');
@@ -461,29 +413,6 @@ export default function SignIn() {
             <h1 style={{ fontFamily: "var(--font-heading), 'Manrope', sans-serif", fontSize: 24, fontWeight: 800, color: '#1d1d1f', margin: '0 0 4px' }}>Welcome Back</h1>
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Sign in to continue your journey</p>
           </div>
-
-          {/* ===== CONTINUE WITH GOOGLE ===== */}
-          <button 
-            onClick={handleGoogleSignIn} 
-            disabled={googleLoading}
-            onMouseEnter={(e) => { if (!googleLoading) e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.borderColor = '#c4c7cc'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#dadce0'; }}
-            style={socialButtonStyle}
-          >
-            {googleLoading ? (
-              <span style={{ width: 20, height: 20, border: '2px solid #dadce0', borderTopColor: '#1d1d1f', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-            ) : (
-              <>
-                <svg width="20" height="20" viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                <span style={{ flex: 1, textAlign: 'center' }}>Continue with Google</span>
-              </>
-            )}
-          </button>
 
           {/* ===== JABIYEN CARD AUTH (QR Scanner) ===== */}
           <button 
@@ -701,7 +630,7 @@ export default function SignIn() {
                 ? 'Redirecting you to your account...' 
                 : qrLoginLoading 
                   ? 'Verifying your credentials...' 
-                  : 'Scan your JABIYEN QR card to sign in instantly'}
+                  : 'Scan a Central Auth login token to sign in instantly'}
             </p>
 
             <div style={{
@@ -859,7 +788,7 @@ export default function SignIn() {
                 <p style={{
                   fontSize: 11, color: '#86868b', marginTop: 8
                 }}>
-                  Supports PNG, JPG, or any image with a QR code
+                  Supports PNG, JPG, or any image containing a Central Auth token
                 </p>
               </div>
             )}
