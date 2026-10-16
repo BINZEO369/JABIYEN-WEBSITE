@@ -26,6 +26,13 @@ const socialButtonStyle = {
   position: 'relative'
 };
 
+const apiErrorMessage = (payload, fallback) => {
+  if (typeof payload?.error === 'string') return payload.error;
+  if (typeof payload?.error?.message === 'string') return payload.error.message;
+  if (typeof payload?.message === 'string') return payload.message;
+  return fallback;
+};
+
 export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -135,7 +142,7 @@ export default function SignIn() {
       if (!res.ok) {
         return { 
           success: false, 
-          error: result.error || result.message || 'Invalid email or password',
+          error: apiErrorMessage(result, 'Invalid email or password'),
           status: res.status
         };
       }
@@ -219,7 +226,7 @@ export default function SignIn() {
         body: JSON.stringify({ token })
       });
       const result = await res.json().catch(() => ({}));
-      if (!res.ok) return { success: false, error: result.error || result.message || 'Invalid or expired login token' };
+      if (!res.ok) return { success: false, error: apiErrorMessage(result, 'Invalid or expired login token') };
       const payload = result.data || result;
       if (payload.session) saveSession(payload.session);
       return { success: true, redirect: result.redirect || '/auth/account', data: result };
@@ -254,7 +261,7 @@ export default function SignIn() {
       }, 1200);
     } else {
       setQrLoginLoading(false);
-      setQrError(result.error || 'This login token is invalid, expired, or already used.');
+      setQrError(apiErrorMessage(result, 'This login token is invalid, expired, or already used.'));
       showToast('Token login failed', 'error');
       setTimeout(() => { setQrError(null); startCamera(); }, 3000);
     }
