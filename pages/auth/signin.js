@@ -220,6 +220,8 @@ export default function SignIn() {
       });
       const result = await res.json().catch(() => ({}));
       if (!res.ok) return { success: false, error: result.error || result.message || 'Invalid or expired login token' };
+      const payload = result.data || result;
+      if (payload.session) saveSession(payload.session);
       return { success: true, redirect: result.redirect || '/auth/account', data: result };
     } catch (err) {
       return { success: false, error: err.message || 'Network error. Please check your connection.' };

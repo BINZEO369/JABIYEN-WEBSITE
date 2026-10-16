@@ -331,11 +331,13 @@ export default function Account() {
       return;
     }
     try {
-      const res = await fetch('/api/user/profile', {
-        headers: { Accept: 'application/json', Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        if (res.status === 401) {
+      const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` };
+      const [profileRes, addressesRes] = await Promise.all([
+        fetch('/api/user/profile', { headers }),
+        fetch('/api/user/addresses', { headers })
+      ]);
+      if (!profileRes.ok) {
+        if (profileRes.status === 401) {
           localStorage.removeItem('jayenware_session');
           setError('Session expired. Please sign in again.');
           setLoading(false);
@@ -343,25 +345,29 @@ export default function Account() {
         }
         throw new Error('Failed to load');
       }
-      const result = await res.json();
+      const result = await profileRes.json();
       const payload = result.data || result;
       const profile = payload.profile || {};
       const user = payload.user || {};
+      const addressPayload = addressesRes.ok ? await addressesRes.json() : {};
+      const addresses = addressPayload.data?.addresses || addressPayload.addresses || [];
+      const address = addresses.find(item => item.is_primary) || addresses[0] || {};
       const metadata = user.user_metadata || {};
       const appMetadata = user.app_metadata || {};
       setUserData({
         email: user.email || profile.email || '',
         first_name: profile.first_name || metadata.first_name || metadata.full_name?.split(' ')[0] || '',
         last_name: profile.last_name || metadata.last_name || metadata.full_name?.split(' ').slice(1).join(' ') || '',
-        phone: profile.phone || metadata.phone || '',
+        phone: user.phone || metadata.phone || '',
         avatar_url: metadata.avatar_url || metadata.picture || '',
         provider: profile.provider || appMetadata.provider || 'email',
-        address_line1: profile.address_line1 || metadata.address_line1 || '',
-        address_line2: profile.address_line2 || metadata.address_line2 || '',
-        city: profile.city || metadata.city || '',
-        state: profile.state || metadata.state || '',
-        postal_code: profile.postal_code || metadata.postal_code || '',
-        country: profile.country || metadata.country || '',
+        address_id: address.id || null,
+        address_line1: address.address_line_1 || metadata.address_line1 || '',
+        address_line2: address.address_line_2 || metadata.address_line2 || '',
+        city: address.city || metadata.city || '',
+        state: address.state_province || metadata.state || '',
+        postal_code: address.postal_code || metadata.postal_code || '',
+        country: address.country_code || metadata.country || '',
         created_at: profile.created_at || user.created_at || '',
         updated_at: profile.updated_at || user.updated_at || ''
       });
@@ -427,14 +433,27 @@ export default function Account() {
     setSaving(true);
     const token = getToken();
     try {
-      const res = await fetch('/api/user/profile', {
-        method: 'PATCH',
+      const countryCode = String(userData.country || '').trim().toUpperCase();
+      const body = {
+        address_type: 'home',
+        address_line_1: userData.address_line1,
+        address_line_2: userData.address_line2 || undefined,
+        city: userData.city || undefined,
+        state_province: userData.state || undefined,
+        postal_code: userData.postal_code || undefined,
+        country_code: /^[A-Z]{2}$/.test(countryCode) ? countryCode : undefined,
+        is_primary: true,
+      };
+      if (!body.address_line_1?.trim()) throw new Error('Address line 1 is required');
+      const res = await fetch(userData.address_id ? `/api/user/addresses/${userData.address_id}` : '/api/user/addresses', {
+        method: userData.address_id ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ country_code: userData.country || undefined })
+        body: JSON.stringify(body)
       });
       if (!res.ok) throw new Error();
       showToast('Address updated successfully!');
       setIsEditingAddress(false);
+      await fetchUserData();
     } catch (e) {
       showToast('Failed to update address', 'error');
     }
@@ -477,8 +496,21 @@ export default function Account() {
         setQrVerifying(false);
         return;
       }
+      const loginPayload = result.data || result;
+      const accessToken = loginPayload.session?.access_token;
+      if (!accessToken) throw new Error('Central Auth did not return a session');
+      const tokenRes = await fetch('/api/user/temporary-login-tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ duration_minutes: 5 })
+      });
+      const tokenResult = await tokenRes.json();
+      if (!tokenRes.ok) throw new Error(tokenResult.error?.message || tokenResult.error || 'Could not create one-time token');
+      const tokenPayload = tokenResult.data || tokenResult;
+      if (!tokenPayload.token) throw new Error('Central Auth did not return a one-time token');
       setQrVerified(true);
-      generateQRCode();
+      setQrPassword('');
+      generateQRCode(tokenPayload.token);
       showToast('Card generated successfully!', 'success');
     } catch (err) {
       setQrError('Verification failed. Please try again.');
@@ -488,8 +520,8 @@ export default function Account() {
     }
   };
 
-  const generateQRCode = () => {
-    const qrData = JSON.stringify({ email: userData.email, password: qrPassword });
+  const generateQRCode = (oneTimeToken) => {
+    const qrData = JSON.stringify({ token: oneTimeToken, one_time: true, expires_in_minutes: 5 });
     if (qrContainerRef.current) {
       qrContainerRef.current.innerHTML = '';
     }
@@ -774,7 +806,7 @@ export default function Account() {
                       <>
                         <InfoField label="First Name"><input style={inputStyle} value={userData.first_name} onChange={(e) => updateField('first_name', e.target.value)} /></InfoField>
                         <InfoField label="Last Name"><input style={inputStyle} value={userData.last_name} onChange={(e) => updateField('last_name', e.target.value)} /></InfoField>
-                        <InfoField label="Phone"><input style={inputStyle} value={userData.phone} onChange={(e) => updateField('phone', e.target.value)} /></InfoField>
+                        <InfoField label="Phone"><input style={{ ...inputStyle, backgroundColor: '#f5f5f7', color: '#71717a' }} value={userData.phone || 'Not provided'} disabled title="Phone is managed by Central Auth" /></InfoField>
                         <InfoField label="Email"><input style={{ ...inputStyle, backgroundColor: '#f5f5f7', color: '#71717a' }} value={userData.email} disabled /></InfoField>
                       </>
                     ) : (
