@@ -1,16 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { startRegistration } from '@simplewebauthn/browser';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
-
-const inputStyle = {
-  width: '100%', padding: '8px 12px',
-  border: '1.5px solid #e5e5ea',
-  borderRadius: 8, fontFamily: "'Inter', sans-serif",
-  fontSize: 14, fontWeight: 500, color: '#1d1d1f',
-  outline: 'none', transition: 'border-color 0.2s ease'
-};
 
 function formatDate(dateString) {
   if (!dateString) return '—';
@@ -19,256 +12,6 @@ function formatDate(dateString) {
   } catch { return dateString; }
 }
 
-// ===================== JABIYEN CARD COMPONENT =====================
-function JABIYENCard({ userData, fullName, username, getInitials, qrContainerRef, qrGenerated }) {
-  return (
-    <div className="jabiyen-card" style={{
-      width: '100%',
-      maxWidth: 600,
-      minWidth: 300,
-      height: 'auto',
-      minHeight: 340,
-      background: '#ffffff',
-      position: 'relative',
-      overflow: 'hidden',
-      borderRadius: 16,
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif",
-      boxSizing: 'border-box',
-      boxShadow: '0 8px 40px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
-      margin: '0 auto'
-    }}>
-      {/* ===== TOP DARK HEADER ===== */}
-      <div style={{
-        width: '100%',
-        height: 80,
-        background: '#0f0f0f',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        boxSizing: 'border-box',
-        borderRadius: '16px 16px 0 0'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <img 
-            src="/logo.png" 
-            alt="J" 
-            style={{ width: 28, height: 28, borderRadius: 6, flexShrink: 0 }}
-            crossOrigin="anonymous"
-          />
-          <span style={{ 
-            color: '#ffffff', 
-            fontWeight: 800, 
-            fontSize: 18, 
-            fontFamily: "'Manrope', sans-serif", 
-            letterSpacing: '-0.5px'
-          }}>
-            JABIYEN
-          </span>
-        </div>
-        <span style={{ 
-          color: 'rgba(255,255,255,0.6)', 
-          fontSize: 8, 
-          fontWeight: 600, 
-          textTransform: 'uppercase', 
-          letterSpacing: '0.15em',
-          textAlign: 'right',
-          lineHeight: 1.2
-        }}>
-          Digital<br/>Auth Card
-        </span>
-      </div>
-
-      {/* ===== WHITE BODY ===== */}
-      <div style={{ 
-        padding: '20px',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 20
-      }}>
-        {/* User Row */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 12,
-          paddingBottom: 16,
-          borderBottom: '1px solid #e5e5ea',
-          flexWrap: 'wrap'
-        }}>
-          <div style={{
-            width: 44,
-            height: 44,
-            background: '#0f0f0f',
-            color: '#ffffff',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            fontSize: 16,
-            fontWeight: 700,
-            flexShrink: 0,
-            fontFamily: "'Manrope', sans-serif",
-            borderRadius: 10
-          }}>
-            {getInitials()}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ 
-              fontSize: 15, 
-              fontWeight: 700, 
-              color: '#0f0f0f',
-              fontFamily: "'Manrope', sans-serif",
-              lineHeight: 1.3,
-              wordBreak: 'break-word'
-            }}>
-              {fullName}
-            </div>
-            <div style={{ 
-              fontSize: 10, 
-              color: '#71717a', 
-              marginTop: 2,
-              fontFamily: "'Inter', sans-serif",
-              wordBreak: 'break-word'
-            }}>
-              {userData?.email || '—'}
-            </div>
-          </div>
-        </div>
-
-        {/* Bottom Section: Info Grid + QR */}
-        <div style={{
-          display: 'flex',
-          gap: 20,
-          alignItems: 'center',
-          flexWrap: 'wrap'
-        }}>
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-            gap: '10px 16px',
-            flex: 1,
-            minWidth: 150
-          }}>
-            {userData?.phone && (
-              <div>
-                <div style={labelStyle}>Phone</div>
-                <div style={valueStyle}>{userData.phone}</div>
-              </div>
-            )}
-            {(userData?.city || userData?.state) && (
-              <div>
-                <div style={labelStyle}>Location</div>
-                <div style={valueStyle}>{[userData.city, userData.state].filter(Boolean).join(', ')}</div>
-              </div>
-            )}
-            {userData?.country && (
-              <div>
-                <div style={labelStyle}>Country</div>
-                <div style={valueStyle}>{userData.country}</div>
-              </div>
-            )}
-            <div>
-              <div style={labelStyle}>Member Since</div>
-              <div style={valueStyle}>{formatDate(userData?.created_at)}</div>
-            </div>
-          </div>
-
-          <div style={{
-            width: 85,
-            height: 85,
-            minWidth: 85,
-            minHeight: 85,
-            background: '#ffffff',
-            border: '1px solid #e5e5ea',
-            borderRadius: 12,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            padding: 3,
-            boxSizing: 'border-box'
-          }}>
-            <div ref={qrContainerRef} style={{ 
-              width: 75, 
-              height: 75,
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center'
-            }}>
-              {!qrGenerated && (
-                <div style={{ 
-                  width: 20, 
-                  height: 20,
-                  border: '2px solid #e5e5ea',
-                  borderTopColor: '#0f0f0f',
-                  borderRadius: '50%',
-                  animation: 'spin 0.7s linear infinite'
-                }} />
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ 
-          textAlign: 'right', 
-          marginTop: 2 
-        }}>
-          <span style={{ 
-            fontSize: 7, 
-            fontWeight: 700, 
-            color: '#a1a1aa', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.1em'
-          }}>
-            Scan to Authenticate
-          </span>
-        </div>
-      </div>
-
-      {/* ===== BOTTOM STRIP ===== */}
-      <div style={{
-        width: '100%',
-        height: 34,
-        background: '#fafafa',
-        borderTop: '1px solid #e5e5ea',
-        borderRadius: '0 0 16px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 20px',
-        boxSizing: 'border-box',
-        gap: 10
-      }}>
-        <span style={{ fontSize: 8, color: '#a1a1aa', fontWeight: 600, letterSpacing: '0.05em' }}>
-          JABIYEN CARD AUTH &copy; {new Date().getFullYear()}
-        </span>
-        <span style={{ fontSize: 8, color: '#a1a1aa', fontWeight: 600, fontFamily: 'monospace' }}>
-          @{username}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-const labelStyle = {
-  fontSize: 7.5,
-  fontWeight: 700,
-  textTransform: 'uppercase',
-  letterSpacing: '0.1em',
-  color: '#a1a1aa',
-  marginBottom: 2,
-  fontFamily: "'Inter', sans-serif"
-};
-
-const valueStyle = {
-  fontSize: 11,
-  fontWeight: 500,
-  color: '#0f0f0f',
-  fontFamily: "'Inter', sans-serif",
-  lineHeight: 1.3,
-  wordBreak: 'break-word'
-};
-
 // ===================== MAIN ACCOUNT PAGE =====================
 export default function Account() {
   const router = useRouter();
@@ -276,25 +19,9 @@ export default function Account() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPanel, setCurrentPanel] = useState('profile');
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isEditingAddress, setIsEditingAddress] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [toast, setToast] = useState(null);
-  const [saving, setSaving] = useState(false);
-
-  const [qrPassword, setQrPassword] = useState('');
-  const [qrVerifying, setQrVerifying] = useState(false);
-  const [qrVerified, setQrVerified] = useState(false);
-  const [qrGenerated, setQrGenerated] = useState(false);
-  const [qrError, setQrError] = useState(null);
-  const [cardImageUrl, setCardImageUrl] = useState(null);
-  const qrContainerRef = useRef(null);
-  const cardRef = useRef(null);
-
-  const showToast = (message, type = 'success') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 4000);
-  };
+  const [passkeyWorking, setPasskeyWorking] = useState(false);
+  const [passkeyMessage, setPasskeyMessage] = useState(null);
 
   const getToken = () => {
     try {
@@ -333,8 +60,8 @@ export default function Account() {
     try {
       const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` };
       const [profileRes, addressesRes] = await Promise.all([
-        fetch('/api/user/profile', { headers }),
-        fetch('/api/user/addresses', { headers })
+        fetch('/api/user/profile', { headers, cache: 'no-store' }),
+        fetch('/api/user/addresses', { headers, cache: 'no-store' })
       ]);
       if (!profileRes.ok) {
         if (profileRes.status === 401) {
@@ -345,13 +72,19 @@ export default function Account() {
         }
         throw new Error('Failed to load');
       }
+      if (!addressesRes.ok) throw new Error('Central Auth address service is unavailable');
       const result = await profileRes.json();
       const payload = result.data || result;
       const profile = payload.profile || {};
       const user = payload.user || {};
-      const addressPayload = addressesRes.ok ? await addressesRes.json() : {};
+      const addressPayload = await addressesRes.json();
       const addresses = addressPayload.data?.addresses || addressPayload.addresses || [];
       const address = addresses.find(item => item.is_primary) || addresses[0] || {};
+      void fetch('/api/project-access/record', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ project_key: 'jabiyen', client_key: 'website', event_type: 'profile_synced', outcome: 'success', metadata: { source: 'jabiyen-website-account' } })
+      }).catch(() => {});
       const metadata = user.user_metadata || {};
       const appMetadata = user.app_metadata || {};
       setUserData({
@@ -359,15 +92,14 @@ export default function Account() {
         first_name: profile.first_name || metadata.first_name || metadata.full_name?.split(' ')[0] || '',
         last_name: profile.last_name || metadata.last_name || metadata.full_name?.split(' ').slice(1).join(' ') || '',
         phone: user.phone || metadata.phone || '',
-        avatar_url: metadata.avatar_url || metadata.picture || '',
+        avatar_url: profile.profile_photo_url || metadata.avatar_url || metadata.picture || '',
         provider: profile.provider || appMetadata.provider || 'email',
-        address_id: address.id || null,
-        address_line1: address.address_line_1 || metadata.address_line1 || '',
-        address_line2: address.address_line_2 || metadata.address_line2 || '',
-        city: address.city || metadata.city || '',
-        state: address.state_province || metadata.state || '',
-        postal_code: address.postal_code || metadata.postal_code || '',
-        country: address.country_code || metadata.country || '',
+        address_line1: address.address_line_1 || '',
+        address_line2: address.address_line_2 || '',
+        city: address.city || '',
+        state: address.state_province || '',
+        postal_code: address.postal_code || '',
+        country: address.country_code || '',
         created_at: profile.created_at || user.created_at || '',
         updated_at: profile.updated_at || user.updated_at || ''
       });
@@ -377,22 +109,19 @@ export default function Account() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { 
-    fetchUserData();
-    if (typeof window !== 'undefined') {
-      if (!window.QRCode) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js';
-        script.async = true;
-        document.head.appendChild(script);
-      }
-      if (!window.html2canvas) {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
-        script.async = true;
-        document.head.appendChild(script);
-      }
-    }
+  useEffect(() => {
+    void fetchUserData();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') void fetchUserData();
+    };
+    window.addEventListener('focus', refreshWhenVisible);
+    document.addEventListener('visibilitychange', refreshWhenVisible);
+    const refreshTimer = window.setInterval(refreshWhenVisible, 60_000);
+    return () => {
+      window.removeEventListener('focus', refreshWhenVisible);
+      document.removeEventListener('visibilitychange', refreshWhenVisible);
+      window.clearInterval(refreshTimer);
+    };
   }, [fetchUserData]);
 
   const handleLogout = async () => {
@@ -407,61 +136,34 @@ export default function Account() {
     router.push('/');
   };
 
-  const saveProfile = async () => {
-    setSaving(true);
+  const registerPasskey = async () => {
     const token = getToken();
-    try {
-      const res = await fetch('/api/user/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          display_name: `${userData.first_name || ''} ${userData.last_name || ''}`.trim(),
-        })
-      });
-      if (!res.ok) throw new Error();
-      showToast('Profile updated successfully!');
-      setIsEditingProfile(false);
-    } catch (e) {
-      showToast('Failed to update profile', 'error');
+    if (!token) {
+      setPasskeyMessage({ type: 'error', text: 'Your session has expired. Sign in again before adding a passkey.' });
+      return;
     }
-    setSaving(false);
-  };
-
-  const saveAddress = async () => {
-    setSaving(true);
-    const token = getToken();
+    setPasskeyWorking(true);
+    setPasskeyMessage(null);
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
     try {
-      const countryCode = String(userData.country || '').trim().toUpperCase();
-      const body = {
-        address_type: 'home',
-        address_line_1: userData.address_line1,
-        address_line_2: userData.address_line2 || undefined,
-        city: userData.city || undefined,
-        state_province: userData.state || undefined,
-        postal_code: userData.postal_code || undefined,
-        country_code: /^[A-Z]{2}$/.test(countryCode) ? countryCode : undefined,
-        is_primary: true,
-      };
-      if (!body.address_line_1?.trim()) throw new Error('Address line 1 is required');
-      const res = await fetch(userData.address_id ? `/api/user/addresses/${userData.address_id}` : '/api/user/addresses', {
-        method: userData.address_id ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body)
+      const optionsResponse = await fetch('/api/user/passkeys', { method: 'POST', headers, body: JSON.stringify({}) });
+      const optionsResult = await optionsResponse.json();
+      if (!optionsResponse.ok) throw new Error(optionsResult.error?.message || 'Passkey setup could not start.');
+      const options = optionsResult.data || optionsResult;
+      const response = await startRegistration({ optionsJSON: options.options });
+      const verifyResponse = await fetch('/api/user/passkeys/register', {
+        method: 'POST', headers,
+        body: JSON.stringify({ challenge_id: options.challenge_id, challenge: options.options.challenge, response, device_name: 'JABIYEN on this device' })
       });
-      if (!res.ok) throw new Error();
-      showToast('Address updated successfully!');
-      setIsEditingAddress(false);
-      await fetchUserData();
-    } catch (e) {
-      showToast('Failed to update address', 'error');
+      const verifyResult = await verifyResponse.json();
+      if (!verifyResponse.ok) throw new Error(verifyResult.error?.message || 'Passkey could not be saved.');
+      setPasskeyMessage({ type: 'success', text: 'Biometric sign-in is enabled for this JABIYEN website on this device.' });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Passkey setup was cancelled.';
+      setPasskeyMessage({ type: 'error', text: message.includes('NotAllowedError') ? 'The biometric prompt was cancelled or not approved.' : message });
+    } finally {
+      setPasskeyWorking(false);
     }
-    setSaving(false);
-  };
-
-  const updateField = (field, value) => {
-    setUserData(prev => ({ ...prev, [field]: value }));
   };
 
   const getInitials = () => {
@@ -473,116 +175,7 @@ export default function Account() {
   };
 
   const fullName = `${userData?.first_name || ''} ${userData?.last_name || ''}`.trim() || userData?.email?.split('@')[0] || 'User';
-  const username = userData?.email?.split('@')[0] || 'user';
-
-  const verifyPasswordForQR = async () => {
-    if (!qrPassword) {
-      setQrError('Please enter your password');
-      showToast('Please enter your password', 'error');
-      return;
-    }
-    setQrVerifying(true);
-    setQrError(null);
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userData.email, password: qrPassword })
-      });
-      const result = await res.json();
-      if (!res.ok) {
-        setQrError('Invalid password. Please try again.');
-        showToast('Password verification failed', 'error');
-        setQrVerifying(false);
-        return;
-      }
-      const loginPayload = result.data || result;
-      const accessToken = loginPayload.session?.access_token;
-      if (!accessToken) throw new Error('Central Auth did not return a session');
-      const tokenRes = await fetch('/api/user/temporary-login-tokens', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ duration_minutes: 5 })
-      });
-      const tokenResult = await tokenRes.json();
-      if (!tokenRes.ok) throw new Error(tokenResult.error?.message || tokenResult.error || 'Could not create one-time token');
-      const tokenPayload = tokenResult.data || tokenResult;
-      if (!tokenPayload.token) throw new Error('Central Auth did not return a one-time token');
-      setQrVerified(true);
-      setQrPassword('');
-      generateQRCode(tokenPayload.token);
-      showToast('Card generated successfully!', 'success');
-    } catch (err) {
-      setQrError('Verification failed. Please try again.');
-      showToast('Verification failed', 'error');
-    } finally {
-      setQrVerifying(false);
-    }
-  };
-
-  const generateQRCode = (oneTimeToken) => {
-    const qrData = JSON.stringify({ token: oneTimeToken, one_time: true, expires_in_minutes: 5 });
-    if (qrContainerRef.current) {
-      qrContainerRef.current.innerHTML = '';
-    }
-    setTimeout(() => {
-      if (qrContainerRef.current && window.QRCode) {
-        new window.QRCode(qrContainerRef.current, {
-          text: qrData,
-          width: 75,
-          height: 75,
-          colorDark: '#000000',
-          colorLight: '#ffffff',
-          correctLevel: window.QRCode.CorrectLevel ? window.QRCode.CorrectLevel.H : 2
-        });
-        setTimeout(() => {
-          setQrGenerated(true);
-          setTimeout(() => { captureCard(); }, 1000);
-        }, 500);
-      }
-    }, 200);
-  };
-
-  const captureCard = async () => {
-    if (!cardRef.current || !window.html2canvas) return;
-    try {
-      const canvas = await window.html2canvas(cardRef.current, {
-        scale: 3,
-        backgroundColor: null,
-        useCORS: true,
-        allowTaint: true,
-        logging: false
-      });
-      const imgUrl = canvas.toDataURL('image/png');
-      setCardImageUrl(imgUrl);
-    } catch (err) {
-      console.error('Capture error:', err);
-      showToast('Failed to capture card image', 'error');
-    }
-  };
-
-  const downloadCard = () => {
-    if (!cardImageUrl) return;
-    const link = document.createElement('a');
-    link.download = `${username}-jabiyen-auth.png`;
-    link.href = cardImageUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast('Card downloaded successfully!');
-  };
-
-  const handlePanelSwitch = (panel) => {
-    setCurrentPanel(panel);
-    if (panel !== 'card-auth') {
-      setQrPassword('');
-      setQrVerified(false);
-      setQrGenerated(false);
-      setQrError(null);
-      setCardImageUrl(null);
-      if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
-    }
-  };
+  const handlePanelSwitch = (panel) => setCurrentPanel(panel);
 
   if (loading) {
     return (
@@ -652,7 +245,7 @@ export default function Account() {
             {[
               { key: 'profile', icon: 'user', label: 'Profile' },
               { key: 'addresses', icon: 'location-dot', label: 'Location' },
-              { key: 'card-auth', icon: 'id-card', label: 'Card Auth' }
+              { key: 'security', icon: 'fingerprint', label: 'Biometric Sign-In' }
             ].map(panel => (
               <button key={panel.key} onClick={() => handlePanelSwitch(panel.key)} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -765,58 +358,19 @@ export default function Account() {
                       fontWeight: 700, 
                       margin: 0 
                     }}>Personal Information</h2>
-                    {!isEditingProfile ? (
-                      <button onClick={() => setIsEditingProfile(true)} style={{ 
-                        fontSize: 'clamp(11px, 2vw, 13px)', 
-                        color: '#007aff', 
-                        background: 'none', 
-                        border: 'none', 
-                        cursor: 'pointer', 
-                        fontWeight: 600 
-                      }}><i className="fa-solid fa-pen" style={{ marginRight: 4 }}></i> Edit</button>
-                    ) : (
-                      <div style={{ display: 'flex', gap: 8 }}>
-                        <button onClick={() => setIsEditingProfile(false)} style={{ 
-                          fontSize: 'clamp(11px, 2vw, 13px)', 
-                          color: '#dc2626', 
-                          background: 'none', 
-                          border: 'none', 
-                          cursor: 'pointer', 
-                          fontWeight: 600 
-                        }}>Cancel</button>
-                        <button onClick={saveProfile} disabled={saving} style={{ 
-                          fontSize: 'clamp(11px, 2vw, 13px)', 
-                          color: '#fff', 
-                          background: '#007aff', 
-                          border: 'none', 
-                          borderRadius: 50, 
-                          padding: '6px 14px', 
-                          cursor: 'pointer', 
-                          fontWeight: 600 
-                        }}>{saving ? 'Saving...' : 'Save'}</button>
-                      </div>
-                    )}
+                    <span style={{ fontSize: 12, color: '#71717a' }}>Managed by Central Auth</span>
                   </div>
                   <div style={{ 
                     display: 'grid', 
                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
                     gap: '16px 24px' 
                   }}>
-                    {isEditingProfile ? (
-                      <>
-                        <InfoField label="First Name"><input style={inputStyle} value={userData.first_name} onChange={(e) => updateField('first_name', e.target.value)} /></InfoField>
-                        <InfoField label="Last Name"><input style={inputStyle} value={userData.last_name} onChange={(e) => updateField('last_name', e.target.value)} /></InfoField>
-                        <InfoField label="Phone"><input style={{ ...inputStyle, backgroundColor: '#f5f5f7', color: '#71717a' }} value={userData.phone || 'Not provided'} disabled title="Phone is managed by Central Auth" /></InfoField>
-                        <InfoField label="Email"><input style={{ ...inputStyle, backgroundColor: '#f5f5f7', color: '#71717a' }} value={userData.email} disabled /></InfoField>
-                      </>
-                    ) : (
-                      <>
-                        <InfoField label="First Name"><span>{userData.first_name || '—'}</span></InfoField>
-                        <InfoField label="Last Name"><span>{userData.last_name || '—'}</span></InfoField>
-                        <InfoField label="Phone"><span>{userData.phone || '—'}</span></InfoField>
-                        <InfoField label="Email"><span>{userData.email || '—'}</span></InfoField>
-                      </>
-                    )}
+                    <>
+                      <InfoField label="First Name"><span>{userData.first_name || '—'}</span></InfoField>
+                      <InfoField label="Last Name"><span>{userData.last_name || '—'}</span></InfoField>
+                      <InfoField label="Phone"><span>{userData.phone || '—'}</span></InfoField>
+                      <InfoField label="Email"><span>{userData.email || '—'}</span></InfoField>
+                    </>
                   </div>
                 </div>
 
@@ -881,55 +435,13 @@ export default function Account() {
                     fontWeight: 700, 
                     margin: 0 
                   }}>Saved Location</h2>
-                  {!isEditingAddress ? (
-                    <button onClick={() => setIsEditingAddress(true)} style={{ 
-                      fontSize: 'clamp(11px, 2vw, 13px)', 
-                      color: '#007aff', 
-                      background: 'none', 
-                      border: '1.5px solid #e5e5ea', 
-                      borderRadius: 50, 
-                      padding: '6px 14px', 
-                      cursor: 'pointer', 
-                      fontWeight: 600 
-                    }}><i className="fa-solid fa-pen" style={{ marginRight: 4 }}></i> Edit</button>
-                  ) : (
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <button onClick={() => setIsEditingAddress(false)} style={{ 
-                        fontSize: 'clamp(11px, 2vw, 13px)', 
-                        color: '#dc2626', 
-                        background: 'none', 
-                        border: 'none', 
-                        cursor: 'pointer', 
-                        fontWeight: 600 
-                      }}>Cancel</button>
-                      <button onClick={saveAddress} disabled={saving} style={{ 
-                        fontSize: 'clamp(11px, 2vw, 13px)', 
-                        color: '#fff', 
-                        background: '#007aff', 
-                        border: 'none', 
-                        borderRadius: 50, 
-                        padding: '6px 14px', 
-                        cursor: 'pointer', 
-                        fontWeight: 600 
-                      }}>{saving ? 'Saving...' : 'Save'}</button>
-                    </div>
-                  )}
+                    <span style={{ fontSize: 12, color: '#71717a' }}>Managed by Central Auth</span>
                 </div>
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
                   gap: '16px 24px' 
                 }}>
-                  {isEditingAddress ? (
-                    <>
-                      <InfoField label="Address Line 1"><input style={inputStyle} value={userData.address_line1} onChange={(e) => updateField('address_line1', e.target.value)} /></InfoField>
-                      <InfoField label="Address Line 2"><input style={inputStyle} value={userData.address_line2} onChange={(e) => updateField('address_line2', e.target.value)} /></InfoField>
-                      <InfoField label="City"><input style={inputStyle} value={userData.city} onChange={(e) => updateField('city', e.target.value)} /></InfoField>
-                      <InfoField label="State / Province"><input style={inputStyle} value={userData.state} onChange={(e) => updateField('state', e.target.value)} /></InfoField>
-                      <InfoField label="Postal Code"><input style={inputStyle} value={userData.postal_code} onChange={(e) => updateField('postal_code', e.target.value)} /></InfoField>
-                      <InfoField label="Country"><input style={inputStyle} value={userData.country} onChange={(e) => updateField('country', e.target.value)} /></InfoField>
-                    </>
-                  ) : (
                     <>
                       <InfoField label="Address Line 1"><span>{userData.address_line1 || '—'}</span></InfoField>
                       <InfoField label="Address Line 2"><span>{userData.address_line2 || '—'}</span></InfoField>
@@ -938,245 +450,32 @@ export default function Account() {
                       <InfoField label="Postal Code"><span>{userData.postal_code || '—'}</span></InfoField>
                       <InfoField label="Country"><span>{userData.country || '—'}</span></InfoField>
                     </>
-                  )}
+                    <p style={{ gridColumn: '1 / -1', margin: '4px 0 0', fontSize: 12, color: '#71717a' }}>
+                      Location details are read directly from Central Auth. Update them only in your Central Auth account.
+                    </p>
                 </div>
               </div>
             )}
 
-            {/* Card Auth Panel */}
-            {currentPanel === 'card-auth' && (
-              <div style={{ 
-                background: '#fff', 
-                borderRadius: 16, 
-                padding: 'clamp(20px, 4vw, 32px)', 
-                boxShadow: '0 1px 3px rgba(0,0,0,0.03)' 
-              }}>
-                <div style={{ textAlign: 'center', marginBottom: 28 }}>
-                  <div style={{ 
-                    width: 'clamp(48px, 8vw, 56px)', 
-                    height: 'clamp(48px, 8vw, 56px)', 
-                    background: '#0f0f0f',
-                    borderRadius: 12,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    margin: '0 auto clamp(12px, 2vw, 16px)'
-                  }}>
-                    <img src="/logo.png" alt="J" style={{ 
-                      width: 'clamp(24px, 4vw, 28px)', 
-                      height: 'clamp(24px, 4vw, 28px)', 
-                      borderRadius: 6 
-                    }} crossOrigin="anonymous" />
-                  </div>
-                  <h2 style={{ 
-                    fontFamily: "'Manrope', sans-serif", 
-                    fontSize: 'clamp(18px, 3vw, 22px)', 
-                    fontWeight: 700, 
-                    margin: '0 0 6px', 
-                    color: '#0f0f0f' 
-                  }}>JABIYEN Card Auth</h2>
-                  <p style={{ 
-                    fontSize: 'clamp(12px, 2vw, 14px)', 
-                    color: '#71717a', 
-                    margin: 0 
-                  }}>
-                    Generate your digital JABIYEN card for instant QR login
-                  </p>
+            {/* Biometric Sign-In Panel */}
+            {currentPanel === 'security' && (
+              <section style={{ background: '#fff', borderRadius: 16, padding: 'clamp(20px, 4vw, 32px)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
+                <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>Biometric sign-in</h2>
+                <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.6, margin: '0 0 18px' }}>
+                  Add a device passkey for this JABIYEN website using fingerprint, Face ID, Windows Hello, or your device screen lock. Your biometric data stays on your device.
+                </p>
+                <div style={{ borderRadius: 12, background: '#f5f5f7', padding: 14, fontSize: 12, color: '#555', lineHeight: 1.55, marginBottom: 18 }}>
+                  Passkeys are scoped to a website by browser security. A passkey registered on Central Auth may need a separate enrollment for JABIYEN.
                 </div>
-
-                {!qrVerified && (
-                  <div style={{ maxWidth: 400, margin: '0 auto', width: '100%' }}>
-                    <div style={{ marginBottom: 20 }}>
-                      <label style={{ 
-                        display: 'block', 
-                        fontSize: 'clamp(11px, 2vw, 13px)', 
-                        fontWeight: 600, 
-                        color: '#0f0f0f', 
-                        marginBottom: 8 
-                      }}>
-                        Verify Password <span style={{ color: '#dc2626' }}>*</span>
-                      </label>
-                      <div style={{ position: 'relative' }}>
-                        <input 
-                          type="password" value={qrPassword}
-                          onChange={(e) => { setQrPassword(e.target.value); setQrError(null); }}
-                          onKeyDown={(e) => { if (e.key === 'Enter') verifyPasswordForQR(); }}
-                          placeholder="Enter your password"
-                          style={{
-                            ...inputStyle, padding: '14px 16px', paddingRight: 48,
-                            borderColor: qrError ? '#dc2626' : '#e5e5ea',
-                            fontSize: 'clamp(14px, 2vw, 15px)', borderRadius: 12
-                          }}
-                        />
-                        <div style={{ position: 'absolute', right: 14, top: '50%', transform: 'translateY(-50%)', color: '#71717a' }}>
-                          <i className="fa-solid fa-lock" style={{ fontSize: 14 }}></i>
-                        </div>
-                      </div>
-                      {qrError && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#dc2626', marginTop: 6 }}>
-                          <i className="fa-solid fa-circle-exclamation" style={{ fontSize: 11 }}></i>
-                          <span>{qrError}</span>
-                        </div>
-                      )}
-                    </div>
-                    <button 
-                      onClick={verifyPasswordForQR}
-                      disabled={qrVerifying || !qrPassword}
-                      style={{
-                        width: '100%', padding: '14px 24px',
-                        background: qrVerifying || !qrPassword ? '#a1a1a6' : '#0f0f0f',
-                        color: '#fff', fontFamily: "'Inter', sans-serif",
-                        fontSize: 'clamp(14px, 2vw, 15px)', fontWeight: 600, border: 'none',
-                        borderRadius: 12, cursor: qrVerifying || !qrPassword ? 'not-allowed' : 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10
-                      }}
-                    >
-                      {qrVerifying ? (
-                        <>
-                          <span style={{ width: 20, height: 20, border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#fff', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
-                          Verifying...
-                        </>
-                      ) : (
-                        <>
-                          <i className="fa-solid fa-shield-check"></i>
-                          Generate My Card
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-                {qrVerified && (
-                  <div className="card-display-section" style={{ animation: 'fadeInUp 0.6s ease' }}>
-                    {/* Card Container with Horizontal Scroll */}
-                    <div className="card-scroll-container" style={{
-                      width: '100%',
-                      overflowX: 'auto',
-                      overflowY: 'visible',
-                      padding: '10px 0 20px',
-                      marginBottom: 24,
-                      WebkitOverflowScrolling: 'touch',
-                      scrollbarWidth: 'thin',
-                      scrollbarColor: '#c0c0c0 #f0f0f0',
-                      display: 'flex',
-                      justifyContent: 'flex-start',
-                      borderRadius: 12
-                    }}>
-                      <div ref={cardRef} style={{
-                        minWidth: 'max-content',
-                        flexShrink: 0,
-                        padding: '0 4px'
-                      }}>
-                        <JABIYENCard 
-                          userData={userData}
-                          fullName={fullName}
-                          username={username}
-                          getInitials={getInitials}
-                          qrContainerRef={qrContainerRef}
-                          qrGenerated={qrGenerated}
-                        />
-                      </div>
-                    </div>
-
-                    <div style={{ 
-                      display: 'flex', 
-                      justifyContent: 'center', 
-                      gap: 12,
-                      flexWrap: 'wrap' 
-                    }}>
-                      <button
-                        onClick={downloadCard}
-                        disabled={!qrGenerated || !cardImageUrl}
-                        style={{
-                          padding: '14px 28px',
-                          background: (qrGenerated && cardImageUrl) ? '#0f0f0f' : '#a1a1a6',
-                          color: '#fff', fontFamily: "'Inter', sans-serif",
-                          fontSize: 'clamp(13px, 2vw, 15px)', fontWeight: 600, border: 'none',
-                          borderRadius: 12, cursor: (qrGenerated && cardImageUrl) ? 'pointer' : 'not-allowed',
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          boxShadow: (qrGenerated && cardImageUrl) ? '0 4px 16px rgba(0,0,0,0.2)' : 'none',
-                          flex: '1 1 auto',
-                          justifyContent: 'center',
-                          maxWidth: 250
-                        }}
-                      >
-                        <i className="fa-solid fa-download"></i>
-                        Download Card
-                      </button>
-                      <button
-                        onClick={() => {
-                          setQrVerified(false); setQrGenerated(false);
-                          setQrPassword(''); setQrError(null); setCardImageUrl(null);
-                          if (qrContainerRef.current) qrContainerRef.current.innerHTML = '';
-                        }}
-                        style={{
-                          padding: '14px 20px', background: '#f4f4f5', color: '#0f0f0f',
-                          fontFamily: "'Inter', sans-serif", fontSize: 'clamp(13px, 2vw, 15px)', fontWeight: 600,
-                          border: 'none', borderRadius: 12, cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          flex: '1 1 auto',
-                          justifyContent: 'center',
-                          maxWidth: 200
-                        }}
-                      >
-                        <i className="fa-solid fa-rotate"></i>
-                        Reset
-                      </button>
-                    </div>
-
-                    <p style={{ 
-                      textAlign: 'center', 
-                      fontSize: 'clamp(10px, 1.5vw, 12px)', 
-                      color: '#71717a', 
-                      marginTop: 12,
-                      wordBreak: 'break-all'
-                    }}>
-                      File: <strong style={{ color: '#0f0f0f' }}>{username}-jabiyen-auth.png</strong>
-                    </p>
-                  </div>
-                )}
-
-                <div style={{
-                  marginTop: 32, padding: '14px 16px',
-                  background: '#fef3c7', borderRadius: 12,
-                  border: '1px solid #fcd34d', display: 'flex', gap: 10,
-                  maxWidth: 520, margin: '32px auto 0',
-                  flexWrap: 'wrap'
-                }}>
-                  <i className="fa-solid fa-triangle-exclamation" style={{ color: '#d97706', fontSize: 16, marginTop: 1, flexShrink: 0 }}></i>
-                  <div style={{ fontSize: 'clamp(11px, 1.5vw, 12px)', color: '#92400e', lineHeight: 1.5, flex: 1 }}>
-                    <strong style={{ color: '#b45309' }}>Security Note:</strong> Your JABIYEN card contains encrypted login credentials. Keep it secure. The QR code provides instant authentication.
-                  </div>
-                </div>
-              </div>
+                <button type="button" onClick={registerPasskey} disabled={passkeyWorking} style={{ border: 0, borderRadius: 12, padding: '13px 18px', background: passkeyWorking ? '#888' : '#0f0f0f', color: '#fff', fontWeight: 600, cursor: passkeyWorking ? 'wait' : 'pointer' }}>
+                  {passkeyWorking ? 'Waiting for device verification…' : 'Enable biometric sign-in on this device'}
+                </button>
+                {passkeyMessage && <p role="status" style={{ margin: '14px 0 0', fontSize: 13, color: passkeyMessage.type === 'success' ? '#047857' : '#b91c1c' }}>{passkeyMessage.text}</p>}
+              </section>
             )}
           </div>
         </div>
       </div>
-
-      {/* Toast Notification */}
-      {toast && (
-        <div style={{ 
-          position: 'fixed', 
-          top: 24, 
-          left: '50%', 
-          transform: 'translateX(-50%)', 
-          background: toast.type === 'error' ? '#dc2626' : '#0f0f0f', 
-          color: '#fff', 
-          padding: '14px 24px', 
-          borderRadius: 50, 
-          fontSize: 'clamp(12px, 2vw, 14px)', 
-          fontWeight: 500, 
-          zIndex: 9999, 
-          boxShadow: '0 12px 40px rgba(0,0,0,0.25)', 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 10,
-          maxWidth: '90vw',
-          textAlign: 'center'
-        }}>
-          <i className={`fa-solid fa-circle-${toast.type === 'error' ? 'exclamation' : 'check'}`}></i>
-          <span>{toast.message}</span>
-        </div>
-      )}
 
       {/* Logout Modal */}
       {showLogoutModal && (
@@ -1266,34 +565,6 @@ export default function Account() {
           100% { background-position: 200% 0; } 
         }
         
-        /* Card scroll container styling */
-        .card-scroll-container::-webkit-scrollbar {
-          height: 6px;
-        }
-        .card-scroll-container::-webkit-scrollbar-track {
-          background: #f0f0f0;
-          border-radius: 10px;
-        }
-        .card-scroll-container::-webkit-scrollbar-thumb {
-          background: #c0c0c0;
-          border-radius: 10px;
-        }
-        .card-scroll-container::-webkit-scrollbar-thumb:hover {
-          background: #a0a0a0;
-        }
-
-        /* Responsive card scaling */
-        @media (max-width: 640px) {
-          .card-scroll-container {
-            padding: 10px 0 16px;
-          }
-        }
-
-        @media (min-width: 641px) and (max-width: 1024px) {
-          .card-scroll-container {
-            padding: 12px 0 18px;
-          }
-        }
       `}</style>
     </>
   );
