@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { startAuthentication } from '@simplewebauthn/browser';
 import Head from 'next/head';
 import Link from 'next/link';
 
@@ -46,8 +45,10 @@ export default function SignIn() {
   const [touched, setTouched] = useState({});
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
-  const [passkeyError, setPasskeyError] = useState(null);
   const [manualToken, setManualToken] = useState('');
+  const [showTokenForm, setShowTokenForm] = useState(false);
+  const [tokenLoginLoading, setTokenLoginLoading] = useState(false);
+  const [tokenLoginError, setTokenLoginError] = useState(null);
   
   // QR Scanner states
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -60,6 +61,7 @@ export default function SignIn() {
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const handoffTokenHandled = useRef(false);
 
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
@@ -217,38 +219,13 @@ export default function SignIn() {
     setLoading(false);
   };
 
-  // QR codes contain a one-time Central Auth token, never an email/password pair.
-  const loginWithPasskey = async () => {
+  // WebAuthn credentials are origin-bound; Central Auth performs the biometric check.
+  const loginWithPasskey = () => {
     setPasskeyLoading(true);
-    setPasskeyError(null);
-    try {
-      const optionsResponse = await fetch('/api/auth/passkey/options', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({})
-      });
-      const optionsResult = await optionsResponse.json().catch(() => ({}));
-      if (!optionsResponse.ok) throw new Error(apiErrorMessage(optionsResult, 'Passkey sign-in is unavailable.'));
-      const optionsPayload = optionsResult.data || optionsResult;
-      const response = await startAuthentication({ optionsJSON: optionsPayload.options });
-      const verifyResponse = await fetch('/api/auth/passkey/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ challenge_id: optionsPayload.challenge_id, challenge: optionsPayload.options.challenge, response })
-      });
-      const verifyResult = await verifyResponse.json().catch(() => ({}));
-      if (!verifyResponse.ok) throw new Error(apiErrorMessage(verifyResult, 'Passkey sign-in failed.'));
-      const payload = verifyResult.data || verifyResult;
-      if (!payload.session?.access_token) throw new Error('Central Auth did not return a sign-in session.');
-      saveSession(payload.session);
-      await recordProjectAccess(payload.session.access_token, 'token_verified');
-      window.location.href = '/auth/account';
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Passkey sign-in was cancelled.';
-        setPasskeyError(message.includes('NotAllowedError') ? 'No JABIYEN passkey was selected, or verification was cancelled. Sign in with Central Auth first, then add a passkey under Account → Biometric Sign-In.' : message);
-    } finally {
-      setPasskeyLoading(false);
-    }
+    const centralAuthUrl = new URL('/signin', 'https://auth-binzeo.vercel.app');
+    centralAuthUrl.searchParams.set('handoff', 'jabiyen');
+    centralAuthUrl.searchParams.set('method', 'passkey');
+    window.location.assign(centralAuthUrl.toString());
   };
 
   const parseQRToken = (data) => {
@@ -258,14 +235,20 @@ export default function SignIn() {
       const parsed = JSON.parse(raw);
       const token = parsed.token || parsed.login_token || parsed.temporary_token || parsed.access_token;
       return token && token.length >= 20 ? token : null;
-    } catch {
-      try {
-        const params = new URLSearchParams(raw);
-        const token = params.get('token') || params.get('login_token') || params.get('temporary_token');
-        if (token && token.length >= 20) return token;
-      } catch { /* fall through to raw token */ }
-      return raw.length >= 20 && !raw.includes(':') ? raw : null;
-    }
+    } catch { /* try URL/query token formats below */ }
+    try {
+      const url = new URL(raw);
+      const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+      const token = url.searchParams.get('temporary_token') || url.searchParams.get('login_token') || url.searchParams.get('token') ||
+        hashParams.get('temporary_token') || hashParams.get('login_token') || hashParams.get('token');
+      if (token && token.length >= 20) return token;
+    } catch { /* try raw query/string formats below */ }
+    try {
+      const params = new URLSearchParams(raw.replace(/^[?#]/, ''));
+      const token = params.get('temporary_token') || params.get('login_token') || params.get('token');
+      if (token && token.length >= 20) return token;
+    } catch { /* fall through to raw token */ }
+    return raw.length >= 20 && !raw.includes(':') ? raw : null;
   };
 
   const loginWithToken = async (token) => {
@@ -288,6 +271,52 @@ export default function SignIn() {
       return { success: false, error: err.message || 'Network error. Please check your connection.' };
     }
   };
+
+  const submitManualToken = async () => {
+    const token = parseQRToken(manualToken);
+    if (!token) {
+      setTokenLoginError('Enter a valid Central Auth one-time token.');
+      return;
+    }
+    setTokenLoginError(null);
+    setTokenLoginLoading(true);
+    const result = await loginWithToken(token);
+    setTokenLoginLoading(false);
+    if (result.success) {
+      setManualToken('');
+      setShowTokenForm(false);
+      showToast('Signed in successfully! Redirecting...', 'success');
+      setTimeout(() => window.location.replace(result.redirect || '/auth/account'), 500);
+    } else {
+      setTokenLoginError(result.error || 'This token is invalid, expired, or already used.');
+    }
+  };
+
+  useEffect(() => {
+    if (handoffTokenHandled.current) return;
+    const token = new URLSearchParams(window.location.hash.replace(/^#/, '')).get('temporary_token');
+    if (!token) return;
+    handoffTokenHandled.current = true;
+    window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`);
+    setTokenLoginLoading(true);
+    setToast({ message: 'Verifying your Central Auth sign-in…', type: 'success' });
+    void loginWithToken(token).then((result) => {
+      setTokenLoginLoading(false);
+      if (result.success) {
+        setToast({ message: 'Biometric sign-in verified. Redirecting…', type: 'success' });
+        window.location.replace(result.redirect || '/auth/account');
+      } else {
+        setManualToken(token);
+        setTokenLoginError(result.error || 'The Central Auth handoff token expired. Please try again.');
+        setShowTokenForm(true);
+      }
+    }).catch(() => {
+      setTokenLoginLoading(false);
+      setManualToken(token);
+      setTokenLoginError('Could not complete Central Auth sign-in. Please try again.');
+      setShowTokenForm(true);
+    });
+  }, [loginWithToken]);
 
   const processQRData = async (data) => {
     if (!data) return;
@@ -477,25 +506,48 @@ export default function SignIn() {
             <p style={{ fontSize: 14, color: '#86868b', margin: 0 }}>Sign in to continue your journey</p>
           </div>
 
-          {/* ===== JABIYEN CARD AUTH (QR Scanner) ===== */}
-          <button 
+          {/* Central Auth QR and one-time token are separate sign-in methods. */}
+          <button
+            type="button"
             onClick={openQRScanner}
-            onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.borderColor = '#c4c7cc'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.borderColor = '#dadce0'; }}
             style={socialButtonStyle}
           >
-            <img 
-              src="/logo.png" 
-              alt="JABIYEN" 
-              style={{ 
-                width: 20, height: 20, 
-                borderRadius: 4,
-                flexShrink: 0,
-                objectFit: 'contain'
-              }} 
-            />
-            <span style={{ flex: 1, textAlign: 'center' }}>JABIYEN Card Auth</span>
+            <i className="fa-solid fa-qrcode" style={{ width: 20, fontSize: 17, color: '#5f6368' }}></i>
+            <span style={{ flex: 1, textAlign: 'center' }}>Scan Central Auth QR Code</span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => { setShowTokenForm((current) => !current); setTokenLoginError(null); }}
+            style={socialButtonStyle}
+          >
+            <i className="fa-solid fa-key" style={{ width: 20, fontSize: 17, color: '#5f6368' }}></i>
+            <span style={{ flex: 1, textAlign: 'center' }}>Enter One-Time Token</span>
+          </button>
+          {showTokenForm && (
+            <div style={{ border: '1.5px solid #dadce0', borderRadius: 14, padding: 16, marginBottom: 16, background: '#fafafa' }}>
+              <label htmlFor="manual-login-token" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 7 }}>
+                Central Auth one-time token
+              </label>
+              <input
+                id="manual-login-token"
+                value={manualToken}
+                onChange={(event) => setManualToken(event.target.value)}
+                onKeyDown={(event) => { if (event.key === 'Enter' && manualToken.trim()) void submitManualToken(); }}
+                autoComplete="one-time-code"
+                placeholder="Paste token"
+                style={{ ...inputStyle, fontSize: 13, padding: '10px 12px' }}
+                disabled={tokenLoginLoading}
+              />
+              {tokenLoginError && <p role="alert" style={{ margin: '8px 0 0', color: '#b91c1c', fontSize: 12 }}>{tokenLoginError}</p>}
+              <button
+                type="button"
+                onClick={() => void submitManualToken()}
+                disabled={!manualToken.trim() || tokenLoginLoading}
+                style={{ width: '100%', marginTop: 9, border: 0, borderRadius: 10, padding: '11px 14px', background: !manualToken.trim() || tokenLoginLoading ? '#a1a1a6' : '#1d1d1f', color: '#fff', fontWeight: 600, cursor: !manualToken.trim() || tokenLoginLoading ? 'not-allowed' : 'pointer' }}
+              >{tokenLoginLoading ? 'Verifying token…' : 'Sign in with token'}</button>
+            </div>
+          )}
 
           <button
             type="button"
@@ -504,9 +556,9 @@ export default function SignIn() {
             style={{ ...socialButtonStyle, background: passkeyLoading ? '#f5f5f7' : '#fff' }}
           >
             <i className="fa-solid fa-fingerprint" style={{ width: 20, fontSize: 17, color: '#5f6368' }}></i>
-            <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Waiting for biometric verification…' : 'Sign in with fingerprint / Face ID'}</span>
+            <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Opening Central Auth…' : 'Sign in with fingerprint / Face ID'}</span>
           </button>
-          {passkeyError && <p role="alert" style={{ margin: '-8px 0 16px', fontSize: 12, color: '#b91c1c', textAlign: 'center' }}>{passkeyError}</p>}
+          <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>Passkey verification is handled by Central Auth.</p>
 
           {/* ===== CONTINUE WITH EMAIL ===== */}
           {!showEmailForm ? (
@@ -866,27 +918,7 @@ export default function SignIn() {
                 </p>
               </div>
             )}
-            {!qrSuccess && (
-              <div style={{ marginTop: 18, borderTop: '1px solid #eee', paddingTop: 16 }}>
-                <label htmlFor="manual-login-token" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 7 }}>Or paste a one-time Central Auth token</label>
-                <input
-                  id="manual-login-token"
-                  value={manualToken}
-                  onChange={(event) => setManualToken(event.target.value)}
-                  onKeyDown={(event) => { if (event.key === 'Enter' && manualToken.trim()) void processQRData(manualToken); }}
-                  autoComplete="one-time-code"
-                  placeholder="Paste token"
-                  style={{ ...inputStyle, fontSize: 13, padding: '10px 12px' }}
-                  disabled={qrLoginLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => void processQRData(manualToken)}
-                  disabled={!manualToken.trim() || qrLoginLoading}
-                  style={{ width: '100%', marginTop: 9, border: 0, borderRadius: 10, padding: '11px 14px', background: !manualToken.trim() || qrLoginLoading ? '#a1a1a6' : '#1d1d1f', color: '#fff', fontWeight: 600, cursor: !manualToken.trim() || qrLoginLoading ? 'not-allowed' : 'pointer' }}
-                >Continue with token</button>
-              </div>
-            )}
+
           </div>
         </div>
       )}
