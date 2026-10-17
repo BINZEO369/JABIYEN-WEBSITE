@@ -45,6 +45,10 @@ export default function SignIn() {
   const [touched, setTouched] = useState({});
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyError, setPasskeyError] = useState(null);
+  const passkeyPopupRef = useRef(null);
+  const passkeyPopupMessageHandlerRef = useRef(null);
+  const passkeyPopupPollRef = useRef(null);
   const [manualToken, setManualToken] = useState('');
   const [showTokenForm, setShowTokenForm] = useState(false);
   const [tokenLoginLoading, setTokenLoginLoading] = useState(false);
@@ -87,6 +91,11 @@ export default function SignIn() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      if (passkeyPopupMessageHandlerRef.current) {
+        window.removeEventListener('message', passkeyPopupMessageHandlerRef.current);
+      }
+      if (passkeyPopupPollRef.current) window.clearInterval(passkeyPopupPollRef.current);
+      if (passkeyPopupRef.current && !passkeyPopupRef.current.closed) passkeyPopupRef.current.close();
     };
   }, []);
 
@@ -264,13 +273,53 @@ export default function SignIn() {
     }
   };
 
-  // WebAuthn credentials are origin-bound; Central Auth performs the biometric check.
+  // WebAuthn credentials are origin-bound; keep JABIYEN open while Central Auth verifies in a popup.
   const loginWithPasskey = () => {
-    setPasskeyLoading(true);
+    setPasskeyError(null);
     const centralAuthUrl = new URL('/signin', 'https://auth-binzeo.vercel.app');
     centralAuthUrl.searchParams.set('handoff', 'jabiyen');
     centralAuthUrl.searchParams.set('method', 'passkey');
-    window.location.assign(centralAuthUrl.toString());
+    const popup = window.open(centralAuthUrl.toString(), 'jabiyen-central-passkey', 'popup,width=480,height=720,resizable=yes,scrollbars=yes');
+    if (!popup) {
+      setPasskeyError('Allow pop-up windows to complete Central Auth passkey verification.');
+      return;
+    }
+
+    passkeyPopupRef.current = popup;
+    setPasskeyLoading(true);
+    const cleanup = () => {
+      if (passkeyPopupMessageHandlerRef.current) {
+        window.removeEventListener('message', passkeyPopupMessageHandlerRef.current);
+      }
+      if (passkeyPopupPollRef.current) window.clearInterval(passkeyPopupPollRef.current);
+      passkeyPopupMessageHandlerRef.current = null;
+      passkeyPopupPollRef.current = null;
+      passkeyPopupRef.current = null;
+    };
+    const handleMessage = async (event) => {
+      if (event.origin !== window.location.origin || event.source !== popup) return;
+      if (event.data?.type !== 'JABIYEN_CENTRAL_AUTH_HANDOFF' || typeof event.data.token !== 'string') return;
+      cleanup();
+      if (!popup.closed) popup.close();
+      const result = await loginWithToken(event.data.token);
+      setPasskeyLoading(false);
+      if (result.success && result.requiresTwoFactor) return;
+      if (result.success) {
+        showToast('Passkey verified. Signing you in…', 'success');
+        setTimeout(() => window.location.replace(result.redirect || '/auth/account'), 500);
+      } else {
+        setPasskeyError(result.error || 'Central Auth passkey verification failed. Please try again.');
+      }
+    };
+    passkeyPopupMessageHandlerRef.current = handleMessage;
+    window.addEventListener('message', handleMessage);
+    passkeyPopupPollRef.current = window.setInterval(() => {
+      if (popup.closed) {
+        cleanup();
+        setPasskeyLoading(false);
+        setPasskeyError('Passkey sign-in window was closed before verification finished.');
+      }
+    }, 500);
   };
 
   const parseQRToken = (data) => {
@@ -357,6 +406,11 @@ export default function SignIn() {
     if (!token) return;
     handoffTokenHandled.current = true;
     window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`);
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: 'JABIYEN_CENTRAL_AUTH_HANDOFF', token }, window.location.origin);
+      window.close();
+      return;
+    }
     setTokenLoginLoading(true);
     setToast({ message: 'Verifying your Central Auth sign-in…', type: 'success' });
     void loginWithToken(token).then((result) => {
@@ -621,9 +675,10 @@ export default function SignIn() {
             style={{ ...socialButtonStyle, background: passkeyLoading ? '#f5f5f7' : '#fff' }}
           >
             <i className="fa-solid fa-fingerprint" style={{ width: 20, fontSize: 17, color: '#5f6368' }}></i>
-            <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Opening Central Auth…' : 'Sign in with fingerprint / Face ID'}</span>
+            <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Waiting for passkey verification…' : 'Sign in with fingerprint / Face ID'}</span>
           </button>
-          <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>Passkey verification is handled by Central Auth.</p>
+          {passkeyError && <p role="alert" style={{ margin: '-8px 0 12px', fontSize: 12, color: '#b91c1c', textAlign: 'center' }}>{passkeyError}</p>}
+          <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>Your passkey stays managed in Central Auth; JABIYEN only uses the verified sign-in handoff.</p>
 
           {/* ===== CONTINUE WITH EMAIL ===== */}
           {twoFactorChallengeId ? (
