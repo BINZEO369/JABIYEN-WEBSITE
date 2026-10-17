@@ -307,6 +307,17 @@ export default function SignIn() {
       const result = await res.json().catch(() => ({}));
       if (!res.ok) return { success: false, error: apiErrorMessage(result, 'Invalid or expired login token') };
       const payload = result.data || result;
+      if (payload.requires_two_factor) {
+        if (!payload.challenge_id) return { success: false, error: 'The 2FA challenge could not be started. Please try again.' };
+        setTwoFactorChallengeId(payload.challenge_id);
+        setTwoFactorCode('');
+        setTwoFactorError(null);
+        setShowEmailForm(false);
+        setShowTokenForm(false);
+        setManualToken('');
+        showToast('A 6-digit sign-in verification code was sent to your email.', 'success');
+        return { success: true, requiresTwoFactor: true, data: result };
+      }
       if (payload.session) {
         saveSession(payload.session);
         await recordProjectAccess(payload.session.access_token, 'token_verified');
@@ -327,7 +338,10 @@ export default function SignIn() {
     setTokenLoginLoading(true);
     const result = await loginWithToken(token);
     setTokenLoginLoading(false);
-    if (result.success) {
+    if (result.success && result.requiresTwoFactor) {
+      setManualToken('');
+      setShowTokenForm(false);
+    } else if (result.success) {
       setManualToken('');
       setShowTokenForm(false);
       showToast('Signed in successfully! Redirecting...', 'success');
@@ -347,7 +361,9 @@ export default function SignIn() {
     setToast({ message: 'Verifying your Central Auth sign-in…', type: 'success' });
     void loginWithToken(token).then((result) => {
       setTokenLoginLoading(false);
-      if (result.success) {
+      if (result.success && result.requiresTwoFactor) {
+        setToast({ message: 'A 6-digit sign-in verification code was sent to your email.', type: 'success' });
+      } else if (result.success) {
         setToast({ message: 'Biometric sign-in verified. Redirecting…', type: 'success' });
         window.location.replace(result.redirect || '/auth/account');
       } else {
@@ -379,7 +395,11 @@ export default function SignIn() {
     setQrError(null);
     const result = await loginWithToken(token);
 
-    if (result.success) {
+    if (result.success && result.requiresTwoFactor) {
+      setQrLoginLoading(false);
+      setShowQRScanner(false);
+      setQrSuccess(false);
+    } else if (result.success) {
       setQrSuccess(true);
       setQrLoginLoading(false);
       setTimeout(() => {
