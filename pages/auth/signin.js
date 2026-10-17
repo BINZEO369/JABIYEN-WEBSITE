@@ -49,6 +49,10 @@ export default function SignIn() {
   const [showTokenForm, setShowTokenForm] = useState(false);
   const [tokenLoginLoading, setTokenLoginLoading] = useState(false);
   const [tokenLoginError, setTokenLoginError] = useState(null);
+  const [twoFactorChallengeId, setTwoFactorChallengeId] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorError, setTwoFactorError] = useState(null);
+  const [twoFactorLoading, setTwoFactorLoading] = useState(false);
   
   // QR Scanner states
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -210,13 +214,54 @@ export default function SignIn() {
         showToast(msg, 'error');
       }
     } else {
-      showToast('Signed in successfully! Redirecting...', 'success');
-      setTimeout(() => {
-        window.location.href = result.redirect;
-      }, 800);
+      const payload = result.data?.data || result.data;
+      if (payload?.requires_two_factor) {
+        if (!payload.challenge_id) {
+          setAlert('The 2FA challenge could not be started. Please try again.');
+        } else {
+          setTwoFactorChallengeId(payload.challenge_id);
+          setTwoFactorCode('');
+          setTwoFactorError(null);
+          showToast('A 6-digit sign-in verification code was sent to your email.', 'success');
+        }
+      } else {
+        showToast('Signed in successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = result.redirect;
+        }, 800);
+      }
     }
 
     setLoading(false);
+  };
+
+  const handleTwoFactorSubmit = async (e) => {
+    e.preventDefault();
+    setTwoFactorLoading(true);
+    setTwoFactorError(null);
+    try {
+      const res = await fetch('/api/auth/two-factor/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge_id: twoFactorChallengeId, code: twoFactorCode })
+      });
+      const result = await res.json();
+      const payload = result.data || result;
+      if (!res.ok || !result.success || !payload.session?.access_token) {
+        setTwoFactorError(apiErrorMessage(result, '2FA verification failed. Check the code and try again.'));
+        return;
+      }
+      saveSession(payload.session);
+      await recordProjectAccess(payload.session.access_token, 'token_verified');
+      setTwoFactorChallengeId('');
+      setTwoFactorCode('');
+      showToast('2FA verified. Signing you in...', 'success');
+      setTimeout(() => window.location.replace('/auth/account'), 500);
+    } catch (err) {
+      setTwoFactorError(err.message || '2FA verification failed. Please try again.');
+    } finally {
+      setTwoFactorLoading(false);
+    }
   };
 
   // WebAuthn credentials are origin-bound; Central Auth performs the biometric check.
@@ -561,7 +606,21 @@ export default function SignIn() {
           <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>Passkey verification is handled by Central Auth.</p>
 
           {/* ===== CONTINUE WITH EMAIL ===== */}
-          {!showEmailForm ? (
+          {twoFactorChallengeId ? (
+            <div style={{ border: '1.5px solid #dadce0', borderRadius: 16, padding: '24px 20px 20px', marginTop: 4, background: '#fafafa' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#1d1d1f' }}>Verify your sign-in</span>
+                <button type="button" onClick={() => { setTwoFactorChallengeId(''); setTwoFactorCode(''); setTwoFactorError(null); setShowEmailForm(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868b', fontSize: 13 }}>Back</button>
+              </div>
+              <p style={{ fontSize: 13, color: '#68686d', margin: '0 0 16px' }}>We sent a 6-digit verification code to your email. It expires in 30 seconds.</p>
+              {twoFactorError && <p role="alert" style={{ color: '#b91c1c', fontSize: 12, margin: '0 0 12px' }}>{twoFactorError}</p>}
+              <form onSubmit={handleTwoFactorSubmit} noValidate>
+                <label htmlFor="email-two-factor-code" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 7 }}>6-digit verification code</label>
+                <input id="email-two-factor-code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={twoFactorCode} onChange={(event) => setTwoFactorCode(event.target.value.replace(/\D/g, '').slice(0, 6))} required autoComplete="one-time-code" placeholder="000000" style={{ ...inputStyle, textAlign: 'center', letterSpacing: '0.35em' }} />
+                <button type="submit" disabled={twoFactorLoading || twoFactorCode.length !== 6} style={{ width: '100%', marginTop: 12, border: 0, borderRadius: 10, padding: '11px 14px', background: twoFactorLoading || twoFactorCode.length !== 6 ? '#a1a1a6' : '#1d1d1f', color: '#fff', fontWeight: 600, cursor: twoFactorLoading || twoFactorCode.length !== 6 ? 'not-allowed' : 'pointer' }}>{twoFactorLoading ? 'Verifying…' : 'Verify and sign in'}</button>
+              </form>
+            </div>
+          ) : !showEmailForm ? (
             <button 
               onClick={() => setShowEmailForm(true)}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.borderColor = '#c4c7cc'; }}
