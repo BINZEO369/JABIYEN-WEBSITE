@@ -678,7 +678,7 @@ export default function SignIn() {
             <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Waiting for passkey verification…' : 'Sign in with fingerprint / Face ID'}</span>
           </button>
           {passkeyError && <p role="alert" style={{ margin: '-8px 0 12px', fontSize: 12, color: '#b91c1c', textAlign: 'center' }}>{passkeyError}</p>}
-          <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>Your passkey stays managed in Central Auth; JABIYEN only uses the verified sign-in handoff.</p>
+          <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>A secure Central Auth window verifies your saved passkey; this JABIYEN page stays open and signs you in automatically when verification finishes.</p>
 
           {/* ===== CONTINUE WITH EMAIL ===== */}
           {twoFactorChallengeId ? (
