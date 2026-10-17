@@ -45,10 +45,18 @@ export default function SignIn() {
   const [touched, setTouched] = useState({});
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [passkeyLoading, setPasskeyLoading] = useState(false);
+  const [passkeyError, setPasskeyError] = useState(null);
+  const passkeyPopupRef = useRef(null);
+  const passkeyPopupMessageHandlerRef = useRef(null);
+  const passkeyPopupPollRef = useRef(null);
   const [manualToken, setManualToken] = useState('');
   const [showTokenForm, setShowTokenForm] = useState(false);
   const [tokenLoginLoading, setTokenLoginLoading] = useState(false);
   const [tokenLoginError, setTokenLoginError] = useState(null);
+  const [twoFactorChallengeId, setTwoFactorChallengeId] = useState('');
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [twoFactorError, setTwoFactorError] = useState(null);
+  const [twoFactorLoading, setTwoFactorLoading] = useState(false);
   
   // QR Scanner states
   const [showQRScanner, setShowQRScanner] = useState(false);
@@ -83,6 +91,11 @@ export default function SignIn() {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
       }
+      if (passkeyPopupMessageHandlerRef.current) {
+        window.removeEventListener('message', passkeyPopupMessageHandlerRef.current);
+      }
+      if (passkeyPopupPollRef.current) window.clearInterval(passkeyPopupPollRef.current);
+      if (passkeyPopupRef.current && !passkeyPopupRef.current.closed) passkeyPopupRef.current.close();
     };
   }, []);
 
@@ -210,22 +223,103 @@ export default function SignIn() {
         showToast(msg, 'error');
       }
     } else {
-      showToast('Signed in successfully! Redirecting...', 'success');
-      setTimeout(() => {
-        window.location.href = result.redirect;
-      }, 800);
+      const payload = result.data?.data || result.data;
+      if (payload?.requires_two_factor) {
+        if (!payload.challenge_id) {
+          setAlert('The 2FA challenge could not be started. Please try again.');
+        } else {
+          setTwoFactorChallengeId(payload.challenge_id);
+          setTwoFactorCode('');
+          setTwoFactorError(null);
+          showToast('A 6-digit sign-in verification code was sent to your email.', 'success');
+        }
+      } else {
+        showToast('Signed in successfully! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = result.redirect;
+        }, 800);
+      }
     }
 
     setLoading(false);
   };
 
-  // WebAuthn credentials are origin-bound; Central Auth performs the biometric check.
+  const handleTwoFactorSubmit = async (e) => {
+    e.preventDefault();
+    setTwoFactorLoading(true);
+    setTwoFactorError(null);
+    try {
+      const res = await fetch('/api/auth/two-factor/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ challenge_id: twoFactorChallengeId, code: twoFactorCode })
+      });
+      const result = await res.json();
+      const payload = result.data || result;
+      if (!res.ok || !result.success || !payload.session?.access_token) {
+        setTwoFactorError(apiErrorMessage(result, '2FA verification failed. Check the code and try again.'));
+        return;
+      }
+      saveSession(payload.session);
+      await recordProjectAccess(payload.session.access_token, 'token_verified');
+      setTwoFactorChallengeId('');
+      setTwoFactorCode('');
+      showToast('2FA verified. Signing you in...', 'success');
+      setTimeout(() => window.location.replace('/auth/account'), 500);
+    } catch (err) {
+      setTwoFactorError(err.message || '2FA verification failed. Please try again.');
+    } finally {
+      setTwoFactorLoading(false);
+    }
+  };
+
+  // WebAuthn credentials are origin-bound; keep JABIYEN open while Central Auth verifies in a popup.
   const loginWithPasskey = () => {
-    setPasskeyLoading(true);
+    setPasskeyError(null);
     const centralAuthUrl = new URL('/signin', 'https://auth-binzeo.vercel.app');
     centralAuthUrl.searchParams.set('handoff', 'jabiyen');
     centralAuthUrl.searchParams.set('method', 'passkey');
-    window.location.assign(centralAuthUrl.toString());
+    const popup = window.open(centralAuthUrl.toString(), 'jabiyen-central-passkey', 'popup,width=480,height=720,resizable=yes,scrollbars=yes');
+    if (!popup) {
+      setPasskeyError('Allow pop-up windows to complete Central Auth passkey verification.');
+      return;
+    }
+
+    passkeyPopupRef.current = popup;
+    setPasskeyLoading(true);
+    const cleanup = () => {
+      if (passkeyPopupMessageHandlerRef.current) {
+        window.removeEventListener('message', passkeyPopupMessageHandlerRef.current);
+      }
+      if (passkeyPopupPollRef.current) window.clearInterval(passkeyPopupPollRef.current);
+      passkeyPopupMessageHandlerRef.current = null;
+      passkeyPopupPollRef.current = null;
+      passkeyPopupRef.current = null;
+    };
+    const handleMessage = async (event) => {
+      if (event.origin !== window.location.origin || event.source !== popup) return;
+      if (event.data?.type !== 'JABIYEN_CENTRAL_AUTH_HANDOFF' || typeof event.data.token !== 'string') return;
+      cleanup();
+      if (!popup.closed) popup.close();
+      const result = await loginWithToken(event.data.token);
+      setPasskeyLoading(false);
+      if (result.success && result.requiresTwoFactor) return;
+      if (result.success) {
+        showToast('Passkey verified. Signing you in…', 'success');
+        setTimeout(() => window.location.replace(result.redirect || '/auth/account'), 500);
+      } else {
+        setPasskeyError(result.error || 'Central Auth passkey verification failed. Please try again.');
+      }
+    };
+    passkeyPopupMessageHandlerRef.current = handleMessage;
+    window.addEventListener('message', handleMessage);
+    passkeyPopupPollRef.current = window.setInterval(() => {
+      if (popup.closed) {
+        cleanup();
+        setPasskeyLoading(false);
+        setPasskeyError('Passkey sign-in window was closed before verification finished.');
+      }
+    }, 500);
   };
 
   const parseQRToken = (data) => {
@@ -262,6 +356,17 @@ export default function SignIn() {
       const result = await res.json().catch(() => ({}));
       if (!res.ok) return { success: false, error: apiErrorMessage(result, 'Invalid or expired login token') };
       const payload = result.data || result;
+      if (payload.requires_two_factor) {
+        if (!payload.challenge_id) return { success: false, error: 'The 2FA challenge could not be started. Please try again.' };
+        setTwoFactorChallengeId(payload.challenge_id);
+        setTwoFactorCode('');
+        setTwoFactorError(null);
+        setShowEmailForm(false);
+        setShowTokenForm(false);
+        setManualToken('');
+        showToast('A 6-digit sign-in verification code was sent to your email.', 'success');
+        return { success: true, requiresTwoFactor: true, data: result };
+      }
       if (payload.session) {
         saveSession(payload.session);
         await recordProjectAccess(payload.session.access_token, 'token_verified');
@@ -282,7 +387,10 @@ export default function SignIn() {
     setTokenLoginLoading(true);
     const result = await loginWithToken(token);
     setTokenLoginLoading(false);
-    if (result.success) {
+    if (result.success && result.requiresTwoFactor) {
+      setManualToken('');
+      setShowTokenForm(false);
+    } else if (result.success) {
       setManualToken('');
       setShowTokenForm(false);
       showToast('Signed in successfully! Redirecting...', 'success');
@@ -298,11 +406,18 @@ export default function SignIn() {
     if (!token) return;
     handoffTokenHandled.current = true;
     window.history.replaceState(null, document.title, `${window.location.pathname}${window.location.search}`);
+    if (window.opener && !window.opener.closed) {
+      window.opener.postMessage({ type: 'JABIYEN_CENTRAL_AUTH_HANDOFF', token }, window.location.origin);
+      window.close();
+      return;
+    }
     setTokenLoginLoading(true);
     setToast({ message: 'Verifying your Central Auth sign-in…', type: 'success' });
     void loginWithToken(token).then((result) => {
       setTokenLoginLoading(false);
-      if (result.success) {
+      if (result.success && result.requiresTwoFactor) {
+        setToast({ message: 'A 6-digit sign-in verification code was sent to your email.', type: 'success' });
+      } else if (result.success) {
         setToast({ message: 'Biometric sign-in verified. Redirecting…', type: 'success' });
         window.location.replace(result.redirect || '/auth/account');
       } else {
@@ -334,7 +449,11 @@ export default function SignIn() {
     setQrError(null);
     const result = await loginWithToken(token);
 
-    if (result.success) {
+    if (result.success && result.requiresTwoFactor) {
+      setQrLoginLoading(false);
+      setShowQRScanner(false);
+      setQrSuccess(false);
+    } else if (result.success) {
       setQrSuccess(true);
       setQrLoginLoading(false);
       setTimeout(() => {
@@ -556,12 +675,27 @@ export default function SignIn() {
             style={{ ...socialButtonStyle, background: passkeyLoading ? '#f5f5f7' : '#fff' }}
           >
             <i className="fa-solid fa-fingerprint" style={{ width: 20, fontSize: 17, color: '#5f6368' }}></i>
-            <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Opening Central Auth…' : 'Sign in with fingerprint / Face ID'}</span>
+            <span style={{ flex: 1, textAlign: 'center' }}>{passkeyLoading ? 'Waiting for passkey verification…' : 'Sign in with fingerprint / Face ID'}</span>
           </button>
-          <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>Passkey verification is handled by Central Auth.</p>
+          {passkeyError && <p role="alert" style={{ margin: '-8px 0 12px', fontSize: 12, color: '#b91c1c', textAlign: 'center' }}>{passkeyError}</p>}
+          <p style={{ margin: '-8px 0 16px', fontSize: 11, color: '#86868b', textAlign: 'center' }}>Your passkey stays managed in Central Auth; JABIYEN only uses the verified sign-in handoff.</p>
 
           {/* ===== CONTINUE WITH EMAIL ===== */}
-          {!showEmailForm ? (
+          {twoFactorChallengeId ? (
+            <div style={{ border: '1.5px solid #dadce0', borderRadius: 16, padding: '24px 20px 20px', marginTop: 4, background: '#fafafa' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: '#1d1d1f' }}>Verify your sign-in</span>
+                <button type="button" onClick={() => { setTwoFactorChallengeId(''); setTwoFactorCode(''); setTwoFactorError(null); setShowEmailForm(true); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#86868b', fontSize: 13 }}>Back</button>
+              </div>
+              <p style={{ fontSize: 13, color: '#68686d', margin: '0 0 16px' }}>We sent a 6-digit verification code to your email. It expires in 30 seconds.</p>
+              {twoFactorError && <p role="alert" style={{ color: '#b91c1c', fontSize: 12, margin: '0 0 12px' }}>{twoFactorError}</p>}
+              <form onSubmit={handleTwoFactorSubmit} noValidate>
+                <label htmlFor="email-two-factor-code" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#555', marginBottom: 7 }}>6-digit verification code</label>
+                <input id="email-two-factor-code" type="text" inputMode="numeric" pattern="[0-9]{6}" maxLength={6} value={twoFactorCode} onChange={(event) => setTwoFactorCode(event.target.value.replace(/\D/g, '').slice(0, 6))} required autoComplete="one-time-code" placeholder="000000" style={{ ...inputStyle, textAlign: 'center', letterSpacing: '0.35em' }} />
+                <button type="submit" disabled={twoFactorLoading || twoFactorCode.length !== 6} style={{ width: '100%', marginTop: 12, border: 0, borderRadius: 10, padding: '11px 14px', background: twoFactorLoading || twoFactorCode.length !== 6 ? '#a1a1a6' : '#1d1d1f', color: '#fff', fontWeight: 600, cursor: twoFactorLoading || twoFactorCode.length !== 6 ? 'not-allowed' : 'pointer' }}>{twoFactorLoading ? 'Verifying…' : 'Verify and sign in'}</button>
+              </form>
+            </div>
+          ) : !showEmailForm ? (
             <button 
               onClick={() => setShowEmailForm(true)}
               onMouseEnter={(e) => { e.currentTarget.style.background = '#f8f9fa'; e.currentTarget.style.borderColor = '#c4c7cc'; }}
