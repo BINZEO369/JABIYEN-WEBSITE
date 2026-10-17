@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { startRegistration } from '@simplewebauthn/browser';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 
@@ -20,8 +19,6 @@ export default function Account() {
   const [error, setError] = useState(null);
   const [currentPanel, setCurrentPanel] = useState('profile');
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-  const [passkeyWorking, setPasskeyWorking] = useState(false);
-  const [passkeyMessage, setPasskeyMessage] = useState(null);
 
   const getToken = () => {
     try {
@@ -136,36 +133,6 @@ export default function Account() {
     router.push('/');
   };
 
-  const registerPasskey = async () => {
-    const token = getToken();
-    if (!token) {
-      setPasskeyMessage({ type: 'error', text: 'Your session has expired. Sign in again before adding a passkey.' });
-      return;
-    }
-    setPasskeyWorking(true);
-    setPasskeyMessage(null);
-    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
-    try {
-      const optionsResponse = await fetch('/api/user/passkeys', { method: 'POST', headers, body: JSON.stringify({}) });
-      const optionsResult = await optionsResponse.json();
-      if (!optionsResponse.ok) throw new Error(optionsResult.error?.message || 'Passkey setup could not start.');
-      const options = optionsResult.data || optionsResult;
-      const response = await startRegistration({ optionsJSON: options.options });
-      const verifyResponse = await fetch('/api/user/passkeys/register', {
-        method: 'POST', headers,
-        body: JSON.stringify({ challenge_id: options.challenge_id, challenge: options.options.challenge, response, device_name: 'JABIYEN on this device' })
-      });
-      const verifyResult = await verifyResponse.json();
-      if (!verifyResponse.ok) throw new Error(verifyResult.error?.message || 'Passkey could not be saved.');
-      setPasskeyMessage({ type: 'success', text: 'Biometric sign-in is enabled for this JABIYEN website on this device.' });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Passkey setup was cancelled.';
-      setPasskeyMessage({ type: 'error', text: message.includes('NotAllowedError') ? 'The biometric prompt was cancelled or not approved.' : message });
-    } finally {
-      setPasskeyWorking(false);
-    }
-  };
-
   const getInitials = () => {
     const f = userData?.first_name?.charAt(0) || '';
     const l = userData?.last_name?.charAt(0) || '';
@@ -245,7 +212,6 @@ export default function Account() {
             {[
               { key: 'profile', icon: 'user', label: 'Profile' },
               { key: 'addresses', icon: 'location-dot', label: 'Location' },
-              { key: 'security', icon: 'fingerprint', label: 'Biometric Sign-In' }
             ].map(panel => (
               <button key={panel.key} onClick={() => handlePanelSwitch(panel.key)} style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
@@ -457,22 +423,7 @@ export default function Account() {
               </div>
             )}
 
-            {/* Biometric Sign-In Panel */}
-            {currentPanel === 'security' && (
-              <section style={{ background: '#fff', borderRadius: 16, padding: 'clamp(20px, 4vw, 32px)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
-                <h2 style={{ fontFamily: "'Manrope', sans-serif", fontSize: 20, fontWeight: 700, margin: '0 0 8px' }}>Biometric sign-in</h2>
-                <p style={{ fontSize: 14, color: '#71717a', lineHeight: 1.6, margin: '0 0 18px' }}>
-                  Add a device passkey for this JABIYEN website using fingerprint, Face ID, Windows Hello, or your device screen lock. Your biometric data stays on your device.
-                </p>
-                <div style={{ borderRadius: 12, background: '#f5f5f7', padding: 14, fontSize: 12, color: '#555', lineHeight: 1.55, marginBottom: 18 }}>
-                  Passkeys are scoped to a website by browser security. A passkey registered on Central Auth may need a separate enrollment for JABIYEN.
-                </div>
-                <button type="button" onClick={registerPasskey} disabled={passkeyWorking} style={{ border: 0, borderRadius: 12, padding: '13px 18px', background: passkeyWorking ? '#888' : '#0f0f0f', color: '#fff', fontWeight: 600, cursor: passkeyWorking ? 'wait' : 'pointer' }}>
-                  {passkeyWorking ? 'Waiting for device verification…' : 'Enable biometric sign-in on this device'}
-                </button>
-                {passkeyMessage && <p role="status" style={{ margin: '14px 0 0', fontSize: 13, color: passkeyMessage.type === 'success' ? '#047857' : '#b91c1c' }}>{passkeyMessage.text}</p>}
-              </section>
-            )}
+
           </div>
         </div>
       </div>
