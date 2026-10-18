@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 
 const CENTRAL_AUTH_URL = 'https://auth-binzeo.vercel.app/signin';
-const CLIENT_ID = 'jabiyen:website';
+const CLIENT_ID = 'jabiyen';
 const CALLBACK_PATH = '/auth/callback';
 const PENDING_KEY = 'binzeo.central-auth.pkce.jabiyen.website';
 

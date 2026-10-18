@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 
-const CLIENT_ID = 'jabiyen:website';
+const CLIENT_ID = 'jabiyen';
 const CALLBACK_PATH = '/auth/callback';
 const PENDING_KEY = 'binzeo.central-auth.pkce.jabiyen.website';
 
