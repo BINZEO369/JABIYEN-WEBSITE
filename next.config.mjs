@@ -13,6 +13,18 @@ const nextConfig = {
       { source: '/api/:path*', destination: `${centralApi}/api/v1/projects/jabiyen/public/:path*` },
     ];
   },
+  async headers() {
+    return [
+      {
+        source: '/auth/callback',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store, max-age=0' },
+          { key: 'Referrer-Policy', value: 'no-referrer' },
+          { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
+        ],
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       {
