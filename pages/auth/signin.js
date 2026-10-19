@@ -72,12 +72,11 @@ export default function SignIn() {
         <div className="bg-image" aria-hidden="true" />
         <div className="bg-overlay" aria-hidden="true" />
 
-        {/* Liquid Glass Card (Reference Styled) */}
+        {/* Liquid Glass Card - Dark Neutral */}
         <section className="liquid-glass-container">
           
-          {/* Inner Light Glare (For top edge reflection) */}
-          <div className="glass-glare-top" aria-hidden="true" />
-          <div className="glass-glare-side" aria-hidden="true" />
+          {/* Inner subtle dark reflection (no white glare) */}
+          <div className="glass-inner-glow" aria-hidden="true" />
 
           {/* Connected Logos Area */}
           <div className="logo-section">
@@ -107,20 +106,19 @@ export default function SignIn() {
             </div>
           )}
 
-          {/* Pill-Shaped Glass Button (Like the "Directions" button) */}
+          {/* Pill-Shaped Dark Glass Button */}
           <button
             type="button"
             onClick={() => void startCentralAuth()}
             disabled={connecting}
             className="glass-button"
           >
-            <img src={BINZEO_FAVICON} alt="" className="btn-logo" />
             <span className="btn-label">
               {connecting ? 'Connecting...' : 'Continue with BINZEO'}
             </span>
           </button>
 
-          {/* Bottom Info Box (Like the Weather Info) */}
+          {/* Bottom Info Box */}
           <div className="info-section">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="info-icon">
               <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -165,51 +163,44 @@ export default function SignIn() {
           .bg-overlay {
             position: absolute;
             inset: 0;
-            background: linear-gradient(180deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.4) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.5) 100%);
             z-index: 1;
             backdrop-filter: blur(2px);
           }
 
-          /* THE LIQUID GLASS CARD */
+          /* THE LIQUID GLASS CARD (DARK NEUTRAL) */
           .liquid-glass-container {
             position: relative;
             z-index: 2;
             width: 100%;
             max-width: 400px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%);
-            backdrop-filter: blur(30px) saturate(200%);
-            -webkit-backdrop-filter: blur(30px) saturate(200%);
+            background: linear-gradient(135deg, rgba(25, 25, 35, 0.45) 0%, rgba(10, 10, 20, 0.25) 100%);
+            backdrop-filter: blur(35px) saturate(160%);
+            -webkit-backdrop-filter: blur(35px) saturate(160%);
             border-radius: 44px;
             padding: 36px 28px 28px;
             box-shadow: 
-              0 30px 60px rgba(0, 0, 0, 0.25),
-              0 10px 20px rgba(0, 0, 0, 0.1),
-              inset 0 1px 2px rgba(255, 255, 255, 0.9),
-              inset 0 -1px 2px rgba(0, 0, 0, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+              0 30px 60px rgba(0, 0, 0, 0.45),
+              0 10px 20px rgba(0, 0, 0, 0.25),
+              inset 0 1px 1px rgba(255, 255, 255, 0.08),
+              inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.08);
             overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
           }
 
-          /* Glare Effects replicating the reference image */
-          .glass-glare-top {
+          /* Subtle dark inner glow (no white glare) */
+          .glass-inner-glow {
             position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 50%;
-            background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0) 100%);
-            border-radius: 44px 44px 0 0;
+            top: -20%;
+            left: -20%;
+            width: 80%;
+            height: 80%;
+            background: radial-gradient(circle, rgba(80, 90, 120, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
             pointer-events: none;
-          }
-
-          .glass-glare-side {
-            position: absolute;
-            top: 10%; left: -10%;
-            width: 50%; height: 80%;
-            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
-            pointer-events: none;
-            filter: blur(20px);
+            filter: blur(40px);
           }
 
           /* LOGOS & CONNECTION */
@@ -224,7 +215,7 @@ export default function SignIn() {
 
           .logo-img {
             object-fit: contain;
-            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
           }
 
           .jabiyen {
@@ -251,7 +242,7 @@ export default function SignIn() {
           .liquid-line {
             width: 100%;
             height: 2px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.8) 50%, rgba(255,255,255,0.1) 100%);
+            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(200, 210, 230, 0.7) 50%, rgba(255,255,255,0.05) 100%);
             border-radius: 2px;
           }
 
@@ -261,13 +252,13 @@ export default function SignIn() {
             height: 10px;
             background: #ffffff;
             border-radius: 50%;
-            box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 20px rgba(150, 200, 255, 0.8);
+            box-shadow: 0 0 12px rgba(180, 200, 255, 0.8), 0 0 20px rgba(120, 160, 255, 0.6);
             animation: pulseDot 2s infinite alternate ease-in-out;
           }
 
           @keyframes pulseDot {
             0% { transform: scale(0.8); opacity: 0.8; }
-            100% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px rgba(255, 255, 255, 1), 0 0 30px rgba(150, 200, 255, 1); }
+            100% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px rgba(200, 220, 255, 1), 0 0 30px rgba(140, 180, 255, 0.9); }
           }
 
           /* TEXT */
@@ -282,7 +273,7 @@ export default function SignIn() {
             font-size: 10px;
             font-weight: 700;
             letter-spacing: 0.15em;
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.7);
             text-transform: uppercase;
           }
 
@@ -292,14 +283,14 @@ export default function SignIn() {
             font-weight: 600;
             color: #ffffff;
             letter-spacing: -0.5px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
           }
 
           .subtitle {
             margin: 0;
             font-size: 13.5px;
             line-height: 1.5;
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(255, 255, 255, 0.75);
             padding: 0 8px;
           }
 
@@ -307,8 +298,8 @@ export default function SignIn() {
           .error-box {
             width: 100%;
             margin-bottom: 16px;
-            background: rgba(255, 60, 60, 0.25);
-            border: 1px solid rgba(255, 100, 100, 0.5);
+            background: rgba(255, 60, 60, 0.2);
+            border: 1px solid rgba(255, 100, 100, 0.4);
             backdrop-filter: blur(10px);
             border-radius: 14px;
             padding: 12px;
@@ -318,7 +309,7 @@ export default function SignIn() {
             z-index: 5;
           }
 
-          /* GLASS BUTTON (Like the "Directions" button) */
+          /* DARK GLASS BUTTON */
           .glass-button {
             width: 100%;
             display: flex;
@@ -326,47 +317,42 @@ export default function SignIn() {
             justify-content: center;
             gap: 10px;
             padding: 16px 24px;
-            background: rgba(255, 255, 255, 0.35);
-            border: 1px solid rgba(255, 255, 255, 0.6);
+            background: rgba(15, 15, 25, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 100px;
             cursor: pointer;
             transition: all 0.3s ease;
             z-index: 5;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.08);
           }
 
           .glass-button:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.5);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255, 255, 255, 0.9);
+            background: rgba(25, 25, 40, 0.65);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.12);
             transform: translateY(-1px);
           }
 
           .glass-button:active:not(:disabled) {
             transform: translateY(1px);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
           }
 
           .glass-button:disabled {
-            opacity: 0.6;
+            opacity: 0.55;
             cursor: wait;
-          }
-
-          .btn-logo {
-            width: 22px;
-            height: 22px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
           }
 
           .btn-label {
             color: #ffffff;
             font-size: 15px;
             font-weight: 600;
-            letter-spacing: 0.2px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+            letter-spacing: 0.3px;
           }
 
-          /* INFO SECTION (Like the Weather Info) */
+          /* INFO SECTION */
           .info-section {
             display: flex;
             align-items: flex-start;
@@ -386,13 +372,13 @@ export default function SignIn() {
             margin: 0;
             font-size: 11.5px;
             line-height: 1.5;
-            color: rgba(255, 255, 255, 0.75);
+            color: rgba(255, 255, 255, 0.65);
             text-align: left;
           }
 
           .info-text p:first-child {
             font-weight: 600;
-            color: rgba(255, 255, 255, 0.9);
+            color: rgba(255, 255, 255, 0.85);
           }
 
           /* FOOTER */
@@ -404,7 +390,7 @@ export default function SignIn() {
           }
 
           .back-link {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.7);
             font-size: 12px;
             text-decoration: none;
             font-weight: 500;
