@@ -7,7 +7,9 @@ const CLIENT_ID = 'jabiyen';
 const CALLBACK_PATH = '/auth/callback';
 const PENDING_KEY = 'binzeo.central-auth.pkce.jabiyen.website';
 
+// Background Image Path
 const HERO_IMAGE = '/images/signin-hero1.jpg';
+// Binzeo Logo URL from GitHub
 const BINZEO_FAVICON =
   'https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/favicon.png';
 
@@ -56,7 +58,7 @@ export default function SignIn() {
       authUrl.searchParams.set('code_challenge', codeChallenge);
       authUrl.searchParams.set('code_challenge_method', 'S256');
       authUrl.searchParams.set('handoff', 'one-time');
-      // No method is specified: Central Auth presents and handles all supported methods.
+      
       window.location.assign(authUrl.toString());
     } catch (cause) {
       setError(
@@ -78,324 +80,57 @@ export default function SignIn() {
         />
         <meta name="referrer" content="no-referrer" />
         <meta name="robots" content="noindex,nofollow" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
 
-      <main
-        style={{
-          minHeight: 'calc(100vh - 180px)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '48px 16px',
-          position: 'relative',
-          backgroundImage: `url(${HERO_IMAGE})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundAttachment: 'fixed',
-          backgroundRepeat: 'no-repeat',
-          overflow: 'hidden',
-        }}
-      >
-        {/* Readability overlay */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'linear-gradient(145deg, rgba(12, 20, 32, 0.55) 0%, rgba(20, 30, 45, 0.30) 50%, rgba(8, 14, 24, 0.65) 100%)',
-            pointerEvents: 'none',
-          }}
-        />
+      <main className="page-container">
+        {/* Background Image Layer */}
+        <div className="bg-image" />
+        
+        {/* Dark Overlay to enhance glass readability */}
+        <div className="bg-overlay" />
 
-        {/* Ambient light blobs */}
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            top: '-12%',
-            left: '-10%',
-            width: 460,
-            height: 460,
-            borderRadius: '50%',
-            background:
-              'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.35), rgba(255,255,255,0) 70%)',
-            filter: 'blur(40px)',
-            pointerEvents: 'none',
-          }}
-        />
-        <div
-          aria-hidden="true"
-          style={{
-            position: 'absolute',
-            bottom: '-18%',
-            right: '-12%',
-            width: 520,
-            height: 520,
-            borderRadius: '50%',
-            background:
-              'radial-gradient(circle at 70% 70%, rgba(120, 180, 255, 0.38), rgba(120, 180, 255, 0) 70%)',
-            filter: 'blur(48px)',
-            pointerEvents: 'none',
-          }}
-        />
-
-        {/* Liquid glass card */}
-        <section
-          className="glass-card"
-          style={{
-            position: 'relative',
-            width: '100%',
-            maxWidth: 480,
-            background: 'rgba(255, 255, 255, 0.12)',
-            border: '1px solid rgba(255, 255, 255, 0.35)',
-            borderRadius: 26,
-            padding: '36px 30px 30px',
-            backdropFilter: 'blur(24px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(24px) saturate(180%)',
-            boxShadow:
-              '0 24px 70px rgba(8, 14, 24, 0.45), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -1px 0 rgba(255,255,255,0.08)',
-            color: '#fff',
-            overflow: 'hidden',
-          }}
-        >
-          {/* top glass highlight */}
-          <div
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 1,
-              background:
-                'linear-gradient(90deg, transparent, rgba(255,255,255,0.85), transparent)',
-            }}
-          />
-
-          {/* Connected logos cluster */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 10,
-              marginBottom: 24,
-            }}
-          >
-            {/* JABIYEN logo */}
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: 'rgba(255, 255, 255, 0.95)',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow:
-                  '0 10px 26px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.9)',
-                border: '1px solid rgba(255,255,255,0.6)',
-                overflow: 'hidden',
-                flexShrink: 0,
-              }}
-            >
-              <img
-                src="/logo.png"
-                alt="JABIYEN"
-                width="44"
-                height="44"
-                style={{
-                  width: 44,
-                  height: 44,
-                  objectFit: 'cover',
-                  borderRadius: 10,
-                }}
-              />
-            </div>
-
-            {/* Connector: line → link chip → line */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0,
-                flexShrink: 1,
-              }}
-              aria-hidden="true"
-            >
-              <div
-                style={{
-                  width: 22,
-                  height: 1.5,
-                  background:
-                    'linear-gradient(90deg, rgba(255,255,255,0.15), rgba(255,255,255,0.95))',
-                }}
-              />
-              <div
-                style={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.18)',
-                  border: '1px solid rgba(255,255,255,0.55)',
-                  display: 'grid',
-                  placeItems: 'center',
-                  backdropFilter: 'blur(8px)',
-                  WebkitBackdropFilter: 'blur(8px)',
-                  boxShadow:
-                    '0 6px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.6)',
-                  margin: '0 2px',
-                }}
+        {/* Liquid Glass Card */}
+        <section className="glass-card">
+          
+          {/* Logo Connection Area - No borders, pure sleek design */}
+          <div className="logo-connection">
+            <img
+              src="/logo.png"
+              alt="JABIYEN"
+              className="logo-img jabiyen-logo"
+            />
+            <div className="connection-line">
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="rgba(255,255,255,0.6)"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               >
-                <svg
-                  width="13"
-                  height="13"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="#fff"
-                  strokeWidth="2.4"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                </svg>
-              </div>
-              <div
-                style={{
-                  width: 22,
-                  height: 1.5,
-                  background:
-                    'linear-gradient(90deg, rgba(255,255,255,0.95), rgba(255,255,255,0.15))',
-                }}
-              />
+                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
             </div>
-
-            {/* BINZEO Central Auth favicon */}
-            <div
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 16,
-                background: 'rgba(29, 40, 52, 0.85)',
-                display: 'grid',
-                placeItems: 'center',
-                boxShadow:
-                  '0 10px 26px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.20)',
-                border: '1px solid rgba(255,255,255,0.28)',
-                overflow: 'hidden',
-                flexShrink: 0,
-              }}
-            >
-              <img
-                src={BINZEO_FAVICON}
-                alt="BINZEO Central Auth"
-                width="44"
-                height="44"
-                style={{
-                  width: 44,
-                  height: 44,
-                  objectFit: 'contain',
-                  borderRadius: 10,
-                }}
-              />
-            </div>
+            <img
+              src={BINZEO_FAVICON}
+              alt="BINZEO Central Auth"
+              className="logo-img binzeo-logo"
+            />
           </div>
 
-          {/* Capability chip */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'center',
-              marginTop: -10,
-              marginBottom: 18,
-            }}
-          >
-            <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '5px 11px',
-                borderRadius: 999,
-                fontSize: 9.5,
-                fontWeight: 700,
-                letterSpacing: '.16em',
-                textTransform: 'uppercase',
-                color: 'rgba(255,255,255,0.92)',
-                background: 'rgba(255,255,255,0.14)',
-                border: '1px solid rgba(255,255,255,0.30)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-              }}
-            >
-              <span
-                aria-hidden="true"
-                style={{
-                  width: 5,
-                  height: 5,
-                  borderRadius: '50%',
-                  background: '#7ee0a8',
-                  boxShadow: '0 0 6px rgba(126,224,168,0.9)',
-                }}
-              />
-              Connected to Central Auth
-            </span>
-          </div>
-
-          <header style={{ textAlign: 'center', marginBottom: 22 }}>
-            <p
-              style={{
-                margin: '0 0 8px',
-                color: 'rgba(255,255,255,0.72)',
-                fontSize: 11,
-                fontWeight: 700,
-                letterSpacing: '.18em',
-                textTransform: 'uppercase',
-              }}
-            >
-              JABIYEN · Secure Access
-            </p>
-            <h1
-              style={{
-                margin: 0,
-                color: '#fff',
-                fontSize: 28,
-                lineHeight: 1.2,
-                fontWeight: 750,
-                textShadow: '0 2px 22px rgba(0,0,0,0.35)',
-              }}
-            >
-              Sign in securely
-            </h1>
-            <p
-              style={{
-                margin: '10px 0 0',
-                color: 'rgba(255,255,255,0.82)',
-                fontSize: 13.5,
-                lineHeight: 1.55,
-              }}
-            >
-              Continue to BINZEO Central Auth. Choose your sign-in method and
-              verify your identity there.
+          <header className="text-header">
+            <h1>Sign in securely</h1>
+            <p>
+              Continue to BINZEO Central Auth to securely access your JABIYEN account.
             </p>
           </header>
 
           {error && (
-            <div
-              role="alert"
-              style={{
-                marginBottom: 16,
-                border: '1px solid rgba(255,180,180,0.6)',
-                background: 'rgba(160, 30, 30, 0.35)',
-                color: '#fff',
-                borderRadius: 12,
-                padding: '12px 14px',
-                fontSize: 13,
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-              }}
-            >
+            <div role="alert" className="error-box">
               {error}
             </div>
           )}
@@ -404,119 +139,251 @@ export default function SignIn() {
             type="button"
             onClick={() => void startCentralAuth()}
             disabled={connecting}
-            aria-label="Sign in with BINZEO Central Auth"
-            className="signin-btn"
-            style={{
-              width: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 12,
-              padding: '15px 18px',
-              color: '#0f1620',
-              background: connecting
-                ? 'rgba(255,255,255,0.65)'
-                : 'linear-gradient(180deg, #ffffff 0%, #eef2f6 100%)',
-              border: '1px solid rgba(255,255,255,0.75)',
-              borderRadius: 14,
-              cursor: connecting ? 'wait' : 'pointer',
-              opacity: connecting ? 0.85 : 1,
-              fontSize: 14,
-              fontWeight: 700,
-              boxShadow:
-                '0 12px 30px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.95)',
-              transition:
-                'background .18s ease, transform .18s ease, box-shadow .18s ease',
-            }}
+            className="auth-button"
           >
-            <span
+            {/* Replaced B with actual Binzeo Logo */}
+            <img
+              src={BINZEO_FAVICON}
+              alt=""
+              className="button-icon"
               aria-hidden="true"
-              style={{
-                width: 26,
-                height: 26,
-                display: 'grid',
-                placeItems: 'center',
-                borderRadius: 8,
-                color: '#fff',
-                background: '#1d2834',
-                fontSize: 15,
-                fontWeight: 800,
-              }}
-            >
-              B
+            />
+            <span>
+              {connecting ? 'Connecting securely…' : 'Continue with BINZEO'}
             </span>
-            {connecting
-              ? 'Connecting to Central Auth…'
-              : 'Continue with BINZEO Central Auth'}
           </button>
 
-          <div
-            style={{
-              marginTop: 20,
-              padding: '12px 14px',
-              borderRadius: 12,
-              background: 'rgba(255,255,255,0.10)',
-              border: '1px solid rgba(255,255,255,0.20)',
-              color: 'rgba(255,255,255,0.82)',
-              fontSize: 11.5,
-              lineHeight: 1.55,
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}
-          >
-            Email, password, OTP, passkey, one-time token and QR sign-in are
-            handled only by BINZEO Central Auth. JABIYEN never verifies these
-            credentials; it receives a short-lived, single-use, PKCE-protected
-            handoff ticket after sign-in.
+          <div className="info-box">
+            <p>
+              JABIYEN never stores or verifies your passwords. All authentication
+              is handled securely by BINZEO Central Auth using PKCE protocols.
+            </p>
           </div>
 
-          <footer style={{ marginTop: 20, textAlign: 'center' }}>
-            <Link
-              href="/"
-              style={{
-                color: 'rgba(255,255,255,0.88)',
-                fontSize: 12,
-                textDecoration: 'none',
-                borderBottom: '1px dotted rgba(255,255,255,0.45)',
-                paddingBottom: 1,
-              }}
-            >
+          <footer className="card-footer">
+            <Link href="/" className="back-link">
               Return to JABIYEN
             </Link>
-            <p
-              style={{
-                margin: '10px 0 0',
-                color: 'rgba(255,255,255,0.60)',
-                fontSize: 10.5,
-              }}
-            >
-              Protected by BINZEO Central Auth · PKCE protected sign-in
-            </p>
           </footer>
         </section>
 
         <style jsx>{`
-          .signin-btn:hover:not(:disabled) {
-            background: linear-gradient(180deg, #ffffff 0%, #f5f8fb 100%);
-            transform: translateY(-1px);
-            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.42),
-              inset 0 1px 0 rgba(255, 255, 255, 0.95);
+          .page-container {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+              Helvetica, Arial, sans-serif;
           }
-          .signin-btn:active:not(:disabled) {
-            transform: translateY(0);
+
+          .bg-image {
+            position: absolute;
+            inset: 0;
+            background-image: url(${HERO_IMAGE});
+            background-size: cover;
+            background-position: center;
+            z-index: 0;
+            /* Slight scale to prevent blur edges */
+            transform: scale(1.05); 
           }
-          .signin-btn:focus-visible {
-            outline: 2px solid rgba(255, 255, 255, 0.9);
-            outline-offset: 3px;
+
+          .bg-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+              145deg,
+              rgba(15, 25, 40, 0.45) 0%,
+              rgba(10, 15, 25, 0.65) 100%
+            );
+            z-index: 1;
           }
-          @media (max-width: 380px) {
+
+          /* Liquid Glass Card styling inspired by the reference */
+          .glass-card {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 420px;
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(32px) saturate(180%);
+            -webkit-backdrop-filter: blur(32px) saturate(180%);
+            border-radius: 40px; /* High border radius like iOS */
+            padding: 40px 32px 32px;
+            box-shadow: 
+              0 30px 60px -10px rgba(0, 0, 0, 0.5),
+              inset 0 1px 1px rgba(255, 255, 255, 0.4), /* Top glass reflection */
+              inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+          }
+
+          /* Logo Area */
+          .logo-connection {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 28px;
+            width: 100%;
+          }
+
+          .logo-img {
+            object-fit: contain;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3));
+          }
+
+          .jabiyen-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px; /* Soft round corners for jabiyen logo */
+          }
+
+          .binzeo-logo {
+            width: 44px;
+            height: 44px;
+          }
+
+          .connection-line {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.8;
+            animation: pulse 3s infinite ease-in-out;
+          }
+
+          @keyframes pulse {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+          }
+
+          /* Text Header */
+          .text-header {
+            text-align: center;
+            margin-bottom: 28px;
+            width: 100%;
+          }
+
+          .text-header h1 {
+            margin: 0 0 8px;
+            font-size: 26px;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+          }
+
+          .text-header p {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.7);
+            padding: 0 10px;
+          }
+
+          /* Error Box */
+          .error-box {
+            width: 100%;
+            margin-bottom: 20px;
+            background: rgba(255, 60, 60, 0.15);
+            border: 1px solid rgba(255, 60, 60, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 12px 16px;
+            color: #ffb3b3;
+            font-size: 13px;
+            text-align: center;
+          }
+
+          /* Primary Button */
+          .auth-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            border-radius: 100px; /* Pill shape */
+            color: #1a1f26;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+          }
+
+          .auth-button:hover:not(:disabled) {
+            background: #ffffff;
+            transform: translateY(-2px) scale(1.01);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+          }
+
+          .auth-button:active:not(:disabled) {
+            transform: translateY(0) scale(0.98);
+          }
+
+          .auth-button:disabled {
+            opacity: 0.8;
+            cursor: wait;
+            background: rgba(255, 255, 255, 0.7);
+          }
+
+          .button-icon {
+            width: 22px;
+            height: 22px;
+            object-fit: contain;
+          }
+
+          /* Info Box (Bottom Text) */
+          .info-box {
+            margin-top: 24px;
+            padding: 14px 16px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+          }
+
+          .info-box p {
+            margin: 0;
+            font-size: 11px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.6);
+            text-align: center;
+          }
+
+          /* Footer */
+          .card-footer {
+            margin-top: 20px;
+            text-align: center;
+          }
+
+          .back-link {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: color 0.2s ease;
+          }
+
+          .back-link:hover {
+            color: #ffffff;
+            text-decoration: underline;
+          }
+
+          /* Responsive adjustments */
+          @media (max-width: 400px) {
             .glass-card {
-              padding: 28px 20px 24px !important;
+              padding: 32px 20px 24px;
+              border-radius: 32px;
             }
-          }
-          @media (prefers-reduced-motion: reduce) {
-            .signin-btn {
-              transition: none !important;
+            .text-header h1 {
+              font-size: 22px;
             }
           }
         `}</style>
