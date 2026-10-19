@@ -82,10 +82,17 @@ export default function SignIn() {
           <div className="logo-section">
             <img src="/logo.png" alt="JABIYEN" className="logo-img jabiyen" />
             
-            {/* Liquid Connection Line */}
+            {/* Simple static connection icon */}
             <div className="liquid-connection" aria-hidden="true">
-              <div className="liquid-line" />
-              <div className="liquid-dot" />
+              <svg width="28" height="12" viewBox="0 0 28 12" fill="none">
+                <path
+                  d="M1 6 H27"
+                  stroke="rgba(255,255,255,0.4)"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+                <circle cx="14" cy="6" r="2.5" fill="rgba(255,255,255,0.6)" />
+              </svg>
             </div>
 
             <img src={BINZEO_FAVICON} alt="BINZEO Auth" className="logo-img binzeo" />
@@ -208,7 +215,7 @@ export default function SignIn() {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 14px;
             margin-bottom: 26px;
             z-index: 5;
           }
@@ -230,35 +237,13 @@ export default function SignIn() {
             border-radius: 12px;
           }
 
+          /* Simple static connection icon (no animation, no glow) */
           .liquid-connection {
-            position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 44px;
-            height: 20px;
-          }
-
-          .liquid-line {
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(200, 210, 230, 0.7) 50%, rgba(255,255,255,0.05) 100%);
-            border-radius: 2px;
-          }
-
-          .liquid-dot {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: #ffffff;
-            border-radius: 50%;
-            box-shadow: 0 0 12px rgba(180, 200, 255, 0.8), 0 0 20px rgba(120, 160, 255, 0.6);
-            animation: pulseDot 2s infinite alternate ease-in-out;
-          }
-
-          @keyframes pulseDot {
-            0% { transform: scale(0.8); opacity: 0.8; }
-            100% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 16px rgba(200, 220, 255, 1), 0 0 30px rgba(140, 180, 255, 0.9); }
+            width: 28px;
+            height: 12px;
           }
 
           /* TEXT */
