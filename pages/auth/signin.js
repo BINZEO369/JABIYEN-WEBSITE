@@ -60,6 +60,12 @@ export default function SignIn() {
         <div className="auth-backdrop" style={{ backgroundImage: `url(${HERO_IMAGE})` }} aria-hidden="true" />
         <div className="auth-orbit auth-orbit-one" aria-hidden="true" />
         <div className="auth-orbit auth-orbit-two" aria-hidden="true" />
+        <div className="auth-3d-scene" aria-hidden="true">
+          <div className="shape shape-ring" />
+          <div className="shape shape-cube" />
+          <div className="shape shape-sphere" />
+          <div className="shape shape-orb" />
+        </div>
         <header className="auth-topbar">
           <Link href="/" className="brand-mark"><img src="/logo.png" alt="JABIYEN" /><span>JABIYEN</span></Link>
           <span className="status-pill"><i /> SYSTEM ONLINE</span>
@@ -103,6 +109,14 @@ export default function SignIn() {
         .auth-assurance { display: flex; gap: 12px; margin: 26px 0 34px; color: #a9b8cc; } .lock-icon { display: grid; place-items: center; width: 25px; height: 25px; border: 1px solid #38557f; border-radius: 8px; color: #8bb7ff; } .auth-assurance strong { display: block; margin-bottom: 4px; font-size: 11px; color: #d4deec; } .auth-assurance p { margin: 0; font-size: 11px; line-height: 1.45; }
         .auth-footer { padding-top: 18px; border-top: 1px solid rgba(255,255,255,.08); } .auth-footer a { color: #9abcf3; text-decoration: none; letter-spacing: .04em; } .auth-build { bottom: 28px; color: #4e5e76; font-size: 9px; letter-spacing: .2em; } .auth-build span { float: right; }
         @media (max-width: 700px) { .auth-shell { align-self: center; margin-top: 22px; } .auth-orbit-one { width: 130vw; height: 54vw; left: -70vw; top: 12%; } .auth-orbit-two { width: 100vw; height: 40vw; left: -50vw; top: 20%; } }
+        .auth-3d-scene { position: absolute; inset: 0; z-index: 1; pointer-events: none; perspective: 900px; overflow: hidden; }
+        .shape { position: absolute; transform-style: preserve-3d; animation: float-shape 9s ease-in-out infinite; }
+        .shape-ring { width: 230px; height: 230px; left: 13%; top: 22%; border: 24px solid #ff4ecd; border-right-color: #7b61ff; border-bottom-color: #35d8ff; border-radius: 50%; transform: rotateX(66deg) rotateZ(-24deg); opacity: .88; box-shadow: 0 0 45px rgba(255, 78, 205, .3), inset 0 0 25px rgba(53, 216, 255, .35); animation-delay: -2s; }
+        .shape-cube { width: 92px; height: 92px; left: 42%; top: 16%; border-radius: 22px; background: linear-gradient(135deg, #fff 0 28%, #ffb84d 29% 48%, #ff4ecd 49% 70%, #715dff 71%); transform: rotateX(20deg) rotateY(36deg) rotateZ(18deg); opacity: .9; box-shadow: 22px 25px 0 rgba(94, 63, 190, .35), 0 25px 55px rgba(255, 78, 205, .25); animation-delay: -5s; }
+        .shape-sphere { width: 118px; height: 118px; right: 10%; bottom: 19%; border-radius: 50%; background: radial-gradient(circle at 30% 25%, #fff 0 5%, #ffda75 12%, #ff6b9d 38%, #855cff 72%, #241b54 100%); box-shadow: -20px 22px 0 rgba(54, 216, 255, .3), 0 24px 70px rgba(133, 92, 255, .55); animation-delay: -1s; }
+        .shape-orb { width: 26px; height: 26px; left: 8%; bottom: 18%; border-radius: 50%; background: #5ee7ff; box-shadow: 0 0 30px #5ee7ff, 75px -80px 0 -7px #ffda75, 150px -10px 0 -5px #ff4ecd; animation-delay: -7s; }
+        @keyframes float-shape { 0%, 100% { margin-top: 0; } 50% { margin-top: -18px; } }
+        @media (max-width: 700px) { .shape-ring { width: 150px; height: 150px; left: -12%; top: 23%; border-width: 16px; } .shape-cube { width: 62px; height: 62px; left: auto; right: 8%; top: 12%; border-radius: 16px; } .shape-sphere { width: 72px; height: 72px; right: -3%; bottom: 14%; } .shape-orb { left: 10%; bottom: 13%; } }
       `}</style>
     </>
   );
