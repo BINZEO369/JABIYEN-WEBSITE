@@ -15,13 +15,21 @@ export default function CentralAuthCallback() {
     const run = async () => {
       const callbackUrl = new URL(window.location.href);
       const code = callbackUrl.searchParams.get('code') || '';
-      const returnedState = callbackUrl.searchParams.get('state') || '';
+      const queryState = callbackUrl.searchParams.get('state') || '';
+      const fragment = new URLSearchParams(callbackUrl.hash.replace(/^#/, ''));
+      const handoffToken = fragment.get('handoff_token') || '';
+      const returnedState = handoffToken ? fragment.get('state') || '' : queryState;
       const centralError = callbackUrl.searchParams.get('error_description') || callbackUrl.searchParams.get('error') || '';
-      // Authorization codes are short-lived. Remove them from the visible URL immediately.
+      // Handoff tickets/codes are short-lived. Remove all callback secrets from the URL immediately.
       window.history.replaceState(null, document.title, CALLBACK_PATH);
 
       if (centralError) throw new Error('Central Auth could not complete this sign-in. Return to JABIYEN and try again.');
-      if (!/^[A-Za-z0-9_-]{43}$/.test(code) || !/^[A-Za-z0-9_-]{32,128}$/.test(returnedState)) {
+      if (handoffToken && code) throw new Error('This sign-in response is ambiguous. Please start again.');
+      if (
+        (!handoffToken && !/^[A-Za-z0-9_-]{43}$/.test(code)) ||
+        (handoffToken && !/^h1\.[A-Za-z0-9_-]{43}\.\d{13}\.[A-Za-z0-9_-]{43}$/.test(handoffToken)) ||
+        !/^[A-Za-z0-9_-]{32,128}$/.test(returnedState)
+      ) {
         throw new Error('This sign-in response is incomplete or expired. Please start again.');
       }
 
@@ -45,12 +53,19 @@ export default function CentralAuthCallback() {
         throw new Error('The sign-in response did not match this browser session or has expired. Please start again.');
       }
 
-      const response = await fetch('/api/auth/token', {
+      const useHandoff = Boolean(handoffToken);
+      const response = await fetch(useHandoff ? '/api/auth/handoff/redeem' : '/api/auth/token', {
         method: 'POST',
         credentials: 'same-origin',
         cache: 'no-store',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(useHandoff ? {
+          client_id: CLIENT_ID,
+          redirect_uri: expectedRedirect,
+          state: returnedState,
+          token: handoffToken,
+          code_verifier: pending.codeVerifier,
+        } : {
           client_id: CLIENT_ID,
           redirect_uri: expectedRedirect,
           code,
@@ -75,7 +90,7 @@ export default function CentralAuthCallback() {
           method: 'POST',
           cache: 'no-store',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ project_key: 'jabiyen', client_key: 'website', event_type: 'central_auth_login', outcome: 'success', metadata: { source: 'central-auth-pkce' } }),
+          body: JSON.stringify({ project_key: 'jabiyen', client_key: 'website', event_type: 'central_auth_login', outcome: 'success', metadata: { source: useHandoff ? 'central-auth-handoff' : 'central-auth-pkce' } }),
         });
       } catch { /* access auditing must not interrupt a successful sign-in */ }
 

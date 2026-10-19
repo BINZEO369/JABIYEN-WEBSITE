@@ -45,6 +45,7 @@ export default function SignIn() {
       authUrl.searchParams.set('state', state);
       authUrl.searchParams.set('code_challenge', codeChallenge);
       authUrl.searchParams.set('code_challenge_method', 'S256');
+      authUrl.searchParams.set('handoff', 'one-time');
       // No method is specified: Central Auth presents and handles all supported methods.
       window.location.assign(authUrl.toString());
     } catch (cause) {
@@ -84,7 +85,7 @@ export default function SignIn() {
           </button>
 
           <div style={{ marginTop: 22, padding: '13px 14px', borderRadius: 12, background: '#f7f9fb', color: '#69727e', fontSize: 11.5, lineHeight: 1.55 }}>
-            Email, password, OTP, passkey, one-time token and QR sign-in are handled only by BINZEO Central Auth. JABIYEN never verifies these credentials; it receives a short-lived, single-use authorization code after sign-in.
+            Email, password, OTP, passkey, one-time token and QR sign-in are handled only by BINZEO Central Auth. JABIYEN never verifies these credentials; it receives a short-lived, single-use, PKCE-protected handoff ticket after sign-in.
           </div>
           <footer style={{ marginTop: 22, textAlign: 'center' }}>
             <Link href="/" style={{ color: '#5e6875', fontSize: 12, textDecoration: 'none' }}>Return to JABIYEN</Link>
