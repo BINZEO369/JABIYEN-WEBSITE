@@ -3,10 +3,10 @@
 @tailwind utilities;
 
 :root {
-  --auth-bg: #ffffff;
-  --auth-foreground: #111318;
-  --auth-muted: #626975;
-  --auth-accent: #111318;
+  --auth-bg: #050810;
+  --auth-foreground: #f1f5fb;
+  --auth-muted: #94a1b4;
+  --auth-accent: #8fb8ff;
   --auth-success: #76e0b1;
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
   --primary: #1d1d1f;
