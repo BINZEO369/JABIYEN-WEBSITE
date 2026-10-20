@@ -14,8 +14,20 @@ export default function AccountPage() {
       window.history.replaceState({}, '', '/account');
     }
     const saved = window.localStorage.getItem('binzeo_jabiyen_connected');
-    setConnection(saved === 'connected' ? 'connected' : 'not_connected');
+    const pending = window.localStorage.getItem('binzeo_jabiyen_connection_pending');
+    if (saved === 'connected' || pending === '1' || params.get('connected') === '1') {
+      window.localStorage.setItem('binzeo_jabiyen_connected', 'connected');
+      window.localStorage.removeItem('binzeo_jabiyen_connection_pending');
+      setConnection('connected');
+    } else {
+      setConnection('not_connected');
+    }
   }, []);
+
+  const startConnection = () => {
+    window.localStorage.setItem('binzeo_jabiyen_connection_pending', '1');
+    window.location.href = `${CENTRAL_AUTH}/authorize?app=jabiyen&return_to=${encodeURIComponent('https://jabiyen-website.vercel.app/account')}`;
+  };
 
   return (
     <>
@@ -46,7 +58,7 @@ export default function AccountPage() {
               <div><span style={styles.detailLabel}>Password sharing</span><strong>Never</strong></div>
             </div>
             <p style={styles.note}>After connecting, approved account information is shown and managed from your BINZEO Central Account. You can disconnect JABIYEN at any time.</p>
-            <a href={`${CENTRAL_AUTH}/authorize?app=jabiyen&return_to=${encodeURIComponent('https://jabiyen-website.vercel.app/account')}`} style={styles.primary}>Connect or view account information</a>
+            <button type="button" onClick={startConnection} style={styles.primary}>Connect or view account information</button>
           </section>
 
           <section style={styles.infoCard}>
