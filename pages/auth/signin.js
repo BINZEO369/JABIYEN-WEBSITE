@@ -59,8 +59,8 @@ export default function SignIn() {
   return (
     <>
       <Head>
-        <title>Sign In | JABIYEN</title>
-        <meta name="description" content="Sign in to JABIYEN using BINZEO Central Auth." />
+        <title>Connect | JABIYEN</title>
+        <meta name="description" content="Connect JABIYEN with your BINZEO account." />
         <meta name="referrer" content="no-referrer" />
         <meta name="robots" content="noindex,nofollow" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -89,10 +89,10 @@ export default function SignIn() {
 
           {/* Text */}
           <div className="text-content">
-            <p className="eyebrow">JABIYEN ACCESS</p>
-            <h1 className="title">Sign In</h1>
+            <p className="eyebrow">BINZEO CENTRAL AUTH</p>
+            <h1 className="title">Connect JABIYEN</h1>
             <p className="subtitle">
-              Continue with BINZEO Central Auth to securely verify your identity.
+              If you are already signed in to BINZEO, connect in one step. If not, BINZEO will ask you to sign in first.
             </p>
           </div>
 
@@ -110,7 +110,7 @@ export default function SignIn() {
             className="primary-button"
           >
             <span className="btn-label">
-              {connecting ? 'Connecting…' : 'Continue with BINZEO'}
+              {connecting ? 'Opening secure connection…' : 'Connect with BINZEO'}
             </span>
           </button>
 

@@ -8,7 +8,7 @@ const PENDING_KEY = 'binzeo.central-auth.pkce.jabiyen.website';
 
 export default function CentralAuthCallback() {
   const [status, setStatus] = useState('loading');
-  const [message, setMessage] = useState('Verifying your secure sign-in…');
+  const [message, setMessage] = useState('Completing your secure connection…');
 
   useEffect(() => {
     let active = true;
@@ -96,7 +96,7 @@ export default function CentralAuthCallback() {
 
       if (!active) return;
       setStatus('success');
-      setMessage('Identity verified. Opening your JABIYEN account…');
+      setMessage('Connected. Opening your JABIYEN account…');
       window.location.replace('/auth/account');
     };
 
@@ -118,7 +118,7 @@ export default function CentralAuthCallback() {
       <main style={{ minHeight: 'calc(100vh - 180px)', display: 'grid', placeItems: 'center', padding: 24, background: '#f7f8fa' }}>
         <section aria-live="polite" style={{ width: '100%', maxWidth: 440, padding: '36px 30px', textAlign: 'center', background: '#fff', border: '1px solid #eceef1', borderRadius: 22, boxShadow: '0 18px 55px rgba(18, 27, 39, .08)' }}>
           <img src="/logo.png" alt="JABIYEN" width="48" height="48" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 13, margin: '0 auto 18px' }} />
-          <h1 style={{ margin: 0, color: '#171a20', fontSize: 22, fontWeight: 700 }}>{status === 'error' ? 'Sign-in not completed' : status === 'success' ? 'Verified' : 'Secure sign-in'}</h1>
+          <h1 style={{ margin: 0, color: '#171a20', fontSize: 22, fontWeight: 700 }}>{status === 'error' ? 'Connection not completed' : status === 'success' ? 'Connected' : 'Secure connection'}</h1>
           <p style={{ margin: '10px 0 0', color: '#69727e', fontSize: 14, lineHeight: 1.55 }}>{message}</p>
           {status === 'loading' && <div aria-hidden="true" style={{ width: 26, height: 26, margin: '24px auto 0', border: '3px solid #e2e6eb', borderTopColor: '#293746', borderRadius: '50%', animation: 'jabi-auth-spin .8s linear infinite' }} />}
           {status === 'error' && <Link href="/auth/signin" style={{ display: 'inline-block', marginTop: 24, padding: '11px 18px', borderRadius: 10, background: '#1d2834', color: '#fff', textDecoration: 'none', fontSize: 13, fontWeight: 650 }}>Return to sign in</Link>}
