@@ -85,15 +85,6 @@ export default function CentralAuthCallback() {
         expires_at: session.expires_at || null,
         user_id: session.user.id,
       }));
-      try {
-        await fetch('/api/project-access/record', {
-          method: 'POST',
-          cache: 'no-store',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ project_key: 'jabiyen', client_key: 'website', event_type: 'central_auth_login', outcome: 'success', metadata: { source: useHandoff ? 'central-auth-handoff' : 'central-auth-pkce' } }),
-        });
-      } catch { /* access auditing must not interrupt a successful sign-in */ }
-
       if (!active) return;
       setStatus('success');
       setMessage('Connected. Opening your JABIYEN account…');

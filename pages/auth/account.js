@@ -77,11 +77,6 @@ export default function Account() {
       const addressPayload = await addressesRes.json();
       const addresses = addressPayload.data?.addresses || addressPayload.addresses || [];
       const address = addresses.find(item => item.is_primary) || addresses[0] || {};
-      void fetch('/api/project-access/record', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ project_key: 'jabiyen', client_key: 'website', event_type: 'profile_synced', outcome: 'success', metadata: { source: 'jabiyen-website-account' } })
-      }).catch(() => {});
       const metadata = user.user_metadata || {};
       const appMetadata = user.app_metadata || {};
       setUserData({
