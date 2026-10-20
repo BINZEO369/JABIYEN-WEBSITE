@@ -271,7 +271,7 @@ export default function MenuDrawer({ isOpen, onClose }) {
 
         {/* Footer */}
         <div style={{ padding: 24, borderTop: '1px solid rgba(0,0,0,0.05)', background: 'rgba(255,255,255,0.2)', flexShrink: 0 }}>
-          <a href="https://auth-binzeo.vercel.app/authorize?app=jabiyen" onClick={onClose} style={{
+          <Link href="/account" onClick={onClose} style={{
             display: 'block', width: '100%', padding: '14px 0',
             background: '#000', color: '#fff',
             borderRadius: 12, textAlign: 'center',
@@ -281,7 +281,7 @@ export default function MenuDrawer({ isOpen, onClose }) {
             transition: 'background 0.3s ease'
           }}>
             Connect BINZEO Account
-          </a>
+          </Link>
         </div>
       </div>
     </>
