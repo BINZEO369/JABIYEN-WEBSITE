@@ -21,22 +21,22 @@ export default function App({ Component, pageProps }) {
         <meta name="robots" content="index, follow" />
         <meta name="theme-color" content="#ffffff" />
 
-        <link rel="canonical" href="https://www.jayenware.shop/" />
+        <link rel="canonical" href="https://jabiyen-website.vercel.app/" />
         <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/logo.png" />
         <link rel="apple-touch-icon" href="/logo.png" />
 
         <meta property="og:title" content="Jayenware Official Store | Bangladesh Heritage Fashion" />
         <meta property="og:description" content="Discover luxury Bangladesh clothing, T-shirt, bags, accessories and fragrances for women and men." />
-        <meta property="og:image" content="https://www.jayenware.shop/logo.png" />
-        <meta property="og:url" content="https://www.jayenware.shop/" />
+        <meta property="og:image" content="https://jabiyen-website.vercel.app/logo.png" />
+        <meta property="og:url" content="https://jabiyen-website.vercel.app/" />
         <meta property="og:type" content="website" />
         <meta property="og:site_name" content="JAYENWARE" />
         <meta property="fb:app_id" content="861762253694814" />
 
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content="Jayenware Official Store | Bangladesh Heritage Fashion" />
-        <meta name="twitter:image" content="https://www.jayenware.shop/logo.png" />
+        <meta name="twitter:image" content="https://jabiyen-website.vercel.app/logo.png" />
 
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

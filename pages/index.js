@@ -116,9 +116,9 @@ export default function Home() {
       <Head>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
           "@context":"https://schema.org","@type":"Website","name":"Jayenware","alternateName":"JAYENWARE SHOP",
-          "url":"https://www.jayenware.shop","logo":"https://www.jayenware.shop/logo.png",
+          "url":"https://jabiyen-website.vercel.app","logo":"https://jabiyen-website.vercel.app/logo.png",
           "description":"Premium lifestyle products and quality cotton T-shirts store by BINZEO.",
-          "priceRange":"৳450 - ৳5000","image":"https://www.jayenware.shop/logo.png",
+          "priceRange":"৳450 - ৳5000","image":"https://jabiyen-website.vercel.app/logo.png",
           "address":{"@type":"PostalAddress","addressLocality":"Dhaka","addressRegion":"Dhaka Division","addressCountry":"BD"},
           "contactPoint":{"@type":"ContactPoint","contactType":"customer service","url":"https://m.me/861762253694814"},
           "sameAs":["https://www.facebook.com/jayenware","https://www.instagram.com/jayenware","https://www.twitter.com/jayenware"],

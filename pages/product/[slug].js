@@ -1036,7 +1036,7 @@ export default function ProductPage() {
           <meta name="theme-color" content="#1d1d1f" />
           <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
           <link rel="apple-touch-icon" href="/logo.png" />
-          <link rel="canonical" href="https://www.jayenware.shop/product/" />
+          <link rel="canonical" href="https://jabiyen-website.vercel.app/product/" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
           <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
@@ -1111,7 +1111,7 @@ export default function ProductPage() {
         <meta name="theme-color" content="#1d1d1f" />
         <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
         <link rel="apple-touch-icon" href="/logo.png" />
-        <link rel="canonical" href={`https://www.jayenware.shop/product/${slug}`} />
+        <link rel="canonical" href={`https://jabiyen-website.vercel.app/product/${slug}`} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />

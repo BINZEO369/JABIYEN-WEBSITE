@@ -162,7 +162,7 @@ export default function About() {
       <Head>
         <title>About Us | JAYENWARE</title>
         <meta name="description" content="Learn more about Jayenware, our mission, vision and what drives us forward." />
-        <link rel="canonical" href="https://www.jayenware.shop/about" />
+        <link rel="canonical" href="https://jabiyen-website.vercel.app/about" />
       </Head>
 
       {/* Page Header Slider */}
