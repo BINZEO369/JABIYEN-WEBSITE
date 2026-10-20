@@ -47,7 +47,6 @@ export default function SignIn() {
       authUrl.searchParams.set('state', state);
       authUrl.searchParams.set('code_challenge', codeChallenge);
       authUrl.searchParams.set('code_challenge_method', 'S256');
-      authUrl.searchParams.set('handoff', 'one-time');
       
       window.location.assign(authUrl.toString());
     } catch (cause) {
