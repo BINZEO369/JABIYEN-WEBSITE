@@ -27,7 +27,7 @@ function asDate(value) {
 }
 
 function getAddressLine(address) {
-  return [address.address_line_1, address.address_line_2].filter(Boolean).join(', ');
+  return [address.address_line_1, address.address_line_2, address.address_line_3].filter(Boolean).join(', ');
 }
 
 export default function AccountPage() {
@@ -55,8 +55,8 @@ export default function AccountPage() {
     const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` };
     try {
       const [profileResponse, addressesResponse] = await Promise.all([
-        fetch('/api/user/profile', { headers, cache: 'no-store', credentials: 'same-origin' }),
-        fetch('/api/user/addresses', { headers, cache: 'no-store', credentials: 'same-origin' }),
+        fetch('/api/me', { headers, cache: 'no-store', credentials: 'same-origin' }),
+        fetch('/api/me/addresses', { headers, cache: 'no-store', credentials: 'same-origin' }),
       ]);
 
       if (profileResponse.status === 401 || addressesResponse.status === 401) {
@@ -80,15 +80,13 @@ export default function AccountPage() {
       const payload = profileResult?.data || profileResult;
       const centralProfile = payload?.profile || {};
       const centralUser = payload?.user || {};
-      const metadata = centralUser.user_metadata || {};
-      const appMetadata = centralUser.app_metadata || {};
       setProfile({
         email: centralUser.email || centralProfile.email || '',
-        firstName: centralProfile.first_name || metadata.first_name || metadata.full_name?.split(' ')[0] || '',
-        lastName: centralProfile.last_name || metadata.last_name || metadata.full_name?.split(' ').slice(1).join(' ') || '',
-        phone: centralUser.phone || metadata.phone || centralProfile.phone || '',
-        photo: centralProfile.profile_photo_url || metadata.avatar_url || metadata.picture || '',
-        provider: centralProfile.provider || appMetadata.provider || 'email',
+        firstName: centralProfile.first_name || centralProfile.display_name?.split(' ')[0] || '',
+        lastName: centralProfile.last_name || centralProfile.display_name?.split(' ').slice(1).join(' ') || '',
+        phone: centralUser.phone || '',
+        photo: centralProfile.profile_photo_url || '',
+        provider: centralUser.provider || 'BINZEO Central Auth',
         createdAt: centralProfile.created_at || centralUser.created_at || '',
       });
 
@@ -128,7 +126,6 @@ export default function AccountPage() {
     return `${profile.firstName} ${profile.lastName}`.trim() || profile.email?.split('@')[0] || 'Your account';
   }, [profile]);
   const initials = fullName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'J';
-  const primaryAddress = addresses.find((address) => address.is_primary) || addresses[0];
 
   const signOut = () => {
     // This only clears JABIYEN's local session; it does not sign out of Central Auth or other apps.
@@ -206,7 +203,7 @@ export default function AccountPage() {
                   <Detail label="Last name" value={profile.lastName} />
                   <Detail label="Email" value={profile.email} />
                   <Detail label="Phone" value={profile.phone} />
-                  <Detail label="Sign-in provider" value={profile.provider === 'email' ? 'Email and password' : profile.provider} />
+                  <Detail label="Identity provider" value={profile.provider} />
                   <Detail label="Member since" value={asDate(profile.createdAt)} />
                 </div>
               </section>
@@ -232,7 +229,7 @@ export default function AccountPage() {
                           {address.is_primary && <span className="primary-label">Primary</span>}
                         </div>
                         <p>{getAddressLine(address) || 'Address not provided'}</p>
-                        <p>{[address.city, address.state_province, address.postal_code].filter(Boolean).join(', ') || 'City and postal details not provided'}</p>
+                        <p>{[address.area, address.district, address.city, address.state_province, address.postal_code].filter(Boolean).join(', ') || 'City and postal details not provided'}</p>
                         <p>{address.country_name || address.country_code || ''}</p>
                       </article>
                     ))}
