@@ -25,7 +25,7 @@ export default function AccountPage() {
   }, []);
 
   const startConnection = () => {
-    window.location.href = `${CENTRAL_AUTH}/authorize`;
+    window.location.href = '/auth/signin';
   };
 
   return (
