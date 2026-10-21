@@ -390,7 +390,7 @@ export default function AccountPage() {
           justify-content: center;
           align-items: flex-start;
           min-height: 100vh;
-          background: #ffffff; /* Pure White */
+          background: #ffffff;
           padding: 0;
         }
 
@@ -398,7 +398,7 @@ export default function AccountPage() {
           width: 100%;
           max-width: 420px;
           min-height: 100vh;
-          background: #ffffff; /* Pure White */
+          background: #ffffff;
           display: flex;
           flex-direction: column;
           position: relative;
@@ -408,7 +408,8 @@ export default function AccountPage() {
         .content-scroll {
           flex: 1;
           overflow-y: auto;
-          padding: 30px 20px 40px 20px; /* Added top padding since header is removed */
+          /* Padding Top increased to 80px for a professional gap from the main header */
+          padding: 80px 20px 40px 20px; 
           scrollbar-width: none;
         }
         .content-scroll::-webkit-scrollbar { display: none; }
@@ -418,7 +419,7 @@ export default function AccountPage() {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 10px 0 24px;
+          padding: 0 0 24px; /* Top padding removed since content-scroll already has 80px */
         }
 
         .avatar {
@@ -437,7 +438,7 @@ export default function AccountPage() {
           font-size: 28px;
           font-weight: 500;
           color: #111;
-          background: transparent; /* No grey bg */
+          background: transparent;
           border: 1px solid #e0e0e0;
         }
 
@@ -461,7 +462,7 @@ export default function AccountPage() {
           margin-bottom: 24px;
           border-radius: 16px;
           overflow: hidden;
-          background: transparent; /* No grey bg */
+          background: transparent;
         }
 
         .banner-img {
@@ -481,7 +482,7 @@ export default function AccountPage() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 20px 0; /* Only spacing, no borders or backgrounds */
+          padding: 20px 0;
           text-decoration: none;
           color: #111;
           font-size: 15px;
@@ -503,7 +504,7 @@ export default function AccountPage() {
           display: flex;
           align-items: center;
           gap: 16px;
-          color: #333; /* Icon color */
+          color: #333;
         }
 
         .item-value {
@@ -517,7 +518,7 @@ export default function AccountPage() {
 
         /* Address */
         .address-item {
-          padding: 0 0 16px 36px; /* Indent under icon */
+          padding: 0 0 16px 36px;
           background: transparent;
           border: none;
         }
@@ -580,7 +581,7 @@ export default function AccountPage() {
           justify-content: center;
           height: 100%;
           text-align: center;
-          padding-top: 80px;
+          padding-top: 40px;
         }
 
         .state-icon {
