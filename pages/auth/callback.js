@@ -62,12 +62,78 @@ export default function AuthCallback() {
       <Head>
         <title>Completing Sign In | JABIYEN</title>
       </Head>
-      <main style={{ minHeight: 'calc(100vh - 180px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px' }}>
-        <section style={{ width: '100%', maxWidth: 440, background: '#fff', borderRadius: 24, padding: '40px 36px', textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 32px rgba(0,0,0,0.06)' }}>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1d1d1f', margin: '0 0 12px' }}>Central Auth</h1>
-          <p style={{ fontSize: 15, color: '#68686d', lineHeight: 1.6, margin: 0 }}>{message}</p>
-        </section>
-      </main>
+      
+      <div className="auth-container">
+        <div className="auth-content">
+          {/* Loader Spinner */}
+          <div className="spinner" aria-hidden="true" />
+          
+          <h1 className="auth-title">Central Auth</h1>
+          <p className="auth-message">{message}</p>
+        </div>
+      </div>
+
+      <style jsx global>{`
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #ffffff; /* Pure White Background */
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+      `}</style>
+
+      <style jsx>{`
+        .auth-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 100vh;
+          width: 100%;
+          background-color: #ffffff;
+          padding: 20px;
+        }
+
+        .auth-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          max-width: 400px;
+        }
+
+        /* Minimalist CSS Spinner */
+        .spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid #f0f0f0;
+          border-top: 3px solid #111;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 24px;
+        }
+
+        .auth-title {
+          font-size: 24px;
+          font-weight: 600;
+          color: #111;
+          margin: 0 0 12px;
+          letter-spacing: -0.5px;
+        }
+
+        .auth-message {
+          font-size: 15px;
+          color: #777;
+          line-height: 1.6;
+          margin: 0;
+          font-weight: 400;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </>
   );
 }
