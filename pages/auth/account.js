@@ -73,7 +73,6 @@ function getAddressLine(address) {
 
 // --- SVG Icons ---
 const Icons = {
-  Back: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>,
   ChevronRight: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
   User: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   Phone: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>,
@@ -232,16 +231,6 @@ export default function AccountPage() {
 
       <div className="app-container">
         <div className="mobile-frame">
-
-          {/* Header */}
-          <header className="top-nav">
-            <Link href="/" className="icon-btn" aria-label="Back">
-              <Icons.Back />
-            </Link>
-            <h1 className="nav-title">Settings</h1>
-            <div className="nav-spacer" />
-          </header>
-
           <main className="content-scroll">
 
             {/* Loading State */}
@@ -413,48 +402,13 @@ export default function AccountPage() {
           display: flex;
           flex-direction: column;
           position: relative;
-          /* No shadows, no borders, no rounded corners */
         }
-
-        /* Top Navigation */
-        .top-nav {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          padding: 24px 20px;
-          background: #ffffff;
-          position: sticky;
-          top: 0;
-          z-index: 10;
-        }
-
-        .icon-btn {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: transparent; /* No grey bg */
-          border: 1px solid #e0e0e0; /* Thin border like reference */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #111;
-          text-decoration: none;
-        }
-
-        .nav-title {
-          font-size: 16px;
-          font-weight: 600;
-          margin: 0;
-          color: #111;
-        }
-
-        .nav-spacer { width: 36px; }
 
         /* Scrollable Content */
         .content-scroll {
           flex: 1;
           overflow-y: auto;
-          padding: 0 20px 40px 20px;
+          padding: 30px 20px 40px 20px; /* Added top padding since header is removed */
           scrollbar-width: none;
         }
         .content-scroll::-webkit-scrollbar { display: none; }
