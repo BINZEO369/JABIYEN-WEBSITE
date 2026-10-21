@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 
-const CLIENT_ID = 'jabiyen';
+const CLIENT_ID = 'jabiyen:website';
 
 export default function AuthCallback() {
   const [message, setMessage] = useState('Completing secure sign in…');

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 
 const CENTRAL_AUTH_SIGNIN_URL = 'https://auth-binzeo.vercel.app/signin';
-const CLIENT_ID = 'jabiyen';
+const CLIENT_ID = 'jabiyen:website';
 
 function toBase64Url(bytes) {
   let binary = '';
