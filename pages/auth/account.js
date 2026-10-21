@@ -229,39 +229,38 @@ export default function AccountPage() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
 
-      <div className="account-page-wrapper">
-        <main className="account-container">
+      <div className="app-container">
+        <div className="account-wrapper">
+          <main className="content-scroll">
 
-          {/* Loading State */}
-          {status === 'loading' && (
-            <div className="state-container">
-              <div className="spinner" />
-              <h2 className="state-title">Loading...</h2>
-            </div>
-          )}
-
-          {/* Error / Signed Out State */}
-          {(status === 'error' || status === 'signed_out') && (
-            <div className="state-container">
-              <div className="state-icon"><Icons.Alert /></div>
-              <h2 className="state-title">{status === 'error' ? 'Error' : 'Welcome'}</h2>
-              <p className="state-desc">{message}</p>
-              <div className="state-actions">
-                {status === 'error' && (
-                  <button className="btn btn-outline" onClick={() => void loadAccount()}>Retry</button>
-                )}
-                <Link href="/auth/signin" className="btn btn-primary">Sign In</Link>
+            {/* Loading State */}
+            {status === 'loading' && (
+              <div className="state-container">
+                <div className="spinner" />
+                <h2 className="state-title">Loading...</h2>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Connected State */}
-          {status === 'connected' && profile && (
-            <div className="desktop-layout">
-              
-              {/* Left Column: Profile & Banner */}
-              <div className="profile-column">
-                <div className="profile-info">
+            {/* Error / Signed Out State */}
+            {(status === 'error' || status === 'signed_out') && (
+              <div className="state-container">
+                <div className="state-icon"><Icons.Alert /></div>
+                <h2 className="state-title">{status === 'error' ? 'Error' : 'Welcome'}</h2>
+                <p className="state-desc">{message}</p>
+                <div className="state-actions">
+                  {status === 'error' && (
+                    <button className="btn btn-outline" onClick={() => void loadAccount()}>Retry</button>
+                  )}
+                  <Link href="/auth/signin" className="btn btn-primary">Sign In</Link>
+                </div>
+              </div>
+            )}
+
+            {/* Connected State */}
+            {status === 'connected' && profile && (
+              <>
+                {/* Profile Section */}
+                <div className="profile-section">
                   {profile.photo ? (
                     <img className="avatar" src={profile.photo} alt={fullName} referrerPolicy="no-referrer" />
                   ) : (
@@ -280,12 +279,10 @@ export default function AccountPage() {
                     onError={(e) => { e.target.style.display = 'none'; }}
                   />
                 </div>
-              </div>
 
-              {/* Right Column: Details & Actions */}
-              <div className="details-column">
                 {refreshMessage && <div className="alert-text">{refreshMessage}</div>}
 
+                {/* --- FLAT LIST SECTION (NO DIVIDERS, NO CARDS, PURE WHITE) --- */}
                 <div className="list-section">
                   
                   <div className="list-item">
@@ -371,11 +368,10 @@ export default function AccountPage() {
                 <div className="footer-note">
                   <span>Securely connected via BINZEO</span>
                 </div>
-              </div>
-
-            </div>
-          )}
-        </main>
+              </>
+            )}
+          </main>
+        </div>
       </div>
 
       <style jsx global>{`
@@ -389,53 +385,56 @@ export default function AccountPage() {
       `}</style>
 
       <style jsx>{`
-        .account-page-wrapper {
+        .app-container {
+          display: flex;
+          justify-content: center;
+          align-items: flex-start;
+          min-height: 100vh;
+          background: #ffffff;
+          padding: 0;
+        }
+
+        .account-wrapper {
+          width: 100%;
+          max-width: 100%; /* Full width for mobile */
           min-height: 100vh;
           background: #ffffff;
           display: flex;
-          justify-content: center;
-          /* Top padding gives professional gap from the main header */
-          padding: 120px 24px 80px 24px; 
+          flex-direction: column;
+          position: relative;
         }
 
-        .account-container {
-          width: 100%;
-          max-width: 1000px; /* Wider for desktop */
+        /* Scrollable Content */
+        .content-scroll {
+          flex: 1;
+          overflow-y: auto;
+          padding: 80px 20px 40px 20px; 
+          scrollbar-width: none;
         }
+        .content-scroll::-webkit-scrollbar { display: none; }
 
-        /* Desktop 2-Column Grid Layout */
-        .desktop-layout {
-          display: grid;
-          grid-template-columns: 320px 1fr;
-          gap: 80px;
-          align-items: start;
-        }
-
-        /* --- Left Column: Profile --- */
-        .profile-column {
+        /* Profile Section */
+        .profile-section {
           display: flex;
           flex-direction: column;
-          align-items: flex-start; /* Left aligned for desktop */
-        }
-
-        .profile-info {
-          margin-bottom: 32px;
+          align-items: center;
+          padding: 0 0 24px;
         }
 
         .avatar {
-          width: 100px;
-          height: 100px;
+          width: 80px;
+          height: 80px;
           border-radius: 50%;
           object-fit: cover;
           background: transparent;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .avatar-fallback {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 32px;
+          font-size: 28px;
           font-weight: 500;
           color: #111;
           background: transparent;
@@ -443,23 +442,23 @@ export default function AccountPage() {
         }
 
         .profile-name {
-          font-size: 32px;
+          font-size: 26px;
           font-weight: 500;
-          margin: 0 0 6px;
+          margin: 0 0 4px;
           color: #111;
-          letter-spacing: -0.02em;
         }
 
         .profile-email {
-          font-size: 15px;
-          color: #777;
+          font-size: 14px;
+          color: #888;
           margin: 0;
         }
 
-        /* Banner (Invite friends size style) */
+        /* Banner */
         .banner-wrapper {
           width: 100%;
-          height: 100px; /* Slightly taller for desktop */
+          height: 80px;
+          margin-bottom: 24px;
           border-radius: 16px;
           overflow: hidden;
           background: transparent;
@@ -472,13 +471,7 @@ export default function AccountPage() {
           display: block;
         }
 
-        /* --- Right Column: Details --- */
-        .details-column {
-          display: flex;
-          flex-direction: column;
-          padding-top: 10px; /* Align with profile name */
-        }
-
+        /* List Section */
         .list-section {
           display: flex;
           flex-direction: column;
@@ -488,27 +481,20 @@ export default function AccountPage() {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 24px 0;
+          padding: 20px 0;
           text-decoration: none;
           color: #111;
-          font-size: 16px;
+          font-size: 15px;
           font-weight: 500;
           background: transparent;
           border: none;
-          border-bottom: 1px solid #f0f0f0; /* Subtle divider for desktop structure */
           width: 100%;
           text-align: left;
-          transition: all 0.2s ease;
         }
         
-        .list-item:last-child {
-          border-bottom: none;
-        }
-
         .list-item.clickable {
           cursor: pointer;
         }
-        
         .list-item.clickable:hover {
           opacity: 0.6;
         }
@@ -516,12 +502,12 @@ export default function AccountPage() {
         .item-left {
           display: flex;
           align-items: center;
-          gap: 20px;
-          color: #222;
+          gap: 16px;
+          color: #333;
         }
 
         .item-value {
-          font-size: 15px;
+          font-size: 14px;
           color: #777;
           font-weight: 400;
         }
@@ -531,23 +517,20 @@ export default function AccountPage() {
 
         /* Address */
         .address-item {
-          padding: 16px 0 16px 40px;
+          padding: 0 0 16px 36px;
           background: transparent;
-          border-bottom: 1px solid #fafafa;
-        }
-        .address-item:last-child {
-          border-bottom: none;
+          border: none;
         }
 
         .address-top {
           display: flex;
           align-items: center;
-          gap: 10px;
-          margin-bottom: 6px;
+          gap: 8px;
+          margin-bottom: 4px;
         }
 
         .address-title {
-          font-size: 15px;
+          font-size: 14px;
           font-weight: 600;
           color: #111;
           text-transform: capitalize;
@@ -557,21 +540,20 @@ export default function AccountPage() {
           font-size: 10px;
           background: #111;
           color: #fff;
-          padding: 3px 8px;
+          padding: 2px 6px;
           border-radius: 6px;
           font-weight: 600;
         }
 
         .address-line {
-          margin: 4px 0;
-          font-size: 14px;
+          margin: 2px 0;
+          font-size: 13px;
           color: #666;
-          line-height: 1.5;
         }
 
         .address-loading {
-          padding: 16px 0 16px 40px;
-          font-size: 14px;
+          padding: 0 0 16px 36px;
+          font-size: 13px;
           color: #888;
           display: flex;
           align-items: center;
@@ -579,14 +561,14 @@ export default function AccountPage() {
         }
 
         .address-error {
-          padding: 16px 0 16px 40px;
-          font-size: 14px;
+          padding: 0 0 16px 36px;
+          font-size: 13px;
           color: #d93025;
         }
 
         .empty-state {
-          padding: 16px 0 16px 40px;
-          font-size: 15px;
+          padding: 0 0 16px 36px;
+          font-size: 14px;
           color: #888;
         }
 
@@ -596,50 +578,50 @@ export default function AccountPage() {
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          min-height: 50vh;
+          height: 100%;
           text-align: center;
+          padding-top: 40px;
         }
 
         .state-icon {
-          width: 60px;
-          height: 60px;
+          width: 50px;
+          height: 50px;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
           color: #111;
           border: 1px solid #e0e0e0;
         }
 
         .state-title {
-          font-size: 26px;
+          font-size: 22px;
           font-weight: 500;
-          margin: 0 0 10px;
+          margin: 0 0 8px;
           color: #111;
         }
 
         .state-desc {
-          font-size: 15px;
+          font-size: 14px;
           color: #888;
-          max-width: 300px;
-          line-height: 1.6;
-          margin: 0 0 30px;
+          max-width: 250px;
+          line-height: 1.5;
+          margin: 0 0 24px;
         }
 
         .state-actions {
           display: flex;
-          gap: 12px;
+          gap: 10px;
         }
 
         .btn {
-          padding: 14px 32px;
+          padding: 12px 24px;
           border-radius: 100px;
-          font-size: 15px;
+          font-size: 14px;
           font-weight: 600;
           cursor: pointer;
           text-decoration: none;
-          transition: opacity 0.2s;
         }
 
         .btn-primary {
@@ -647,22 +629,17 @@ export default function AccountPage() {
           color: #fff;
           border: none;
         }
-        .btn-primary:hover { opacity: 0.8; }
 
         .btn-outline {
           background: transparent;
           color: #111;
           border: 1px solid #ddd;
         }
-        .btn-outline:hover { background: #f5f5f5; }
 
         .alert-text {
           color: #d93025;
-          font-size: 14px;
-          margin-bottom: 20px;
-          padding: 12px;
-          background: #fff3f3;
-          border-radius: 8px;
+          font-size: 13px;
+          margin-bottom: 16px;
           text-align: center;
         }
 
@@ -671,7 +648,7 @@ export default function AccountPage() {
           border: none;
           color: #111;
           font-weight: 600;
-          font-size: 14px;
+          font-size: 13px;
           text-decoration: underline;
           margin-top: 8px;
           padding: 0;
@@ -679,26 +656,26 @@ export default function AccountPage() {
         }
 
         .footer-note {
-          text-align: left;
-          font-size: 13px;
+          text-align: center;
+          font-size: 12px;
           color: #aaa;
-          margin-top: 40px;
+          margin-top: 30px;
         }
 
         /* Spinners */
         .spinner {
-          width: 30px;
-          height: 30px;
+          width: 24px;
+          height: 24px;
           border: 2px solid #eee;
           border-top-color: #111;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
         }
 
         .mini-spinner {
-          width: 16px;
-          height: 16px;
+          width: 14px;
+          height: 14px;
           border: 2px solid #eee;
           border-top-color: #111;
           border-radius: 50%;
@@ -708,34 +685,93 @@ export default function AccountPage() {
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* --- Responsive: Mobile View --- */
-        @media (max-width: 768px) {
-          .account-page-wrapper {
-            padding: 80px 20px 40px 20px;
+        /* =========================================
+           DESKTOP RESPONSIVE STYLES (Increased sizes)
+           ========================================= */
+        @media (min-width: 768px) {
+          .account-wrapper {
+            max-width: 800px; /* Width increased for desktop */
+            margin: 0 auto;
           }
-          .desktop-layout {
-            grid-template-columns: 1fr;
-            gap: 40px;
+
+          .content-scroll {
+            padding: 120px 40px 60px 40px; /* More gap from top and sides */
           }
-          .profile-column {
-            align-items: center;
-            text-align: center;
+
+          .profile-section {
+            padding-bottom: 40px;
           }
+
+          .avatar {
+            width: 120px;
+            height: 120px;
+            margin-bottom: 24px;
+          }
+
+          .avatar-fallback {
+            font-size: 40px;
+          }
+
           .profile-name {
-            font-size: 26px;
+            font-size: 36px;
+            margin-bottom: 8px;
           }
+
+          .profile-email {
+            font-size: 16px;
+          }
+
           .banner-wrapper {
-            height: 80px;
+            height: 200px; /* Taller banner for desktop */
+            margin-bottom: 40px;
+            border-radius: 24px;
           }
+
           .list-item {
-            padding: 20px 0;
+            padding: 28px 0;
+            font-size: 18px;
+          }
+
+          .item-left {
+            gap: 24px;
+          }
+
+          /* Scale up SVGs inside list items for desktop */
+          .item-left :global(svg) {
+            width: 26px !important;
+            height: 26px !important;
+          }
+
+          .item-value {
+            font-size: 16px;
+          }
+
+          .address-item {
+            padding: 0 0 24px 50px;
+          }
+
+          .address-title {
+            font-size: 16px;
+          }
+
+          .address-line {
+            font-size: 15px;
+            margin: 4px 0;
+          }
+
+          .badge {
+            font-size: 12px;
+            padding: 3px 8px;
+          }
+
+          .address-loading, .address-error, .empty-state {
+            padding-left: 50px;
             font-size: 15px;
           }
-          .address-item {
-            padding-left: 36px;
-          }
+
           .footer-note {
-            text-align: center;
+            margin-top: 50px;
+            font-size: 14px;
           }
         }
       `}</style>
