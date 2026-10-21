@@ -1,12 +1,22 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 
 const CLIENT_ID = 'jabiyen:website';
 
 export default function AuthCallback() {
   const [message, setMessage] = useState('Completing secure sign in…');
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  
+  // useRef ব্যবহার করা হয়েছে যাতে React Strict Mode-এ useEffect দুইবার রান হলেও 
+  // একবারই API কল হয়।
+  const isProcessing = useRef(false);
 
   useEffect(() => {
+    if (isProcessing.current) return;
+    isProcessing.current = true;
+
     const completeSignIn = async () => {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('code');
@@ -15,8 +25,18 @@ export default function AuthCallback() {
       const verifier = sessionStorage.getItem('jabiyen_auth_verifier');
       const redirectUri = sessionStorage.getItem('jabiyen_auth_redirect_uri') || `${window.location.origin}/auth/callback`;
 
-      if (!code || !returnedState || !expectedState || returnedState !== expectedState || !verifier) {
-        setMessage('The sign-in response was invalid or expired. Please start again.');
+      // যদি URL-এ code বা state না থাকে, অথবা sessionStorage খালি থাকে
+      if (!code || !returnedState) {
+        setIsLoading(false);
+        setIsError(true);
+        setMessage('No authorization code found. Please start the sign-in process again.');
+        return;
+      }
+
+      if (!expectedState || returnedState !== expectedState || !verifier) {
+        setIsLoading(false);
+        setIsError(true);
+        setMessage('Your sign-in session expired or was invalid. Please try signing in again.');
         return;
       }
 
@@ -32,7 +52,9 @@ export default function AuthCallback() {
             code_verifier: verifier,
           }),
         });
+        
         const result = await response.json().catch(() => ({}));
+        
         if (!response.ok || !result.success || !result.data?.session?.access_token) {
           throw new Error(result.error?.message || 'Central token exchange failed');
         }
@@ -44,13 +66,24 @@ export default function AuthCallback() {
           expires_at: session.expires_at || null,
           user_id: session.user?.id || null,
         }));
+
+        // সফলভাবে টোকেন সেভ হওয়ার পর সেশন স্টোরেজ ক্লিয়ার করা
         sessionStorage.removeItem('jabiyen_auth_state');
         sessionStorage.removeItem('jabiyen_auth_verifier');
         sessionStorage.removeItem('jabiyen_auth_redirect_uri');
+        
+        // অ্যাকাউন্ট পেজে রিডাইরেক্ট
         window.location.replace('/auth/account');
+        
       } catch (err) {
         console.error('[JABIYEN_AUTH_CALLBACK_ERROR]', err);
-        setMessage('Central authentication could not be completed. Please sign in again.');
+        setIsLoading(false);
+        setIsError(true);
+        setMessage(
+          err.message === 'Central token exchange failed' || err.message.includes('invalid')
+            ? 'The sign-in link has already been used or expired. Please sign in again.'
+            : 'Central authentication could not be completed. Please sign in again.'
+        );
       }
     };
 
@@ -65,11 +98,36 @@ export default function AuthCallback() {
       
       <div className="auth-container">
         <div className="auth-content">
-          {/* Loader Spinner */}
-          <div className="spinner" aria-hidden="true" />
           
-          <h1 className="auth-title">Central Auth</h1>
-          <p className="auth-message">{message}</p>
+          {isLoading ? (
+            /* লোডিং অবস্থা */
+            <>
+              <div className="spinner" aria-hidden="true" />
+              <h1 className="auth-title">Central Auth</h1>
+              <p className="auth-message">{message}</p>
+            </>
+          ) : isError ? (
+            /* এরর অবস্থা */
+            <>
+              <div className="error-icon" aria-hidden="true">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#111" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/>
+                  <line x1="12" y1="8" x2="12" y2="12"/>
+                  <line x1="12" y1="16" x2="12.01" y2="16"/>
+                </svg>
+              </div>
+              <h1 className="auth-title">Sign In Failed</h1>
+              <p className="auth-message">{message}</p>
+              
+              {/* পুনরায় সাইন ইন করার বাটন */}
+              <div className="auth-actions">
+                <Link href="/auth/signin" className="btn btn-primary">
+                  Sign In Again
+                </Link>
+              </div>
+            </>
+          ) : null}
+
         </div>
       </div>
 
@@ -77,7 +135,7 @@ export default function AuthCallback() {
         body {
           margin: 0;
           padding: 0;
-          background-color: #ffffff; /* Pure White Background */
+          background-color: #ffffff;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
           -webkit-font-smoothing: antialiased;
         }
@@ -102,7 +160,6 @@ export default function AuthCallback() {
           max-width: 400px;
         }
 
-        /* Minimalist CSS Spinner */
         .spinner {
           width: 40px;
           height: 40px;
@@ -111,6 +168,10 @@ export default function AuthCallback() {
           border-radius: 50%;
           animation: spin 1s linear infinite;
           margin-bottom: 24px;
+        }
+
+        .error-icon {
+          margin-bottom: 20px;
         }
 
         .auth-title {
@@ -125,8 +186,37 @@ export default function AuthCallback() {
           font-size: 15px;
           color: #777;
           line-height: 1.6;
-          margin: 0;
+          margin: 0 0 24px;
           font-weight: 400;
+        }
+
+        .auth-actions {
+          display: flex;
+          justify-content: center;
+          width: 100%;
+        }
+
+        .btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 44px;
+          padding: 0 24px;
+          border-radius: 999px;
+          font-size: 14px;
+          font-weight: 600;
+          text-decoration: none;
+          transition: opacity 0.2s;
+        }
+
+        .btn-primary {
+          background: #111;
+          color: #fff;
+          border: none;
+        }
+
+        .btn-primary:hover {
+          opacity: 0.8;
         }
 
         @keyframes spin {
