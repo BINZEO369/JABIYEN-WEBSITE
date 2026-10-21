@@ -71,15 +71,17 @@ function getAddressLine(address) {
     .join(', ');
 }
 
-function DetailRow({ label, value }) {
+// নতুন ডিজাইনের জন্য DetailItem
+function DetailItem({ label, value }) {
   return (
-    <div className="detail-row">
+    <div className="detail-item">
       <span className="detail-label">{label}</span>
       <span className="detail-value">{value || 'Not added'}</span>
     </div>
   );
 }
 
+// নতুন ডিজাইনের জন্য AddressCard
 function AddressCard({ address, index }) {
   const title = address.label || address.address_type || `Address ${index + 1}`;
   const locality = [address.area, address.district, address.city, address.state_province, address.postal_code]
@@ -88,15 +90,21 @@ function AddressCard({ address, index }) {
   const country = address.country_name || address.country_code || '';
 
   return (
-    <div className="address-row">
-      <div className="address-info">
-        <div className="address-header">
+    <div className="address-card">
+      <div className="address-header">
+        <div className="address-title-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
           <h4>{title}</h4>
-          {address.is_primary && <span className="primary-badge">Primary</span>}
         </div>
+        {address.is_primary && <span className="primary-badge">Primary</span>}
+      </div>
+      <div className="address-body">
         <p>{getAddressLine(address) || 'Address details not added'}</p>
         {locality && <p>{locality}</p>}
-        {country && <p>{country}</p>}
+        {country && <p className="country-text">{country}</p>}
       </div>
     </div>
   );
@@ -251,14 +259,14 @@ export default function AccountPage() {
       <main className="account-layout">
         <div className="account-container">
           
-          {/* Top Navigation */}
+          {/* Top Nav */}
           <nav className="top-nav">
             <Link href="/" className="back-btn" aria-label="Go back">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </Link>
-            <span className="nav-title">Settings</span>
+            <span className="nav-title">My Account</span>
             <div className="nav-spacer"></div>
           </nav>
 
@@ -295,7 +303,7 @@ export default function AccountPage() {
               
               {refreshMessage && <div className="alert-message">{refreshMessage}</div>}
 
-              {/* Profile Header (Centered like reference) */}
+              {/* Profile Header */}
               <header className="profile-header">
                 <div className="avatar-container">
                   {profile.photo ? (
@@ -306,27 +314,33 @@ export default function AccountPage() {
                 </div>
                 <h1>{fullName}</h1>
                 <p>{profile.email || 'Email not added'}</p>
+                {profile.emailVerified && (
+                  <span className="verified-tag">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    Verified Account
+                  </span>
+                )}
               </header>
 
-              {/* Personal Info List */}
+              {/* Personal Info Grid */}
               <div className="section-group">
                 <div className="section-title">Personal Information</div>
-                <div className="list-card">
-                  <DetailRow label="First name" value={profile.firstName} />
-                  <DetailRow label="Last name" value={profile.lastName} />
-                  <DetailRow label="Email" value={profile.email} />
-                  <DetailRow label="Phone" value={profile.phone} />
-                  {profile.username && <DetailRow label="Username" value={profile.username} />}
-                  {profile.binzeoId && <DetailRow label="BINZEO ID" value={profile.binzeoId} />}
-                  <DetailRow label="Provider" value={profile.provider} />
-                  <DetailRow label="Member since" value={asDate(profile.createdAt)} />
+                <div className="detail-grid">
+                  <DetailItem label="First name" value={profile.firstName} />
+                  <DetailItem label="Last name" value={profile.lastName} />
+                  <DetailItem label="Email address" value={profile.email} />
+                  <DetailItem label="Phone number" value={profile.phone} />
+                  {profile.username && <DetailItem label="Username" value={profile.username} />}
+                  {profile.binzeoId && <DetailItem label="BINZEO ID" value={profile.binzeoId} />}
+                  <DetailItem label="Identity provider" value={profile.provider} />
+                  <DetailItem label="Member since" value={asDate(profile.createdAt)} />
                 </div>
               </div>
 
               {/* Addresses List */}
               <div className="section-group">
                 <div className="section-title">Saved Addresses</div>
-                <div className="list-card">
+                <div className="address-list">
                   {addressLoading ? (
                     <div className="list-item-empty">
                       <span className="small-spinner" /> Loading addresses...
@@ -339,7 +353,7 @@ export default function AccountPage() {
                       </button>
                     </div>
                   ) : addresses.length === 0 ? (
-                    <div className="list-item-empty">
+                    <div className="list-item-empty empty-box">
                       <p>No saved addresses yet.</p>
                     </div>
                   ) : (
@@ -355,12 +369,14 @@ export default function AccountPage() {
                 <a className="btn-primary" href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer">
                   Manage in Central Auth
                 </a>
-                <button className="btn-secondary" type="button" onClick={() => void loadAccount({ quiet: true })} disabled={refreshing}>
-                  {refreshing ? 'Refreshing...' : 'Refresh details'}
-                </button>
-                <button className="btn-secondary danger" type="button" onClick={signOut}>
-                  Sign out of JABIYEN
-                </button>
+                <div className="secondary-actions">
+                  <button className="btn-secondary" type="button" onClick={() => void loadAccount({ quiet: true })} disabled={refreshing}>
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                  </button>
+                  <button className="btn-secondary danger" type="button" onClick={signOut}>
+                    Sign out
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -371,7 +387,7 @@ export default function AccountPage() {
       <style jsx>{`
         .account-layout {
           min-height: 100vh;
-          background: #ffffff;
+          background: #fafafa; /* হালকা অফ-হোয়াইট ব্যাকগ্রাউন্ড */
           color: #111111;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
           padding: 0 16px 60px;
@@ -381,7 +397,7 @@ export default function AccountPage() {
 
         .account-container {
           width: 100%;
-          max-width: 520px; /* Mobile app width feel */
+          max-width: 560px;
         }
 
         /* Top Nav */
@@ -392,7 +408,7 @@ export default function AccountPage() {
           padding: 24px 0;
           position: sticky;
           top: 0;
-          background: #ffffff;
+          background: #fafafa;
           z-index: 10;
         }
 
@@ -403,14 +419,15 @@ export default function AccountPage() {
           width: 40px;
           height: 40px;
           border-radius: 50%;
-          background: #f5f5f5;
+          background: #ffffff;
+          border: 1px solid #eaeaea;
           color: #111;
           text-decoration: none;
-          transition: background 0.2s;
+          transition: all 0.2s;
         }
 
         .back-btn:hover {
-          background: #e5e5e5;
+          background: #f5f5f5;
         }
 
         .nav-title {
@@ -437,11 +454,12 @@ export default function AccountPage() {
         }
 
         .avatar {
-          width: 84px;
-          height: 84px;
+          width: 88px;
+          height: 88px;
           border-radius: 50%;
           object-fit: cover;
-          background: #f5f5f5;
+          background: #ffffff;
+          border: 1px solid #eaeaea;
         }
 
         .avatar-fallback {
@@ -450,93 +468,114 @@ export default function AccountPage() {
           justify-content: center;
           color: #ffffff;
           background: #000000;
-          font-size: 28px;
+          font-size: 30px;
           font-weight: 600;
         }
 
         .profile-header h1 {
           font-size: 24px;
-          font-weight: 500;
+          font-weight: 600;
           margin: 0 0 6px;
           letter-spacing: -0.5px;
         }
 
         .profile-header p {
           margin: 0;
-          font-size: 13px;
-          color: #777777;
+          font-size: 14px;
+          color: #666666;
+        }
+
+        .verified-tag {
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+          margin-top: 12px;
+          padding: 4px 10px;
+          background: #f0f0f0;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #333;
         }
 
         /* Sections */
         .section-group {
-          margin-bottom: 28px;
+          margin-bottom: 32px;
         }
 
         .section-title {
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 600;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
           color: #888888;
           margin-bottom: 12px;
-          padding-left: 4px;
+          padding-left: 8px;
         }
 
-        .list-card {
+        /* Detail Grid (Personal Info) */
+        .detail-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 12px;
+        }
+
+        .detail-item {
           background: #ffffff;
           border: 1px solid #eaeaea;
-          border-radius: 16px;
-          overflow: hidden;
-        }
-
-        /* Detail Rows */
-        .detail-row {
+          border-radius: 12px;
+          padding: 16px;
           display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          padding: 16px 20px;
-          border-bottom: 1px solid #eaeaea;
-          gap: 20px;
-        }
-
-        .detail-row:last-child {
-          border-bottom: none;
+          flex-direction: column;
+          gap: 6px;
         }
 
         .detail-label {
-          font-size: 14px;
-          color: #666666;
-          flex-shrink: 0;
+          font-size: 12px;
+          color: #888888;
+          font-weight: 500;
         }
 
         .detail-value {
           font-size: 14px;
           color: #111111;
-          font-weight: 500;
-          text-align: right;
+          font-weight: 600;
           word-break: break-word;
+          line-height: 1.4;
         }
 
-        /* Address Rows */
-        .address-row {
-          padding: 16px 20px;
-          border-bottom: 1px solid #eaeaea;
+        /* Address Cards */
+        .address-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
 
-        .address-row:last-child {
-          border-bottom: none;
+        .address-card {
+          background: #ffffff;
+          border: 1px solid #eaeaea;
+          border-radius: 16px;
+          padding: 20px;
         }
 
         .address-header {
           display: flex;
           justify-content: space-between;
+          align-items: flex-start;
+          margin-bottom: 12px;
+        }
+
+        .address-title-wrap {
+          display: flex;
           align-items: center;
-          margin-bottom: 6px;
+          gap: 8px;
+        }
+
+        .address-title-wrap svg {
+          color: #555;
         }
 
         .address-header h4 {
           margin: 0;
-          font-size: 14px;
+          font-size: 15px;
           font-weight: 600;
           color: #111;
           text-transform: capitalize;
@@ -544,44 +583,63 @@ export default function AccountPage() {
 
         .primary-badge {
           font-size: 10px;
-          font-weight: 600;
-          padding: 2px 8px;
-          border-radius: 12px;
+          font-weight: 700;
+          padding: 4px 10px;
+          border-radius: 20px;
           background: #000000;
           color: #ffffff;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
-        .address-row p {
-          margin: 0 0 4px;
-          font-size: 13px;
-          color: #666666;
-          line-height: 1.4;
+        .address-body p {
+          margin: 0 0 6px;
+          font-size: 14px;
+          color: #555555;
+          line-height: 1.5;
         }
 
-        .address-row p:last-child {
+        .address-body p:last-child {
           margin-bottom: 0;
         }
 
+        .country-text {
+          font-weight: 600;
+          color: #111 !important;
+          margin-top: 8px !important;
+        }
+
+        /* Empty & Loading States */
         .list-item-empty {
-          padding: 24px 20px;
+          padding: 32px 20px;
           text-align: center;
-          font-size: 13px;
+          font-size: 14px;
           color: #666666;
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           gap: 12px;
+          background: #ffffff;
+          border: 1px solid #eaeaea;
+          border-radius: 16px;
+        }
+
+        .empty-box {
+          border-style: dashed;
+          background: transparent;
         }
 
         .error-text {
           color: #d32f2f;
+          border-color: #ffcccc;
+          background: #fffafa;
         }
 
         .list-item-empty button {
           background: none;
           border: none;
-          font-size: 13px;
+          font-size: 14px;
           font-weight: 600;
           color: #111;
           text-decoration: underline;
@@ -593,7 +651,7 @@ export default function AccountPage() {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          margin-top: 40px;
+          margin-top: 20px;
         }
 
         .btn-primary {
@@ -601,11 +659,11 @@ export default function AccountPage() {
           align-items: center;
           justify-content: center;
           width: 100%;
-          height: 52px;
+          height: 54px;
           background: #000000;
           color: #ffffff;
-          border-radius: 26px;
-          font-size: 14px;
+          border-radius: 27px;
+          font-size: 15px;
           font-weight: 600;
           text-decoration: none;
           border: none;
@@ -617,16 +675,21 @@ export default function AccountPage() {
           opacity: 0.8;
         }
 
+        .secondary-actions {
+          display: flex;
+          gap: 12px;
+        }
+
         .btn-secondary {
+          flex: 1;
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 100%;
-          height: 52px;
+          height: 50px;
           background: #ffffff;
           color: #111111;
           border: 1px solid #eaeaea;
-          border-radius: 26px;
+          border-radius: 25px;
           font-size: 14px;
           font-weight: 600;
           cursor: pointer;
@@ -634,7 +697,7 @@ export default function AccountPage() {
         }
 
         .btn-secondary:hover {
-          background: #f9f9f9;
+          background: #f5f5f5;
         }
 
         .btn-secondary.danger {
@@ -652,7 +715,7 @@ export default function AccountPage() {
           cursor: not-allowed;
         }
 
-        /* States */
+        /* General States */
         .state-container {
           display: flex;
           flex-direction: column;
@@ -667,7 +730,8 @@ export default function AccountPage() {
           width: 64px;
           height: 64px;
           border-radius: 50%;
-          background: #f5f5f5;
+          background: #ffffff;
+          border: 1px solid #eaeaea;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -677,7 +741,7 @@ export default function AccountPage() {
         }
 
         .state-container h2 {
-          font-size: 20px;
+          font-size: 22px;
           font-weight: 600;
           margin: 0 0 8px;
         }
@@ -699,14 +763,15 @@ export default function AccountPage() {
         }
 
         .alert-message {
-          background: #f9f9f9;
-          border: 1px solid #eaeaea;
-          padding: 12px 16px;
+          background: #fff4e5;
+          border: 1px solid #ffd8a8;
+          padding: 14px 16px;
           border-radius: 12px;
           font-size: 13px;
-          color: #111;
+          color: #d9480f;
           margin-bottom: 24px;
           text-align: center;
+          font-weight: 500;
         }
 
         /* Loaders */
@@ -733,31 +798,15 @@ export default function AccountPage() {
           to { transform: rotate(360deg); }
         }
 
-        @media (max-width: 480px) {
-          .account-layout {
-            padding: 0 12px 40px;
+        @media (max-width: 520px) {
+          .detail-grid {
+            grid-template-columns: 1fr; /* মোবাইলে এক কলামে */
           }
-          .top-nav {
-            padding: 16px 0;
+          .profile-header h1 {
+            font-size: 22px;
           }
-          .profile-header {
-            padding: 10px 0 30px;
-          }
-          .avatar {
-            width: 72px;
-            height: 72px;
-          }
-          .detail-row {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 4px;
-            padding: 14px 16px;
-          }
-          .detail-value {
-            text-align: left;
-          }
-          .address-row {
-            padding: 14px 16px;
+          .btn-primary, .btn-secondary {
+            height: 50px;
           }
         }
       `}</style>
