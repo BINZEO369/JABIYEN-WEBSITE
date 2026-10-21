@@ -6,6 +6,9 @@ const nextConfig = {
   reactStrictMode: true,
   async rewrites() {
     return [
+      { source: '/api/auth/:path*', destination: `${centralApi}/v1/auth/:path*` },
+      { source: '/api/user/:path*', destination: `${centralApi}/v1/user/:path*` },
+      { source: '/api/admin/:path*', destination: `${centralApi}/v1/admin/:path*` },
       { source: '/api/:path*', destination: `${centralApi}/api/v1/projects/jabiyen/public/:path*` },
     ];
   },
