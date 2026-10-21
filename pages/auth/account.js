@@ -71,7 +71,7 @@ function getAddressLine(address) {
     .join(', ');
 }
 
-// --- SVG Icons (Minimalist) ---
+// --- SVG Icons (Minimalist & Clean) ---
 const Icons = {
   Back: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>,
   ChevronRight: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
@@ -268,16 +268,6 @@ export default function AccountPage() {
             {/* Connected State */}
             {status === 'connected' && profile && (
               <>
-                {/* Banner Image (Added as requested) */}
-                <div className="banner-section">
-                  <img 
-                    src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-banner.jpg" 
-                    alt="Connected Accounts" 
-                    className="banner-img"
-                    onError={(e) => { e.target.style.display = 'none'; }} 
-                  />
-                </div>
-
                 {/* Profile Section */}
                 <div className="profile-section">
                   {profile.photo ? (
@@ -289,26 +279,28 @@ export default function AccountPage() {
                   <p className="profile-email">{profile.email || 'No email provided'}</p>
                 </div>
 
+                {/* Banner Image (Replaces Invite Friends) */}
+                <div className="banner-wrapper">
+                  <img 
+                    src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-banner.jpg" 
+                    alt="Connected Accounts" 
+                    className="banner-img"
+                    onError={(e) => { e.target.style.display = 'none'; }}
+                  />
+                </div>
+
                 {refreshMessage && <div className="alert-box">{refreshMessage}</div>}
 
-                {/* --- Main List Section (No Cards, direct on white bg) --- */}
+                {/* --- Pure White List Section (No Cards) --- */}
                 <div className="list-section">
                   
-                  {/* Personal Info Row */}
+                  {/* Personal Info */}
                   <div className="list-item">
                     <div className="item-left">
                       <Icons.User />
-                      <span>Personal Information</span>
+                      <span>Name</span>
                     </div>
                     <span className="item-value">{profile.firstName} {profile.lastName}</span>
-                  </div>
-                  
-                  <div className="list-item">
-                    <div className="item-left">
-                      <Icons.User />
-                      <span>Email</span>
-                    </div>
-                    <span className="item-value">{profile.email || 'Not added'}</span>
                   </div>
 
                   <div className="list-item">
@@ -340,7 +332,7 @@ export default function AccountPage() {
                   <div className="divider" />
 
                   {/* Address Section */}
-                  <div className="list-item no-hover">
+                  <div className="list-item">
                     <div className="item-left">
                       <Icons.MapPin />
                       <span>Saved Addresses</span>
@@ -378,7 +370,7 @@ export default function AccountPage() {
 
                   <div className="divider" />
 
-                  {/* Manage & Actions */}
+                  {/* Manage Profile Action */}
                   <a href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer" className="list-item clickable">
                     <div className="item-left">
                       <Icons.Settings />
@@ -389,6 +381,7 @@ export default function AccountPage() {
 
                   <div className="divider" />
 
+                  {/* Sign Out Action */}
                   <button onClick={signOut} className="list-item clickable text-red">
                     <div className="item-left">
                       <Icons.LogOut />
@@ -431,7 +424,7 @@ export default function AccountPage() {
           max-width: 390px;
           height: 844px;
           max-height: 90vh;
-          background: #ffffff;
+          background: #ffffff; /* Single white background */
           border-radius: 40px;
           box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0,0,0,0.02);
           display: flex;
@@ -484,23 +477,12 @@ export default function AccountPage() {
         }
         .content-scroll::-webkit-scrollbar { display: none; }
 
-        /* Banner */
-        .banner-section {
-          margin: 0 -20px 10px -20px; /* Full width within scroll area */
-        }
-        .banner-img {
-          width: 100%;
-          height: 140px;
-          object-fit: cover;
-          display: block;
-        }
-
         /* Profile Section */
         .profile-section {
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 10px 0 30px;
+          padding: 10px 0 24px;
         }
 
         .avatar {
@@ -536,7 +518,24 @@ export default function AccountPage() {
           margin: 0;
         }
 
-        /* List Section (No Cards) */
+        /* Banner (Same as Invite Friends in reference) */
+        .banner-wrapper {
+          width: 100%;
+          height: 80px; /* Matches reference height */
+          margin-bottom: 24px;
+          border-radius: 16px;
+          overflow: hidden;
+          background: #f9f9f9;
+        }
+
+        .banner-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+
+        /* List Section - NO CARDS, Pure White BG */
         .list-section {
           display: flex;
           flex-direction: column;
@@ -565,10 +564,6 @@ export default function AccountPage() {
           opacity: 0.7;
         }
 
-        .list-item.no-hover {
-          cursor: default;
-        }
-
         .item-left {
           display: flex;
           align-items: center;
@@ -594,7 +589,7 @@ export default function AccountPage() {
 
         /* Address */
         .address-item {
-          padding: 12px 0 12px 30px; /* Indent */
+          padding: 12px 0 12px 30px; 
           border-bottom: 1px solid #fafafa;
         }
         .address-item:last-child { border-bottom: none; padding-bottom: 0; }
