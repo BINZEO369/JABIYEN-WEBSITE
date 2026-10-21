@@ -71,14 +71,36 @@ function getAddressLine(address) {
     .join(', ');
 }
 
-// --- Minimalist Icons ---
-const IconUser = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-const IconPhone = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>;
-const IconMap = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
-const IconExternal = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>;
-const IconLogout = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
-const IconRefresh = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
-const IconChevron = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="square" strokeLinejoin="miter"><polyline points="9 18 15 12 9 6"/></svg>;
+function DetailRow({ label, value }) {
+  return (
+    <div className="detail-row">
+      <span className="detail-label">{label}</span>
+      <span className="detail-value">{value || 'Not added'}</span>
+    </div>
+  );
+}
+
+function AddressCard({ address, index }) {
+  const title = address.label || address.address_type || `Address ${index + 1}`;
+  const locality = [address.area, address.district, address.city, address.state_province, address.postal_code]
+    .filter((part) => typeof part === 'string' && part.trim())
+    .join(', ');
+  const country = address.country_name || address.country_code || '';
+
+  return (
+    <div className="address-row">
+      <div className="address-info">
+        <div className="address-header">
+          <h4>{title}</h4>
+          {address.is_primary && <span className="primary-badge">Primary</span>}
+        </div>
+        <p>{getAddressLine(address) || 'Address details not added'}</p>
+        {locality && <p>{locality}</p>}
+        {country && <p>{country}</p>}
+      </div>
+    </div>
+  );
+}
 
 export default function AccountPage() {
   const [profile, setProfile] = useState(null);
@@ -163,7 +185,7 @@ export default function AccountPage() {
       } catch (error) {
         setAddresses([]);
         setAddressMessage(error?.name === 'AbortError'
-          ? 'Your profile is connected, but the address request took too long. You can retry below.'
+          ? 'Your profile is connected, but the address request took too long.'
           : (error instanceof Error ? error.message : 'Saved addresses could not be loaded right now.'));
       } finally {
         setAddressLoading(false);
@@ -206,6 +228,7 @@ export default function AccountPage() {
       || profile.username
       || 'Your account';
   }, [profile]);
+
   const initials = fullName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
 
   const signOut = () => {
@@ -221,501 +244,521 @@ export default function AccountPage() {
     <>
       <Head>
         <title>My Account | JABIYEN</title>
-        <meta name="description" content="Manage your JABIYEN profile and settings." />
+        <meta name="description" content="View your JABIYEN account information provided by BINZEO Central Auth." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       
-      <main className="page-wrapper">
-        <div className="app-container">
+      <main className="account-layout">
+        <div className="account-container">
           
-          {/* Minimal Brand Tag */}
-          <div className="brand-bar">
-            <span>JABIYEN / ACCOUNT</span>
-          </div>
+          {/* Top Navigation */}
+          <nav className="top-nav">
+            <Link href="/" className="back-btn" aria-label="Go back">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </Link>
+            <span className="nav-title">Settings</span>
+            <div className="nav-spacer"></div>
+          </nav>
 
-          {/* Loading State */}
           {status === 'loading' && (
-            <div className="center-state">
-              <div className="spinner" />
-              <p>AUTHENTICATING...</p>
+            <div className="state-container">
+              <span className="spinner" aria-hidden="true" />
+              <h2>Loading account</h2>
+              <p>Verifying with Central Auth...</p>
             </div>
           )}
 
-          {/* Error / Signed Out State */}
           {(status === 'error' || status === 'signed_out') && (
-            <div className="center-state">
-              <div className="icon-circle">
-                <IconUser />
+            <div className="state-container">
+              <div className="state-icon" aria-hidden="true">
+                {status === 'error' ? '!' : '↗'}
               </div>
-              <h2>{status === 'error' ? 'CONNECTION ERROR' : 'NOT SIGNED IN'}</h2>
-              <p className="state-msg">{message}</p>
+              <h2>{status === 'error' ? 'Something went wrong' : 'Welcome back'}</h2>
+              <p>{message}</p>
               <div className="state-actions">
                 {status === 'error' && (
-                  <button className="btn btn-outline" onClick={() => void loadAccount()}>
-                    TRY AGAIN
+                  <button className="btn-primary" type="button" onClick={() => void loadAccount()}>
+                    Try again
                   </button>
                 )}
-                <Link href="/auth/signin" className="btn btn-primary">
-                  SIGN IN
+                <Link className="btn-primary" href="/auth/signin">
+                  Sign in
                 </Link>
               </div>
             </div>
           )}
 
-          {/* Connected State */}
           {status === 'connected' && profile && (
-            <div className="content-fade-in">
+            <div className="content-wrapper">
               
-              {refreshMessage && (
-                <div className="alert alert-error">
-                  {refreshMessage}
-                </div>
-              )}
+              {refreshMessage && <div className="alert-message">{refreshMessage}</div>}
 
-              {/* Profile Info (Top) */}
-              <div className="profile-header">
-                <div className="avatar-wrapper">
+              {/* Profile Header (Centered like reference) */}
+              <header className="profile-header">
+                <div className="avatar-container">
                   {profile.photo ? (
                     <img className="avatar" src={profile.photo} alt={fullName} referrerPolicy="no-referrer" />
                   ) : (
-                    <div className="avatar avatar-initials">{initials}</div>
+                    <div className="avatar avatar-fallback" aria-hidden="true">{initials}</div>
                   )}
                 </div>
-                <div className="profile-info">
-                  <h1>{fullName}</h1>
-                  <p className="email-text">{profile.email || 'No email provided'}</p>
-                  {profile.emailVerified && (
-                    <span className="verified-tag">VERIFIED ACCOUNT</span>
-                  )}
+                <h1>{fullName}</h1>
+                <p>{profile.email || 'Email not added'}</p>
+              </header>
+
+              {/* Personal Info List */}
+              <div className="section-group">
+                <div className="section-title">Personal Information</div>
+                <div className="list-card">
+                  <DetailRow label="First name" value={profile.firstName} />
+                  <DetailRow label="Last name" value={profile.lastName} />
+                  <DetailRow label="Email" value={profile.email} />
+                  <DetailRow label="Phone" value={profile.phone} />
+                  {profile.username && <DetailRow label="Username" value={profile.username} />}
+                  {profile.binzeoId && <DetailRow label="BINZEO ID" value={profile.binzeoId} />}
+                  <DetailRow label="Provider" value={profile.provider} />
+                  <DetailRow label="Member since" value={asDate(profile.createdAt)} />
                 </div>
               </div>
 
-              {/* Section: Account Details */}
-              <div className="section-title">01 / ACCOUNT DATA</div>
-              <div className="list-container">
-                <div className="list-item">
-                  <span className="item-icon"><IconPhone /></span>
-                  <span className="item-text">Phone</span>
-                  <span className="item-value">{profile.phone || 'Not added'}</span>
-                </div>
-                {profile.username && (
-                  <div className="list-item">
-                    <span className="item-icon"><IconUser /></span>
-                    <span className="item-text">Username</span>
-                    <span className="item-value">{profile.username}</span>
-                  </div>
-                )}
-                {profile.binzeoId && (
-                  <div className="list-item">
-                    <span className="item-icon"><IconUser /></span>
-                    <span className="item-text">BINZEO ID</span>
-                    <span className="item-value">{profile.binzeoId}</span>
-                  </div>
-                )}
-                <div className="list-item">
-                  <span className="item-icon"><IconUser /></span>
-                  <span className="item-text">Provider</span>
-                  <span className="item-value text-capitalize">{profile.provider}</span>
-                </div>
-                <div className="list-item">
-                  <span className="item-icon"><IconUser /></span>
-                  <span className="item-text">Member Since</span>
-                  <span className="item-value">{asDate(profile.createdAt)}</span>
-                </div>
-              </div>
-
-              {/* Section: Addresses */}
-              <div className="section-title">02 / LOCATIONS</div>
-              <div className="list-container">
-                {addressLoading ? (
-                  <div className="list-item loading-item">
-                    <div className="small-spinner" /> FETCHING DATA...
-                  </div>
-                ) : addressMessage ? (
-                  <div className="list-item clickable" onClick={() => void loadAccount({ quiet: true })}>
-                    <span className="item-icon">!</span>
-                    <span className="item-text error-text">{addressMessage}</span>
-                    <span className="item-chevron"><IconRefresh /></span>
-                  </div>
-                ) : addresses.length === 0 ? (
-                  <div className="list-item">
-                    <span className="item-icon"><IconMap /></span>
-                    <span className="item-text text-muted">No saved addresses found</span>
-                  </div>
-                ) : (
-                  addresses.map((address, index) => (
-                    <div className="address-item" key={address.id || index}>
-                      <div className="address-top">
-                        <span className="address-label">
-                          <span className="address-index">0{index + 1}</span>
-                          {address.label || address.address_type || 'Address'}
-                        </span>
-                        {address.is_primary && <span className="badge-primary">PRIMARY</span>}
-                      </div>
-                      <div className="address-details">
-                        <p>{getAddressLine(address) || 'No street details'}</p>
-                        <p>{[address.area, address.district, address.city, address.postal_code].filter(Boolean).join(', ')}</p>
-                        <p className="address-country">{[address.country_name, address.country_code].filter(Boolean).join(', ')}</p>
-                      </div>
+              {/* Addresses List */}
+              <div className="section-group">
+                <div className="section-title">Saved Addresses</div>
+                <div className="list-card">
+                  {addressLoading ? (
+                    <div className="list-item-empty">
+                      <span className="small-spinner" /> Loading addresses...
                     </div>
-                  ))
-                )}
+                  ) : addressMessage ? (
+                    <div className="list-item-empty error-text">
+                      <p>{addressMessage}</p>
+                      <button onClick={() => void loadAccount({ quiet: true })} disabled={refreshing}>
+                        {refreshing ? 'Retrying...' : 'Retry'}
+                      </button>
+                    </div>
+                  ) : addresses.length === 0 ? (
+                    <div className="list-item-empty">
+                      <p>No saved addresses yet.</p>
+                    </div>
+                  ) : (
+                    addresses.map((address, index) => (
+                      <AddressCard key={address.id || index} address={address} index={index} />
+                    ))
+                  )}
+                </div>
               </div>
 
-              {/* Section: Actions */}
-              <div className="section-title">03 / SYSTEM CONTROLS</div>
-              <div className="list-container">
-                <a href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer" className="list-item clickable">
-                  <span className="item-icon"><IconExternal /></span>
-                  <span className="item-text">Manage Profile (Central Auth)</span>
-                  <span className="item-chevron"><IconChevron /></span>
+              {/* Actions */}
+              <div className="action-group">
+                <a className="btn-primary" href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer">
+                  Manage in Central Auth
                 </a>
-                <button className="list-item clickable" onClick={() => void loadAccount({ quiet: true })} disabled={refreshing}>
-                  <span className="item-icon"><IconRefresh /></span>
-                  <span className="item-text">{refreshing ? 'REFRESHING DATA...' : 'Refresh Account Data'}</span>
+                <button className="btn-secondary" type="button" onClick={() => void loadAccount({ quiet: true })} disabled={refreshing}>
+                  {refreshing ? 'Refreshing...' : 'Refresh details'}
                 </button>
-                <button className="list-item clickable" onClick={signOut}>
-                  <span className="item-icon"><IconLogout /></span>
-                  <span className="item-text font-bold">Sign Out</span>
+                <button className="btn-secondary danger" type="button" onClick={signOut}>
+                  Sign out of JABIYEN
                 </button>
               </div>
 
-              <div className="footer-note">
-                <p>SECURE CONNECTION // BINZEO CENTRAL AUTH</p>
-              </div>
             </div>
           )}
-
         </div>
       </main>
 
       <style jsx>{`
-        /* Pure Black & White Editorial Theme */
-        .page-wrapper {
+        .account-layout {
           min-height: 100vh;
           background: #ffffff;
-          color: #000000;
+          color: #111111;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          padding: 0 0 60px 0;
+          padding: 0 16px 60px;
           display: flex;
           justify-content: center;
         }
-        .app-container {
+
+        .account-container {
           width: 100%;
-          max-width: 680px;
-          padding: 0 24px;
+          max-width: 520px; /* Mobile app width feel */
         }
 
-        /* Brand Bar */
-        .brand-bar {
+        /* Top Nav */
+        .top-nav {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
           padding: 24px 0;
-          border-bottom: 2px solid #000;
-          margin-bottom: 40px;
-          font-size: 11px;
-          font-weight: 800;
-          letter-spacing: 2px;
-          text-transform: uppercase;
+          position: sticky;
+          top: 0;
+          background: #ffffff;
+          z-index: 10;
         }
 
-        /* Loading & Error States */
-        .center-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          text-align: center;
-          min-height: 50vh;
-        }
-        .icon-circle {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          border: 2px solid #000;
+        .back-btn {
           display: flex;
           align-items: center;
           justify-content: center;
-          margin-bottom: 24px;
-        }
-        .center-state h2 { font-size: 24px; font-weight: 800; margin: 0 0 12px; letter-spacing: -0.5px; }
-        .state-msg { font-size: 14px; color: #555; margin: 0 0 32px; max-width: 320px; line-height: 1.6; }
-        .state-actions { display: flex; gap: 12px; }
-        
-        .spinner {
-          width: 24px; height: 24px;
-          border: 2px solid #e0e0e0;
-          border-top-color: #000;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-          margin-bottom: 24px;
-        }
-        .small-spinner {
-          width: 16px; height: 16px;
-          border: 2px solid #e0e0e0;
-          border-top-color: #000;
-          border-radius: 50%;
-          animation: spin 0.6s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        /* Buttons */
-        .btn {
-          padding: 16px 28px;
-          border-radius: 0; /* Sharp edges for city vibe */
-          font-size: 12px;
-          font-weight: 800;
-          letter-spacing: 1px;
+          background: #f5f5f5;
+          color: #111;
           text-decoration: none;
-          cursor: pointer;
-          border: 2px solid #000;
-          transition: all 0.2s ease;
-          text-transform: uppercase;
+          transition: background 0.2s;
         }
-        .btn-primary { background: #000; color: #fff; }
-        .btn-primary:hover { background: #fff; color: #000; }
-        .btn-outline { background: #fff; color: #000; }
-        .btn-outline:hover { background: #000; color: #fff; }
+
+        .back-btn:hover {
+          background: #e5e5e5;
+        }
+
+        .nav-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #000;
+        }
+
+        .nav-spacer {
+          width: 40px;
+        }
 
         /* Profile Header */
         .profile-header {
           display: flex;
-          align-items: center;
-          gap: 24px;
-          padding-bottom: 32px;
-          border-bottom: 2px solid #000;
-          margin-bottom: 32px;
-        }
-        .avatar-wrapper {
-          position: relative;
-        }
-        .avatar {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          object-fit: cover;
-          border: 2px solid #000;
-          background: #f5f5f5;
-        }
-        .avatar-initials {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 32px;
-          font-weight: 800;
-          background: #000;
-          color: #fff;
-        }
-        .profile-info h1 {
-          font-size: 28px;
-          font-weight: 800;
-          margin: 0 0 4px;
-          letter-spacing: -1px;
-          line-height: 1.1;
-        }
-        .email-text {
-          font-size: 14px;
-          color: #555;
-          margin: 0 0 10px;
-          font-weight: 500;
-        }
-        .verified-tag {
-          display: inline-block;
-          font-size: 10px;
-          font-weight: 800;
-          letter-spacing: 1px;
-          color: #000;
-          border: 1px solid #000;
-          padding: 3px 8px;
-          border-radius: 0;
-        }
-
-        /* Section Titles */
-        .section-title {
-          font-size: 12px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 2px;
-          color: #000;
-          margin: 40px 0 16px;
-          display: flex;
-          align-items: center;
-        }
-        .section-title::after {
-          content: "";
-          flex: 1;
-          height: 1px;
-          background: #000;
-          margin-left: 16px;
-          opacity: 0.2;
-        }
-
-        /* Lists (Flat, White, Black text) */
-        .list-container {
-          display: flex;
           flex-direction: column;
-          border-top: 1px solid #000;
-        }
-        .list-item {
-          display: flex;
           align-items: center;
-          padding: 20px 12px;
-          border-bottom: 1px solid #000;
-          width: 100%;
-          text-align: left;
-          background: transparent;
-          font-family: inherit;
-          color: #000;
-          transition: all 0.2s ease;
-        }
-        .list-item.clickable {
-          cursor: pointer;
-        }
-        .list-item.clickable:hover {
-          background: #000;
-          color: #fff;
-          padding-left: 20px; /* Slight shift on hover */
-        }
-        .list-item.clickable:hover .item-icon,
-        .list-item.clickable:hover .item-value,
-        .list-item.clickable:hover .item-chevron {
-          color: #fff;
-        }
-        
-        .item-icon {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #000;
-          margin-right: 16px;
-          transition: color 0.2s ease;
-        }
-        .item-text {
-          flex: 1;
-          font-size: 15px;
-          font-weight: 600;
-        }
-        .item-value {
-          font-size: 14px;
-          color: #555;
-          font-weight: 500;
-          text-align: right;
-          max-width: 50%;
-          word-break: break-word;
-          transition: color 0.2s ease;
-        }
-        .item-chevron {
-          display: flex;
-          align-items: center;
-          margin-left: 16px;
-          color: #000;
-          transition: color 0.2s ease;
-        }
-        
-        .font-bold { font-weight: 800; }
-        .text-capitalize { text-transform: capitalize; }
-        .text-muted { color: #888; }
-        .error-text { color: #d00; font-weight: 700; }
-        
-        .loading-item {
-          font-size: 13px;
-          font-weight: 700;
-          letter-spacing: 1px;
-          color: #000;
-          gap: 16px;
+          text-align: center;
+          padding: 20px 0 40px;
         }
 
-        /* Address Specific */
-        .address-item {
-          padding: 24px 12px;
-          border-bottom: 1px solid #000;
-        }
-        .address-top {
-          display: flex;
-          align-items: center;
+        .avatar-container {
           margin-bottom: 16px;
         }
-        .address-label {
-          font-size: 15px;
-          font-weight: 800;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-        .address-index {
-          color: #888;
-          font-size: 12px;
-        }
-        .address-details {
-          padding-left: 38px;
-          font-size: 14px;
-          color: #333;
-          line-height: 1.6;
-          font-weight: 500;
-        }
-        .address-details p {
-          margin: 0 0 6px;
-        }
-        .address-details p:last-child {
-          margin-bottom: 0;
-        }
-        .address-country {
-          color: #000;
-          font-weight: 800;
-          font-size: 12px;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          margin-top: 8px !important;
-        }
-        .badge-primary {
-          font-size: 10px;
-          background: #000;
-          color: #fff;
-          padding: 4px 10px;
-          border-radius: 0;
-          font-weight: 800;
-          letter-spacing: 1px;
-          margin-left: auto;
+
+        .avatar {
+          width: 84px;
+          height: 84px;
+          border-radius: 50%;
+          object-fit: cover;
+          background: #f5f5f5;
         }
 
-        /* Alerts */
-        .alert {
-          padding: 16px;
-          border: 2px solid #d00;
-          color: #d00;
+        .avatar-fallback {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #ffffff;
+          background: #000000;
+          font-size: 28px;
+          font-weight: 600;
+        }
+
+        .profile-header h1 {
+          font-size: 24px;
+          font-weight: 500;
+          margin: 0 0 6px;
+          letter-spacing: -0.5px;
+        }
+
+        .profile-header p {
+          margin: 0;
           font-size: 13px;
-          font-weight: 700;
+          color: #777777;
+        }
+
+        /* Sections */
+        .section-group {
+          margin-bottom: 28px;
+        }
+
+        .section-title {
+          font-size: 12px;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          color: #888888;
+          margin-bottom: 12px;
+          padding-left: 4px;
+        }
+
+        .list-card {
+          background: #ffffff;
+          border: 1px solid #eaeaea;
+          border-radius: 16px;
+          overflow: hidden;
+        }
+
+        /* Detail Rows */
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding: 16px 20px;
+          border-bottom: 1px solid #eaeaea;
+          gap: 20px;
+        }
+
+        .detail-row:last-child {
+          border-bottom: none;
+        }
+
+        .detail-label {
+          font-size: 14px;
+          color: #666666;
+          flex-shrink: 0;
+        }
+
+        .detail-value {
+          font-size: 14px;
+          color: #111111;
+          font-weight: 500;
+          text-align: right;
+          word-break: break-word;
+        }
+
+        /* Address Rows */
+        .address-row {
+          padding: 16px 20px;
+          border-bottom: 1px solid #eaeaea;
+        }
+
+        .address-row:last-child {
+          border-bottom: none;
+        }
+
+        .address-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 6px;
+        }
+
+        .address-header h4 {
+          margin: 0;
+          font-size: 14px;
+          font-weight: 600;
+          color: #111;
+          text-transform: capitalize;
+        }
+
+        .primary-badge {
+          font-size: 10px;
+          font-weight: 600;
+          padding: 2px 8px;
+          border-radius: 12px;
+          background: #000000;
+          color: #ffffff;
+        }
+
+        .address-row p {
+          margin: 0 0 4px;
+          font-size: 13px;
+          color: #666666;
+          line-height: 1.4;
+        }
+
+        .address-row p:last-child {
+          margin-bottom: 0;
+        }
+
+        .list-item-empty {
+          padding: 24px 20px;
+          text-align: center;
+          font-size: 13px;
+          color: #666666;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 12px;
+        }
+
+        .error-text {
+          color: #d32f2f;
+        }
+
+        .list-item-empty button {
+          background: none;
+          border: none;
+          font-size: 13px;
+          font-weight: 600;
+          color: #111;
+          text-decoration: underline;
+          cursor: pointer;
+        }
+
+        /* Actions */
+        .action-group {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          margin-top: 40px;
+        }
+
+        .btn-primary {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 52px;
+          background: #000000;
+          color: #ffffff;
+          border-radius: 26px;
+          font-size: 14px;
+          font-weight: 600;
+          text-decoration: none;
+          border: none;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover {
+          opacity: 0.8;
+        }
+
+        .btn-secondary {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 52px;
+          background: #ffffff;
+          color: #111111;
+          border: 1px solid #eaeaea;
+          border-radius: 26px;
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+          background: #f9f9f9;
+        }
+
+        .btn-secondary.danger {
+          color: #d32f2f;
+          border-color: #ffcccc;
+          background: #fffafa;
+        }
+
+        .btn-secondary.danger:hover {
+          background: #ffeded;
+        }
+
+        .btn-secondary:disabled, .btn-primary:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+
+        /* States */
+        .state-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          min-height: 60vh;
+          text-align: center;
+          padding: 20px;
+        }
+
+        .state-icon {
+          width: 64px;
+          height: 64px;
+          border-radius: 50%;
+          background: #f5f5f5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          font-weight: bold;
           margin-bottom: 24px;
         }
 
-        /* Footer */
-        .footer-note {
+        .state-container h2 {
+          font-size: 20px;
+          font-weight: 600;
+          margin: 0 0 8px;
+        }
+
+        .state-container p {
+          font-size: 14px;
+          color: #666666;
+          margin: 0 0 24px;
+          max-width: 300px;
+          line-height: 1.5;
+        }
+
+        .state-actions {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          width: 100%;
+          max-width: 280px;
+        }
+
+        .alert-message {
+          background: #f9f9f9;
+          border: 1px solid #eaeaea;
+          padding: 12px 16px;
+          border-radius: 12px;
+          font-size: 13px;
+          color: #111;
+          margin-bottom: 24px;
           text-align: center;
-          padding: 60px 0 20px;
-        }
-        .footer-note p {
-          font-size: 10px;
-          color: #000;
-          font-weight: 800;
-          margin: 0;
-          text-transform: uppercase;
-          letter-spacing: 2px;
         }
 
-        /* Animation */
-        .content-fade-in {
-          animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(15px); }
-          to { opacity: 1; transform: translateY(0); }
+        /* Loaders */
+        .spinner, .small-spinner {
+          border: 2px solid #eaeaea;
+          border-top-color: #000000;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
         }
 
-        @media (max-width: 600px) {
-          .app-container { padding: 0 16px; }
-          .profile-header { flex-direction: column; align-items: flex-start; gap: 16px; }
-          .address-details { padding-left: 0; }
-          .item-value { font-size: 12px; }
+        .spinner {
+          width: 32px;
+          height: 32px;
+          margin-bottom: 16px;
+        }
+
+        .small-spinner {
+          width: 18px;
+          height: 18px;
+          display: inline-block;
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 480px) {
+          .account-layout {
+            padding: 0 12px 40px;
+          }
+          .top-nav {
+            padding: 16px 0;
+          }
+          .profile-header {
+            padding: 10px 0 30px;
+          }
+          .avatar {
+            width: 72px;
+            height: 72px;
+          }
+          .detail-row {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
+            padding: 14px 16px;
+          }
+          .detail-value {
+            text-align: left;
+          }
+          .address-row {
+            padding: 14px 16px;
+          }
         }
       `}</style>
     </>
