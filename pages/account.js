@@ -25,8 +25,7 @@ export default function AccountPage() {
   }, []);
 
   const startConnection = () => {
-    window.localStorage.setItem('binzeo_jabiyen_connection_pending', '1');
-    window.location.href = `${CENTRAL_AUTH}/authorize?app=jabiyen&return_to=${encodeURIComponent('https://jabiyen-website.vercel.app/account')}`;
+    window.location.href = `${CENTRAL_AUTH}/authorize`;
   };
 
   return (
