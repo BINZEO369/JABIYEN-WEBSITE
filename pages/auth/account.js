@@ -71,18 +71,15 @@ function getAddressLine(address) {
     .join(', ');
 }
 
-// --- SVG Icons (Minimalist & Clean like the reference) ---
+// --- SVG Icons (Minimalist) ---
 const Icons = {
   Back: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>,
+  ChevronRight: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
   User: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>,
   MapPin: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>,
-  Shield: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/><path d="m9 12 2 2 4-4"/></svg>,
-  LogOut: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
-  ChevronRight: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
   Settings: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>,
+  LogOut: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>,
   Alert: () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>,
-  Check: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>,
-  Copy: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
 };
 
 export default function AccountPage() {
@@ -211,7 +208,7 @@ export default function AccountPage() {
       || profile.username
       || 'Your account';
   }, [profile]);
-  
+
   const initials = fullName.split(/\s+/).slice(0, 2).map((part) => part[0]).join('').toUpperCase() || 'U';
 
   const signOut = () => {
@@ -230,10 +227,10 @@ export default function AccountPage() {
         <meta name="description" content="View your JABIYEN account information provided by BINZEO Central Auth." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      
+
       <div className="app-container">
         <div className="mobile-frame">
-          
+
           {/* Header */}
           <header className="top-nav">
             <Link href="/" className="icon-btn" aria-label="Back">
@@ -244,7 +241,7 @@ export default function AccountPage() {
           </header>
 
           <main className="content-scroll">
-            
+
             {/* Loading State */}
             {status === 'loading' && (
               <div className="state-container">
@@ -271,6 +268,16 @@ export default function AccountPage() {
             {/* Connected State */}
             {status === 'connected' && profile && (
               <>
+                {/* Banner Image (Added as requested) */}
+                <div className="banner-section">
+                  <img 
+                    src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-banner.jpg" 
+                    alt="Connected Accounts" 
+                    className="banner-img"
+                    onError={(e) => { e.target.style.display = 'none'; }} 
+                  />
+                </div>
+
                 {/* Profile Section */}
                 <div className="profile-section">
                   {profile.photo ? (
@@ -284,56 +291,79 @@ export default function AccountPage() {
 
                 {refreshMessage && <div className="alert-box">{refreshMessage}</div>}
 
-                {/* Personal Info Card */}
-                <div className="card">
-                  <div className="card-header">
-                    <Icons.User />
-                    <span>Personal Information</span>
+                {/* --- Main List Section (No Cards, direct on white bg) --- */}
+                <div className="list-section">
+                  
+                  {/* Personal Info Row */}
+                  <div className="list-item">
+                    <div className="item-left">
+                      <Icons.User />
+                      <span>Personal Information</span>
+                    </div>
+                    <span className="item-value">{profile.firstName} {profile.lastName}</span>
                   </div>
-                  <div className="card-body">
-                    <div className="info-row">
-                      <span className="info-label">Name</span>
-                      <span className="info-value">{profile.firstName} {profile.lastName}</span>
+                  
+                  <div className="list-item">
+                    <div className="item-left">
+                      <Icons.User />
+                      <span>Email</span>
                     </div>
-                    <div className="info-row">
-                      <span className="info-label">Email</span>
-                      <span className="info-value">{profile.email || 'Not added'}</span>
-                    </div>
-                    <div className="info-row">
-                      <span className="info-label">Phone</span>
-                      <span className="info-value">{profile.phone || 'Not added'}</span>
-                    </div>
-                    <div className="info-row">
-                      <span className="info-label">Member Since</span>
-                      <span className="info-value">{asDate(profile.createdAt)}</span>
-                    </div>
-                    {profile.username && (
-                      <div className="info-row">
-                        <span className="info-label">Username</span>
-                        <span className="info-value">{profile.username}</span>
-                      </div>
-                    )}
+                    <span className="item-value">{profile.email || 'Not added'}</span>
                   </div>
-                </div>
 
-                {/* Saved Addresses Card */}
-                <div className="card">
-                  <div className="card-header">
-                    <Icons.MapPin />
-                    <span>Saved Addresses</span>
+                  <div className="list-item">
+                    <div className="item-left">
+                      <Icons.User />
+                      <span>Phone</span>
+                    </div>
+                    <span className="item-value">{profile.phone || 'Not added'}</span>
                   </div>
-                  <div className="card-body">
-                    {addressLoading ? (
-                      <div className="info-row justify-center"><div className="mini-spinner" /> Loading...</div>
-                    ) : addressMessage ? (
-                      <div className="empty-state text-red">
-                        <p>{addressMessage}</p>
-                        <button className="text-btn" onClick={() => void loadAccount({ quiet: true })}>Try Again</button>
+
+                  <div className="list-item">
+                    <div className="item-left">
+                      <Icons.User />
+                      <span>Member Since</span>
+                    </div>
+                    <span className="item-value">{asDate(profile.createdAt)}</span>
+                  </div>
+
+                  {profile.username && (
+                    <div className="list-item">
+                      <div className="item-left">
+                        <Icons.User />
+                        <span>Username</span>
                       </div>
-                    ) : addresses.length === 0 ? (
-                      <div className="empty-state">No addresses saved.</div>
-                    ) : (
-                      addresses.map((addr, idx) => (
+                      <span className="item-value">{profile.username}</span>
+                    </div>
+                  )}
+
+                  <div className="divider" />
+
+                  {/* Address Section */}
+                  <div className="list-item no-hover">
+                    <div className="item-left">
+                      <Icons.MapPin />
+                      <span>Saved Addresses</span>
+                    </div>
+                    <span className="item-value text-gray">
+                      {addressLoading ? 'Loading...' : `${addresses.length} saved`}
+                    </span>
+                  </div>
+
+                  {addressLoading ? (
+                    <div className="address-loading">
+                      <div className="mini-spinner" /> Loading addresses...
+                    </div>
+                  ) : addressMessage ? (
+                    <div className="address-error">
+                      <p>{addressMessage}</p>
+                      <button className="text-btn" onClick={() => void loadAccount({ quiet: true })}>Try Again</button>
+                    </div>
+                  ) : addresses.length === 0 ? (
+                    <div className="empty-state">No addresses saved yet.</div>
+                  ) : (
+                    <div className="address-list">
+                      {addresses.map((addr, idx) => (
                         <div key={idx} className="address-item">
                           <div className="address-top">
                             <span className="address-title">{addr.label || addr.address_type || 'Address'}</span>
@@ -342,27 +372,30 @@ export default function AccountPage() {
                           <p className="address-line">{getAddressLine(addr)}</p>
                           <p className="address-line">{addr.city}, {addr.state_province} {addr.postal_code}</p>
                         </div>
-                      ))
-                    )}
-                  </div>
-                </div>
+                      ))}
+                    </div>
+                  )}
 
-                {/* Manage & Actions Card */}
-                <div className="card">
-                  <a href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer" className="list-item">
+                  <div className="divider" />
+
+                  {/* Manage & Actions */}
+                  <a href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer" className="list-item clickable">
                     <div className="item-left">
                       <Icons.Settings />
                       <span>Manage Profile</span>
                     </div>
                     <Icons.ChevronRight />
                   </a>
+
                   <div className="divider" />
-                  <button onClick={signOut} className="list-item text-red">
+
+                  <button onClick={signOut} className="list-item clickable text-red">
                     <div className="item-left">
                       <Icons.LogOut />
                       <span>Sign Out</span>
                     </div>
                   </button>
+
                 </div>
 
                 <div className="footer-note">
@@ -378,12 +411,12 @@ export default function AccountPage() {
         body {
           margin: 0;
           padding: 0;
-          background-color: #f0f0f2; /* Light gray bg to make the mobile frame pop */
+          background-color: #f0f0f2; /* Light gray bg for desktop contrast */
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
           -webkit-font-smoothing: antialiased;
         }
       `}</style>
-      
+
       <style jsx>{`
         .app-container {
           display: flex;
@@ -396,7 +429,7 @@ export default function AccountPage() {
         .mobile-frame {
           width: 100%;
           max-width: 390px;
-          height: 844px; /* iPhone 14 Pro height */
+          height: 844px;
           max-height: 90vh;
           background: #ffffff;
           border-radius: 40px;
@@ -418,7 +451,7 @@ export default function AccountPage() {
           top: 0;
           z-index: 10;
         }
-        
+
         .icon-btn {
           width: 36px;
           height: 36px;
@@ -439,7 +472,7 @@ export default function AccountPage() {
           margin: 0;
           color: #111;
         }
-        
+
         .nav-spacer { width: 36px; }
 
         /* Scrollable Content */
@@ -450,6 +483,17 @@ export default function AccountPage() {
           scrollbar-width: none;
         }
         .content-scroll::-webkit-scrollbar { display: none; }
+
+        /* Banner */
+        .banner-section {
+          margin: 0 -20px 10px -20px; /* Full width within scroll area */
+        }
+        .banner-img {
+          width: 100%;
+          height: 140px;
+          object-fit: cover;
+          display: block;
+        }
 
         /* Profile Section */
         .profile-section {
@@ -492,48 +536,17 @@ export default function AccountPage() {
           margin: 0;
         }
 
-        /* Cards */
-        .card {
-          background: #fafafa;
-          border: 1px solid #f0f0f0;
-          border-radius: 20px;
-          margin-bottom: 16px;
-          overflow: hidden;
-        }
-
-        .card-header {
+        /* List Section (No Cards) */
+        .list-section {
           display: flex;
-          align-items: center;
-          gap: 10px;
-          padding: 16px;
-          font-size: 14px;
-          font-weight: 600;
-          color: #111;
-          border-bottom: 1px solid #f0f0f0;
+          flex-direction: column;
         }
 
-        .card-body {
-          padding: 16px;
-        }
-
-        /* Info Rows */
-        .info-row {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 12px;
-          font-size: 13px;
-        }
-        .info-row:last-child { margin-bottom: 0; }
-        
-        .info-label { color: #888; }
-        .info-value { color: #111; font-weight: 500; text-align: right; }
-
-        /* List Items (Like the image) */
         .list-item {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding: 16px;
+          padding: 16px 0;
           text-decoration: none;
           color: #111;
           font-size: 14px;
@@ -542,21 +555,38 @@ export default function AccountPage() {
           border: none;
           width: 100%;
           text-align: left;
-          cursor: pointer;
-          transition: background 0.2s;
+          transition: opacity 0.2s;
         }
-        .list-item:hover { background: #f0f0f0; }
         
+        .list-item.clickable {
+          cursor: pointer;
+        }
+        .list-item.clickable:hover {
+          opacity: 0.7;
+        }
+
+        .list-item.no-hover {
+          cursor: default;
+        }
+
         .item-left {
           display: flex;
           align-items: center;
           gap: 12px;
         }
 
+        .item-value {
+          font-size: 13px;
+          color: #888;
+          font-weight: 400;
+        }
+
+        .text-gray { color: #888; }
+
         .divider {
           height: 1px;
           background: #f0f0f0;
-          margin: 0 16px;
+          margin: 4px 0;
         }
 
         .text-red { color: #d93025; }
@@ -564,25 +594,25 @@ export default function AccountPage() {
 
         /* Address */
         .address-item {
-          padding: 12px 0;
-          border-bottom: 1px solid #f0f0f0;
+          padding: 12px 0 12px 30px; /* Indent */
+          border-bottom: 1px solid #fafafa;
         }
         .address-item:last-child { border-bottom: none; padding-bottom: 0; }
-        
+
         .address-top {
           display: flex;
           align-items: center;
           gap: 8px;
           margin-bottom: 4px;
         }
-        
+
         .address-title {
           font-size: 13px;
           font-weight: 600;
           color: #111;
           text-transform: capitalize;
         }
-        
+
         .badge {
           font-size: 10px;
           background: #111;
@@ -596,6 +626,21 @@ export default function AccountPage() {
           margin: 2px 0;
           font-size: 12px;
           color: #666;
+        }
+
+        .address-loading {
+          padding: 12px 0 12px 30px;
+          font-size: 12px;
+          color: #888;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .address-error {
+          padding: 12px 0 12px 30px;
+          font-size: 12px;
+          color: #d93025;
         }
 
         /* States */
@@ -676,8 +721,7 @@ export default function AccountPage() {
         }
 
         .empty-state {
-          text-align: center;
-          padding: 20px 0;
+          padding: 12px 0 12px 30px;
           font-size: 13px;
           color: #888;
         }
@@ -689,7 +733,8 @@ export default function AccountPage() {
           font-weight: 600;
           font-size: 12px;
           text-decoration: underline;
-          margin-top: 8px;
+          margin-top: 4px;
+          padding: 0;
           cursor: pointer;
         }
 
@@ -697,7 +742,7 @@ export default function AccountPage() {
           text-align: center;
           font-size: 11px;
           color: #aaa;
-          margin-top: 10px;
+          margin-top: 20px;
         }
 
         /* Spinners */
@@ -719,8 +764,6 @@ export default function AccountPage() {
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
           display: inline-block;
-          margin-right: 8px;
-          vertical-align: middle;
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
