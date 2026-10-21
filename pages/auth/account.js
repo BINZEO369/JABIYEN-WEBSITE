@@ -72,13 +72,13 @@ function getAddressLine(address) {
 }
 
 // --- SVG Icons ---
-const IconUser = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
-const IconPhone = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>;
-const IconMap = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
-const IconExternal = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>;
-const IconLogout = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
-const IconRefresh = () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
-const IconChevron = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#c7c7cc" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
+const IconUser = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>;
+const IconPhone = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>;
+const IconMap = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>;
+const IconExternal = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>;
+const IconLogout = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
+const IconRefresh = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>;
+const IconChevron = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>;
 
 export default function AccountPage() {
   const [profile, setProfile] = useState(null);
@@ -220,7 +220,7 @@ export default function AccountPage() {
   return (
     <>
       <Head>
-        <title>Profile | JABIYEN</title>
+        <title>My Account | JABIYEN</title>
         <meta name="description" content="Manage your JABIYEN profile and settings." />
         <meta name="robots" content="noindex, nofollow" />
       </Head>
@@ -228,13 +228,6 @@ export default function AccountPage() {
       <main className="page-wrapper">
         <div className="app-container">
           
-          {/* Header */}
-          <header className="app-header">
-            <Link href="/" className="nav-link">← Store</Link>
-            <h1 className="header-title">Profile</h1>
-            <div className="nav-spacer" />
-          </header>
-
           {/* Loading State */}
           {status === 'loading' && (
             <div className="center-state">
@@ -274,94 +267,112 @@ export default function AccountPage() {
                 </div>
               )}
 
-              {/* Profile Card (Like Reference Image) */}
-              <div className="profile-card">
+              {/* Profile Info (Top) */}
+              <div className="profile-header">
                 {profile.photo ? (
                   <img className="avatar" src={profile.photo} alt={fullName} referrerPolicy="no-referrer" />
                 ) : (
                   <div className="avatar avatar-initials">{initials}</div>
                 )}
                 <div className="profile-info">
-                  <h2>{fullName}</h2>
+                  <h1>{fullName}</h1>
                   <p>{profile.email || 'No email provided'}</p>
+                  {profile.emailVerified && (
+                    <span className="verified-tag">✓ Verified Account</span>
+                  )}
                 </div>
               </div>
 
               {/* Section: Account Details */}
-              <div className="section-label">Account</div>
-              <div className="list-group">
+              <div className="section-title">Account Information</div>
+              <div className="list-container">
                 <div className="list-item">
                   <span className="item-icon"><IconPhone /></span>
                   <span className="item-text">Phone</span>
                   <span className="item-value">{profile.phone || 'Not added'}</span>
                 </div>
-                <div className="list-item">
-                  <span className="item-icon"><IconUser /></span>
-                  <span className="item-text">Username</span>
-                  <span className="item-value">{profile.username || 'Not set'}</span>
-                </div>
+                {profile.username && (
+                  <div className="list-item">
+                    <span className="item-icon"><IconUser /></span>
+                    <span className="item-text">Username</span>
+                    <span className="item-value">{profile.username}</span>
+                  </div>
+                )}
+                {profile.binzeoId && (
+                  <div className="list-item">
+                    <span className="item-icon"><IconUser /></span>
+                    <span className="item-text">BINZEO ID</span>
+                    <span className="item-value">{profile.binzeoId}</span>
+                  </div>
+                )}
                 <div className="list-item">
                   <span className="item-icon"><IconUser /></span>
                   <span className="item-text">Provider</span>
                   <span className="item-value text-capitalize">{profile.provider}</span>
                 </div>
-                <a href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer" className="list-item clickable">
-                  <span className="item-icon"><IconExternal /></span>
-                  <span className="item-text">Manage Profile</span>
-                  <span className="item-chevron"><IconChevron /></span>
-                </a>
+                <div className="list-item">
+                  <span className="item-icon"><IconUser /></span>
+                  <span className="item-text">Member Since</span>
+                  <span className="item-value">{asDate(profile.createdAt)}</span>
+                </div>
               </div>
 
               {/* Section: Addresses */}
-              <div className="section-label">Addresses</div>
-              <div className="list-group">
+              <div className="section-title">Saved Addresses</div>
+              <div className="list-container">
                 {addressLoading ? (
                   <div className="list-item loading-item">
-                    <div className="small-spinner" /> Loading...
+                    <div className="small-spinner" /> Loading addresses...
                   </div>
                 ) : addressMessage ? (
                   <div className="list-item clickable" onClick={() => void loadAccount({ quiet: true })}>
-                    <span className="item-icon text-red">!</span>
-                    <span className="item-text text-red">{addressMessage}</span>
+                    <span className="item-icon">!</span>
+                    <span className="item-text error-text">{addressMessage}</span>
                     <span className="item-chevron"><IconRefresh /></span>
                   </div>
                 ) : addresses.length === 0 ? (
                   <div className="list-item">
                     <span className="item-icon"><IconMap /></span>
-                    <span className="item-text text-muted">No saved addresses</span>
+                    <span className="item-text text-muted">No saved addresses found</span>
                   </div>
                 ) : (
                   addresses.map((address, index) => (
-                    <div className="list-item address-item" key={address.id || index}>
+                    <div className="address-item" key={address.id || index}>
                       <div className="address-top">
                         <span className="item-icon"><IconMap /></span>
-                        <span className="item-text font-bold">{address.label || address.address_type || 'Address'}</span>
+                        <span className="address-label">{address.label || address.address_type || `Address ${index + 1}`}</span>
                         {address.is_primary && <span className="badge-primary">Primary</span>}
                       </div>
                       <div className="address-details">
                         <p>{getAddressLine(address) || 'No street details'}</p>
                         <p>{[address.area, address.district, address.city, address.postal_code].filter(Boolean).join(', ')}</p>
+                        <p>{[address.country_name, address.country_code].filter(Boolean).join(', ')}</p>
                       </div>
                     </div>
                   ))
                 )}
               </div>
 
-              {/* Section: Support / Preferences */}
-              <div className="section-label">Support</div>
-              <div className="list-group">
+              {/* Section: Actions */}
+              <div className="section-title">Settings & Actions</div>
+              <div className="list-container">
+                <a href={`${CENTRAL_AUTH_URL}/account`} target="_blank" rel="noreferrer" className="list-item clickable">
+                  <span className="item-icon"><IconExternal /></span>
+                  <span className="item-text">Manage Profile in Central Auth</span>
+                  <span className="item-chevron"><IconChevron /></span>
+                </a>
                 <button className="list-item clickable" onClick={() => void loadAccount({ quiet: true })} disabled={refreshing}>
                   <span className="item-icon"><IconRefresh /></span>
-                  <span className="item-text">{refreshing ? 'Refreshing...' : 'Refresh Data'}</span>
+                  <span className="item-text">{refreshing ? 'Refreshing Data...' : 'Refresh Account Data'}</span>
                 </button>
                 <button className="list-item clickable" onClick={signOut}>
-                  <span className="item-icon text-red"><IconLogout /></span>
-                  <span className="item-text text-red">Sign Out</span>
+                  <span className="item-icon"><IconLogout /></span>
+                  <span className="item-text font-bold">Sign Out</span>
                 </button>
               </div>
 
               <div className="footer-note">
-                <p>Account securely managed by BINZEO Central Auth.</p>
+                <p>Securely managed by BINZEO Central Auth</p>
               </div>
             </div>
           )}
@@ -370,44 +381,20 @@ export default function AccountPage() {
       </main>
 
       <style jsx>{`
-        /* App Layout */
+        /* Pure Black & White Theme */
         .page-wrapper {
           min-height: 100vh;
-          background: #f2f2f7;
-          color: #1c1c1e;
+          background: #ffffff; /* Pure White Background */
+          color: #000000; /* Pure Black Text */
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-          padding: 20px;
+          padding: 40px 20px;
           display: flex;
           justify-content: center;
         }
         .app-container {
           width: 100%;
-          max-width: 600px; /* Mobile app width */
-          padding-top: 10px;
-          padding-bottom: 40px;
+          max-width: 600px;
         }
-
-        /* Header */
-        .app-header {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          margin-bottom: 24px;
-          padding: 0 8px;
-        }
-        .header-title {
-          font-size: 17px;
-          font-weight: 600;
-          margin: 0;
-          color: #000;
-        }
-        .nav-link {
-          font-size: 15px;
-          color: #007aff;
-          text-decoration: none;
-          font-weight: 500;
-        }
-        .nav-spacer { width: 40px; }
 
         /* Loading & Error States */
         .center-state {
@@ -416,36 +403,34 @@ export default function AccountPage() {
           align-items: center;
           justify-content: center;
           text-align: center;
-          min-height: 400px;
-          padding: 40px 20px;
+          min-height: 60vh;
         }
         .icon-circle {
           width: 60px;
           height: 60px;
           border-radius: 50%;
-          background: #e5e5ea;
+          border: 1px solid #000;
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #8e8e93;
-          margin-bottom: 16px;
+          margin-bottom: 20px;
         }
-        .center-state h2 { font-size: 20px; font-weight: 600; margin: 0 0 8px; }
-        .state-msg { font-size: 15px; color: #8e8e93; margin: 0 0 24px; max-width: 300px; }
+        .center-state h2 { font-size: 22px; font-weight: 700; margin: 0 0 10px; }
+        .state-msg { font-size: 15px; color: #666; margin: 0 0 24px; max-width: 320px; line-height: 1.5; }
         .state-actions { display: flex; gap: 12px; }
         
         .spinner {
-          width: 28px; height: 28px;
-          border: 3px solid #e5e5ea;
-          border-top-color: #007aff;
+          width: 24px; height: 24px;
+          border: 2px solid #e0e0e0;
+          border-top-color: #000;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
           margin-bottom: 16px;
         }
         .small-spinner {
           width: 16px; height: 16px;
-          border: 2px solid #e5e5ea;
-          border-top-color: #1c1c1e;
+          border: 2px solid #e0e0e0;
+          border-top-color: #000;
           border-radius: 50%;
           animation: spin 0.8s linear infinite;
         }
@@ -453,152 +438,164 @@ export default function AccountPage() {
 
         /* Buttons */
         .btn {
-          padding: 12px 24px;
-          border-radius: 12px;
+          padding: 14px 24px;
+          border-radius: 4px; /* Sharp, city vibe */
           font-size: 15px;
           font-weight: 600;
           text-decoration: none;
           cursor: pointer;
           border: none;
-          transition: opacity 0.2s;
+          transition: all 0.2s;
         }
-        .btn:active { opacity: 0.7; }
         .btn-primary { background: #000; color: #fff; }
-        .btn-outline { background: transparent; color: #1c1c1e; border: 1px solid #c7c7cc; }
+        .btn-primary:hover { background: #333; }
+        .btn-outline { background: #fff; color: #000; border: 1px solid #000; }
+        .btn-outline:hover { background: #f5f5f5; }
 
-        /* Profile Card */
-        .profile-card {
-          background: #fff;
-          border-radius: 16px;
-          padding: 20px;
+        /* Profile Header */
+        .profile-header {
           display: flex;
           align-items: center;
-          gap: 16px;
-          margin-bottom: 32px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+          gap: 20px;
+          padding-bottom: 30px;
+          border-bottom: 2px solid #000; /* Strong black divider */
+          margin-bottom: 30px;
         }
         .avatar {
-          width: 64px;
-          height: 64px;
+          width: 72px;
+          height: 72px;
           border-radius: 50%;
           object-fit: cover;
-          background: #f2f2f7;
+          border: 1px solid #000;
         }
         .avatar-initials {
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 24px;
+          font-size: 28px;
           font-weight: 600;
-          color: #8e8e93;
+          background: #000;
+          color: #fff;
         }
-        .profile-info h2 {
-          font-size: 18px;
-          font-weight: 600;
-          margin: 0 0 4px;
-          color: #000;
+        .profile-info h1 {
+          font-size: 24px;
+          font-weight: 700;
+          margin: 0 0 6px;
+          letter-spacing: -0.5px;
         }
         .profile-info p {
+          font-size: 15px;
+          color: #666;
+          margin: 0 0 8px;
+        }
+        .verified-tag {
+          display: inline-block;
+          font-size: 12px;
+          font-weight: 600;
+          color: #000;
+          border: 1px solid #000;
+          padding: 4px 8px;
+          border-radius: 4px;
+        }
+
+        /* Section Titles */
+        .section-title {
           font-size: 14px;
-          color: #8e8e93;
-          margin: 0;
+          font-weight: 800;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          color: #000;
+          margin: 32px 0 16px;
         }
 
-        /* Sections */
-        .section-label {
-          font-size: 13px;
-          color: #8e8e93;
-          font-weight: 500;
-          text-transform: capitalize;
-          padding: 0 16px;
-          margin-bottom: 8px;
+        /* Lists (Flat, White, Black text) */
+        .list-container {
+          display: flex;
+          flex-direction: column;
         }
-
-        .list-group {
-          background: #fff;
-          border-radius: 16px;
-          overflow: hidden;
-          margin-bottom: 24px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-        }
-
-        /* List Items */
         .list-item {
           display: flex;
           align-items: center;
-          padding: 16px;
-          background: #fff;
-          border-bottom: 1px solid #f2f2f7;
+          padding: 18px 0;
+          border-bottom: 1px solid #e5e5e5; /* Minimal light divider */
           width: 100%;
           text-align: left;
+          background: transparent;
           border-top: none;
           border-left: none;
           border-right: none;
           font-family: inherit;
+          color: #000;
         }
         .list-item:last-child {
-          border-bottom: none;
+          border-bottom: 1px solid #e5e5e5;
         }
         .list-item.clickable {
           cursor: pointer;
-          transition: background 0.1s;
         }
-        .list-item.clickable:active {
-          background: #f9f9f9;
+        .list-item.clickable:hover .item-text {
+          text-decoration: underline;
         }
+        
         .item-icon {
           display: flex;
           align-items: center;
           justify-content: center;
-          color: #1c1c1e;
-          margin-right: 14px;
-          width: 24px;
+          color: #000;
+          margin-right: 16px;
+          width: 20px;
         }
         .item-text {
           flex: 1;
           font-size: 16px;
-          color: #1c1c1e;
           font-weight: 500;
         }
         .item-value {
           font-size: 15px;
-          color: #8e8e93;
-          margin-right: 8px;
+          color: #666;
+          font-weight: 400;
+          text-align: right;
+          max-width: 50%;
+          word-break: break-word;
         }
         .item-chevron {
           display: flex;
           align-items: center;
-          margin-left: 8px;
+          margin-left: 12px;
+          color: #000;
         }
         
-        .font-bold { font-weight: 600; }
+        .font-bold { font-weight: 700; }
         .text-capitalize { text-transform: capitalize; }
-        .text-muted { color: #8e8e93; }
-        .text-red { color: #ff3b30; }
+        .text-muted { color: #888; }
+        .error-text { color: #d00; font-weight: 600; }
         
         .loading-item {
           font-size: 15px;
-          color: #8e8e93;
+          color: #666;
           gap: 12px;
+          border-bottom: none;
         }
 
         /* Address Specific */
         .address-item {
-          flex-direction: column;
-          align-items: flex-start;
-          padding: 16px;
+          padding: 18px 0;
+          border-bottom: 1px solid #e5e5e5;
         }
         .address-top {
           display: flex;
           align-items: center;
-          width: 100%;
-          margin-bottom: 6px;
+          margin-bottom: 12px;
+        }
+        .address-label {
+          font-size: 16px;
+          font-weight: 700;
         }
         .address-details {
-          padding-left: 38px; /* Align with text, not icon */
-          font-size: 14px;
-          color: #8e8e93;
-          line-height: 1.5;
+          padding-left: 36px;
+          font-size: 15px;
+          color: #666;
+          line-height: 1.6;
         }
         .address-details p {
           margin: 0 0 4px;
@@ -608,43 +605,48 @@ export default function AccountPage() {
         }
         .badge-primary {
           font-size: 11px;
-          background: #e5e5ea;
-          color: #1c1c1e;
-          padding: 3px 8px;
-          border-radius: 6px;
+          background: #000;
+          color: #fff;
+          padding: 4px 10px;
+          border-radius: 4px;
           font-weight: 600;
           margin-left: auto;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         /* Alerts */
         .alert {
-          padding: 12px 16px;
-          border-radius: 12px;
+          padding: 14px 16px;
+          border: 1px solid #d00;
+          color: #d00;
           font-size: 14px;
-          margin-bottom: 16px;
-        }
-        .alert-error {
-          background: #ffe5e5;
-          color: #d70015;
+          margin-bottom: 24px;
+          font-weight: 500;
         }
 
         /* Footer */
         .footer-note {
           text-align: center;
-          padding: 20px 0;
+          padding: 40px 0 20px;
+          border-top: 2px solid #000;
+          margin-top: 40px;
         }
         .footer-note p {
-          font-size: 12px;
-          color: #8e8e93;
+          font-size: 13px;
+          color: #000;
+          font-weight: 600;
           margin: 0;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
         /* Animation */
         .content-fade-in {
-          animation: fadeIn 0.3s ease;
+          animation: fadeIn 0.4s ease;
         }
         @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(5px); }
+          from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
         }
       `}</style>
