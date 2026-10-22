@@ -248,6 +248,7 @@ export default function CheckoutPage() {
           product_id: item.product_id,
           variant_id: item.variant_id || null,
           quantity: Number(item.quantity || 1),
+          
         })),
         display_items: cart.map((item) => ({
           title: String(item.title || 'JABIYEN item').slice(0, 160),
@@ -255,6 +256,7 @@ export default function CheckoutPage() {
           size_name: String(item.size_name || '').slice(0, 60),
           quantity: Number(item.quantity || 1),
           price: Number(item.price || 0),
+            img: item.img || null, 
         })),
         website: '',
       };
