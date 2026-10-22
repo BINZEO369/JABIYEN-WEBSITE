@@ -49,8 +49,7 @@ function countryName(countryCode) {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  // Assuming your useCartState provides an update method. If not, adjust accordingly.
-  const { cart: storedCart, updateCart } = useCartState(); 
+  const { cart: storedCart } = useCartState(); 
   const { formatMoney, selectedCurrency } = useCurrency();
   
   const [cart, setCart] = useState([]);
@@ -67,7 +66,6 @@ export default function CheckoutPage() {
   const [shippingStatus, setShippingStatus] = useState('idle');
   const [shippingMessage, setShippingMessage] = useState('');
 
-  // Sync cart from global state to local state
   useEffect(() => {
     setMounted(true);
     setCart(Array.isArray(storedCart) ? storedCart : []);
@@ -148,7 +146,6 @@ export default function CheckoutPage() {
   const totalItems = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
   const address = useMemo(() => primaryAddress ? addressFields(primaryAddress, profile) : null, [primaryAddress, profile]);
 
-  // Fetch Shipping Quote when cart subtotal or address changes
   useEffect(() => {
     if (!address || subtotal <= 0) {
       setShippingQuote(null);
@@ -196,17 +193,13 @@ export default function CheckoutPage() {
     };
   }, [address, deliveryType, subtotal]);
 
-  // Handle Local Quantity Change
   const handleQuantityChange = (index, delta) => {
     const newCart = [...cart];
     const newQty = Math.max(1, Number(newCart[index].quantity || 1) + delta);
-    if (newQty === newCart[index].quantity) return; // No change
+    if (newQty === newCart[index].quantity) return;
     
     newCart[index].quantity = newQty;
     setCart(newCart);
-    
-    // TODO: If your global cart context needs to be updated, call it here
-    // Example: if (updateCart) updateCart(newCart);
   };
 
   const continueToPayment = async (event) => {
@@ -267,81 +260,48 @@ export default function CheckoutPage() {
         <div className="checkout-shell">
           
           <header className="checkout-header">
-            <Link href="/" className="back-btn">← Back</Link>
+            <Link href="/" className="back-btn">← Return to Store</Link>
             <h1>Checkout</h1>
+            
+            {/* Banner Image Inserted Here */}
+            <div className="banner-wrapper">
+              <img 
+                src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
+                alt="Secure Checkout" 
+                className="checkout-banner"
+                onError={(e) => { e.target.style.display = 'none'; }}
+              />
+            </div>
           </header>
 
           {mounted && cart.length === 0 ? (
             <section className="empty-state">
-              <h2>Your bag is empty</h2>
-              <p>Add something beautiful to your collection.</p>
+              <h2>Your shopping bag is empty</h2>
+              <p>Discover our latest collection.</p>
               <Link href="/" className="btn-primary">Explore Collection</Link>
             </section>
           ) : (
             <div className="checkout-layout">
               
-              {/* Left Side: Forms */}
+              {/* Left Column: Forms */}
               <form className="checkout-form" onSubmit={continueToPayment}>
                 
-                {/* 1. Profile Info */}
+                {/* 1. Delivery Method */}
                 <section className="form-block">
-                  <div className="block-header">
-                    <h2>Profile</h2>
-                    {accountStatus === 'connected' && <span className="status-dot connected">Connected</span>}
-                    {accountStatus === 'signed_out' && <span className="status-dot error">Sign in required</span>}
-                  </div>
-
-                  {accountLoading ? (
-                    <p className="text-muted">Verifying session...</p>
-                  ) : accountStatus === 'signed_out' ? (
-                    <div className="action-box">
-                      <p>Sign in through BINZEO Central Auth to load your delivery details.</p>
-                      <Link href="/auth/signin" className="text-link">Sign In →</Link>
-                    </div>
-                  ) : profile ? (
-                    <div className="profile-grid">
-                      <div className="data-row">
-                        <span>Name</span>
-                        <p>{profile.name}</p>
-                      </div>
-                      <div className="data-row">
-                        <span>Phone</span>
-                        <p>{profile.phone || '—'}</p>
-                      </div>
-                      <div className="data-row full">
-                        <span>Delivery Address</span>
-                        <p>
-                          {address 
-                            ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
-                            : 'No address saved in Central Auth.'}
-                        </p>
-                      </div>
-                      {!address && (
-                        <div className="action-box full">
-                          <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-                </section>
-
-                {/* 2. Delivery Options */}
-                <section className="form-block">
-                  <div className="block-header">
-                    <h2>Delivery Speed</h2>
-                  </div>
-                  <div className="input-row">
+                  <h2 className="section-heading">Delivery Method</h2>
+                  <div className="select-wrapper">
                     <select 
                       value={deliveryType} 
                       onChange={(e) => setDeliveryType(e.target.value)}
-                      className="clean-select"
+                      className="luxury-select"
                     >
                       <option value="Standard">Standard Delivery</option>
                       <option value="Express">Express Delivery</option>
                     </select>
+                    <svg className="select-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                   </div>
                   <div className="shipping-info">
-                    {shippingStatus === 'loading' && <span className="text-muted">Calculating fee...</span>}
+                    {shippingStatus === 'loading' && <span className="text-muted">Calculating...</span>}
                     {shippingStatus === 'ready' && shippingQuote && (
                       <span>
                         {shippingQuote.delivery_fee == null
@@ -353,19 +313,57 @@ export default function CheckoutPage() {
                   </div>
                 </section>
 
-                {/* 3. Order Note */}
+                {/* 2. Order Note */}
                 <section className="form-block">
-                  <div className="block-header">
-                    <h2>Order Note <span>(Optional)</span></h2>
-                  </div>
+                  <h2 className="section-heading">Order Notes <span className="optional">(Optional)</span></h2>
                   <textarea 
                     value={deliveryNote} 
                     onChange={(e) => setDeliveryNote(e.target.value.slice(0, 500))} 
                     maxLength={500} 
                     rows={3} 
-                    placeholder="Any special instructions for delivery?" 
-                    className="clean-textarea"
+                    placeholder="Add any special instructions for delivery..." 
+                    className="luxury-textarea"
                   />
+                </section>
+
+                {/* 3. Account & Delivery (At Bottom) */}
+                <section className="form-block profile-block">
+                  <h2 className="section-heading">Account & Delivery</h2>
+                  
+                  {accountLoading ? (
+                    <p className="text-muted">Verifying secure session...</p>
+                  ) : accountStatus === 'signed_out' ? (
+                    <div className="minimal-box">
+                      <p>Please sign in through BINZEO Central Auth to load your delivery details.</p>
+                      <Link href="/auth/signin" className="btn-outline">Sign In Securely</Link>
+                    </div>
+                  ) : profile ? (
+                    <div className="profile-summary">
+                      <div className="info-row">
+                        <span className="label">Name</span>
+                        <span className="value">{profile.name}</span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Phone</span>
+                        <span className="value">{profile.phone || '—'}</span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Address</span>
+                        <span className="value">
+                          {address 
+                            ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
+                            : 'No address saved in Central Auth.'}
+                        </span>
+                      </div>
+                      {!address && (
+                        <div style={{ marginTop: '16px' }}>
+                          <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                     <p className="text-red">Unable to load account information.</p>
+                  )}
                 </section>
 
                 {error && <div className="error-msg">{error}</div>}
@@ -375,24 +373,25 @@ export default function CheckoutPage() {
                   className="btn-primary full-width" 
                   disabled={submitting || accountLoading || shippingStatus !== 'ready' || !address}
                 >
-                  {submitting ? 'Processing...' : 'Continue to Payment'}
+                  {submitting ? 'Processing...' : `Pay ${shippingQuote?.delivery_fee != null ? formatMoney(subtotal + Number(shippingQuote.delivery_fee)) : ''}`}
                 </button>
               </form>
 
-              {/* Right Side: Summary */}
+              {/* Right Column: Order Summary */}
               <aside className="order-summary">
-                <h2 className="summary-title">Order Summary</h2>
+                <h2 className="section-heading">In Your Bag</h2>
                 
                 <div className="summary-list">
                   {cart.map((item, index) => (
                     <div className="summary-item" key={`${item.product_id}-${index}`}>
-                      <img src={item.img || '/logo.png'} alt="" className="item-img" />
+                      <div className="item-img-wrap">
+                        <img src={item.img || '/logo.png'} alt="" className="item-img" />
+                      </div>
                       
                       <div className="item-details">
                         <h3>{item.title || 'JABIYEN Item'}</h3>
-                        <p>{[item.color_name, item.size_name].filter(Boolean).join(' · ')}</p>
+                        <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ')}</p>
                         
-                        {/* Quantity Controls */}
                         <div className="qty-controls">
                           <button type="button" onClick={() => handleQuantityChange(index, -1)} disabled={item.quantity <= 1}>−</button>
                           <span>{item.quantity || 1}</span>
@@ -413,7 +412,7 @@ export default function CheckoutPage() {
                     <span>{formatMoney(subtotal)}</span>
                   </div>
                   <div className="totals-row">
-                    <span>Delivery</span>
+                    <span>Shipping</span>
                     <span>
                       {shippingStatus === 'ready' 
                         ? (shippingQuote.delivery_fee == null ? 'TBD' : formatMoney(shippingQuote.delivery_fee)) 
@@ -432,7 +431,6 @@ export default function CheckoutPage() {
                       : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}
                   </strong>
                 </div>
-
               </aside>
             </div>
           )}
@@ -444,8 +442,9 @@ export default function CheckoutPage() {
           margin: 0;
           padding: 0;
           background-color: #ffffff;
-          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
           -webkit-font-smoothing: antialiased;
+          color: #000;
         }
       `}</style>
 
@@ -454,178 +453,243 @@ export default function CheckoutPage() {
           min-height: 100vh;
           background: #ffffff;
           padding: 80px 20px 60px;
-          color: #111;
         }
 
         .checkout-shell {
           width: 100%;
-          max-width: 1000px;
+          max-width: 1040px;
           margin: 0 auto;
         }
 
+        /* --- Header & Banner --- */
         .checkout-header {
-          margin-bottom: 48px;
+          margin-bottom: 60px;
           display: flex;
           flex-direction: column;
-          gap: 16px;
         }
 
         .back-btn {
-          font-size: 14px;
-          color: #777;
+          font-size: 11px;
+          color: #000;
+          text-transform: uppercase;
+          letter-spacing: 1px;
           text-decoration: none;
-          width: fit-content;
-          transition: color 0.2s;
+          margin-bottom: 24px;
+          transition: opacity 0.2s;
         }
-        .back-btn:hover { color: #111; }
+        .back-btn:hover { opacity: 0.5; }
 
         .checkout-header h1 {
           font-size: 32px;
-          font-weight: 600;
-          margin: 0;
-          letter-spacing: -0.5px;
+          font-weight: 300;
+          margin: 0 0 32px 0;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+        }
+
+        .banner-wrapper {
+          width: 100%;
+          height: 180px;
+          overflow: hidden;
+          background: #f5f5f5;
+        }
+
+        .checkout-banner {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
         }
 
         .checkout-layout {
           display: grid;
           grid-template-columns: 1fr;
-          gap: 48px;
+          gap: 60px;
         }
 
-        /* --- Forms --- */
-        .form-block {
-          margin-bottom: 40px;
-        }
-
-        .block-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-        }
-
-        .block-header h2 {
-          font-size: 18px;
+        /* --- Typography & Forms --- */
+        .section-heading {
+          font-size: 11px;
           font-weight: 600;
-          margin: 0;
-        }
-        
-        .block-header h2 span {
-          color: #999;
-          font-weight: 400;
-          font-size: 15px;
-        }
-
-        .status-dot {
-          font-size: 12px;
-          font-weight: 500;
-          padding: 4px 10px;
-          border-radius: 100px;
-        }
-        .status-dot.connected { background: #f0f0f0; color: #111; }
-        .status-dot.error { background: #fff; color: #d93025; border: 1px solid #d93025; }
-
-        .profile-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-
-        .data-row { display: flex; flex-direction: column; gap: 6px; }
-        .data-row.full { grid-column: 1 / -1; }
-        
-        .data-row span {
-          font-size: 12px;
-          color: #999;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
+          letter-spacing: 1.5px;
+          margin: 0 0 24px 0;
+          color: #000;
         }
-        .data-row p {
-          margin: 0;
-          font-size: 15px;
-          color: #111;
-          line-height: 1.5;
-        }
-
-        .action-box {
-          padding: 16px;
-          background: #fafafa;
-          border-radius: 8px;
-        }
-        .action-box p {
-          margin: 0 0 8px;
-          font-size: 14px;
-          color: #555;
+        
+        .section-heading .optional {
+          color: #888;
+          font-weight: 400;
+          text-transform: none;
+          letter-spacing: 0;
         }
 
-        .text-link {
-          font-size: 14px;
-          color: #111;
-          font-weight: 500;
-          text-decoration: underline;
+        .form-block {
+          margin-bottom: 48px;
         }
 
-        /* Inputs */
-        .clean-select, .clean-textarea {
+        .select-wrapper {
+          position: relative;
           width: 100%;
-          padding: 14px 16px;
-          border: 1px solid #e5e5e5;
-          border-radius: 8px;
-          font-size: 15px;
-          color: #111;
-          background: #fff;
+        }
+
+        .luxury-select {
+          width: 100%;
+          padding: 12px 0;
+          border: none;
+          border-bottom: 1px solid #000;
+          border-radius: 0;
+          font-size: 14px;
+          color: #000;
+          background: transparent;
           font-family: inherit;
+          appearance: none;
+          outline: none;
+          cursor: pointer;
+          transition: border-color 0.2s;
+        }
+
+        .select-icon {
+          position: absolute;
+          right: 0;
+          top: 50%;
+          transform: translateY(-50%);
+          pointer-events: none;
+        }
+
+        .luxury-textarea {
+          width: 100%;
+          padding: 12px 0;
+          border: none;
+          border-bottom: 1px solid #000;
+          border-radius: 0;
+          font-size: 14px;
+          color: #000;
+          background: transparent;
+          font-family: inherit;
+          resize: vertical;
+          min-height: 80px;
           outline: none;
           transition: border-color 0.2s;
         }
-        .clean-select:focus, .clean-textarea:focus {
-          border-color: #111;
+        .luxury-textarea::placeholder {
+          color: #aaa;
         }
-        .clean-textarea { resize: vertical; min-height: 90px; }
 
         .shipping-info {
           margin-top: 12px;
+          font-size: 12px;
+          color: #555;
+          letter-spacing: 0.5px;
+        }
+
+        .text-muted { color: #888; font-size: 13px; }
+        .text-red { color: #d93025; font-size: 13px; }
+
+        /* --- Profile Section --- */
+        .profile-block {
+          border-top: 1px solid #e5e5e5;
+          padding-top: 40px;
+        }
+
+        .profile-summary {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .info-row {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .info-row .label {
+          font-size: 10px;
+          color: #777;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+
+        .info-row .value {
           font-size: 14px;
+          color: #000;
+          line-height: 1.5;
+        }
+
+        .minimal-box {
+          padding: 24px;
+          background: #fafafa;
+          text-align: center;
+        }
+        .minimal-box p {
+          margin: 0 0 16px;
+          font-size: 13px;
           color: #555;
         }
 
-        .text-muted { color: #888; font-size: 14px; }
-        .text-red { color: #d93025; font-size: 14px; }
-
-        /* Buttons */
+        /* --- Buttons --- */
         .btn-primary {
           display: inline-flex;
           align-items: center;
           justify-content: center;
           height: 56px;
           padding: 0 32px;
-          background: #111;
+          background: #000;
           color: #fff;
           border: none;
-          border-radius: 100px;
-          font-size: 16px;
+          border-radius: 0;
+          font-size: 11px;
           font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 2px;
           cursor: pointer;
-          transition: opacity 0.2s;
+          transition: background 0.3s;
         }
-        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
-        .full-width { width: 100%; margin-top: 16px; }
+        .btn-primary:hover:not(:disabled) { background: #333; }
+        .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+        .full-width { width: 100%; margin-top: 20px; }
+
+        .btn-outline {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 48px;
+          padding: 0 24px;
+          background: transparent;
+          color: #000;
+          border: 1px solid #000;
+          border-radius: 0;
+          font-size: 10px;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          text-decoration: none;
+          transition: all 0.2s;
+        }
+        .btn-outline:hover { background: #000; color: #fff; }
+
+        .text-link {
+          font-size: 11px;
+          color: #000;
+          font-weight: 500;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          text-decoration: underline;
+          text-underline-offset: 4px;
+        }
 
         .error-msg {
           color: #d93025;
-          font-size: 14px;
+          font-size: 12px;
           margin-top: 16px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         /* --- Order Summary --- */
         .order-summary {
-          background: #ffffff;
-        }
-
-        .summary-title {
-          font-size: 18px;
-          font-weight: 600;
-          margin: 0 0 24px;
+          background: transparent;
         }
 
         .summary-list {
@@ -637,15 +701,20 @@ export default function CheckoutPage() {
         .summary-item {
           display: flex;
           align-items: flex-start;
-          gap: 16px;
+          gap: 20px;
+        }
+
+        .item-img-wrap {
+          width: 80px;
+          height: 100px;
+          flex-shrink: 0;
+          background: #f5f5f5;
         }
 
         .item-img {
-          width: 70px;
-          height: 85px;
+          width: 100%;
+          height: 100%;
           object-fit: cover;
-          border-radius: 6px;
-          background: #f5f5f5;
         }
 
         .item-details {
@@ -655,62 +724,56 @@ export default function CheckoutPage() {
         }
 
         .item-details h3 {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 500;
           margin: 0 0 4px;
-          color: #111;
+          color: #000;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
-        .item-details p {
-          font-size: 13px;
-          color: #888;
-          margin: 0 0 12px;
+        .item-variant {
+          font-size: 12px;
+          color: #777;
+          margin: 0 0 16px;
         }
 
-        /* Quantity Controls (Plus/Minus) */
+        /* Quantity Controls */
         .qty-controls {
           display: flex;
           align-items: center;
-          gap: 12px;
-          border: 1px solid #e5e5e5;
-          border-radius: 100px;
-          width: fit-content;
-          padding: 2px 4px;
+          gap: 16px;
         }
 
         .qty-controls button {
           background: none;
           border: none;
-          width: 24px;
-          height: 24px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          padding: 0;
           font-size: 16px;
-          color: #111;
+          color: #000;
           cursor: pointer;
-          border-radius: 50%;
+          transition: opacity 0.2s;
         }
-        .qty-controls button:hover:not(:disabled) { background: #f0f0f0; }
+        .qty-controls button:hover:not(:disabled) { opacity: 0.4; }
         .qty-controls button:disabled { color: #ccc; cursor: not-allowed; }
         
         .qty-controls span {
           font-size: 13px;
           font-weight: 500;
-          min-width: 12px;
+          min-width: 16px;
           text-align: center;
         }
 
         .item-price {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 500;
-          color: #111;
+          color: #000;
         }
 
         .summary-divider {
           height: 1px;
-          background: #f0f0f0;
-          margin: 24px 0;
+          background: #e5e5e5;
+          margin: 32px 0;
         }
 
         .summary-totals {
@@ -722,46 +785,45 @@ export default function CheckoutPage() {
         .totals-row {
           display: flex;
           justify-content: space-between;
-          font-size: 14px;
-          color: #777;
+          font-size: 11px;
+          color: #555;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
-        .totals-row span:last-child { color: #111; }
+        .totals-row span:last-child { color: #000; }
 
         .total-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          font-size: 18px;
-          font-weight: 600;
-          color: #111;
+          font-size: 13px;
+          font-weight: 500;
+          color: #000;
+          text-transform: uppercase;
+          letter-spacing: 1.5px;
         }
-        .total-row strong { font-size: 20px; }
+        .total-row strong { font-size: 18px; font-weight: 400; }
 
         .empty-state {
           text-align: center;
-          padding: 80px 0;
+          padding: 100px 0;
         }
-        .empty-state h2 { font-size: 24px; margin: 0 0 12px; }
-        .empty-state p { color: #777; margin: 0 0 24px; }
+        .empty-state h2 { font-size: 18px; font-weight: 400; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1.5px; }
+        .empty-state p { color: #777; margin: 0 0 32px; font-size: 13px; }
 
         /* --- Desktop Responsive --- */
         @media (min-width: 768px) {
-          .checkout-page { padding: 120px 40px 80px; }
+          .checkout-page { padding: 100px 40px 80px; }
           .checkout-header h1 { font-size: 42px; }
-          .checkout-layout { grid-template-columns: 1.1fr 0.9fr; gap: 80px; }
-          
-          .block-header h2 { font-size: 20px; }
-          .data-row p { font-size: 16px; }
+          .checkout-layout { grid-template-columns: 1fr 1fr; gap: 100px; }
           
           .order-summary { position: sticky; top: 120px; }
-          .summary-title { font-size: 20px; }
           
-          .item-img { width: 80px; height: 96px; }
-          .item-details h3 { font-size: 16px; }
-          .item-price { font-size: 16px; }
+          .item-img-wrap { width: 100px; height: 125px; }
+          .item-details h3 { font-size: 14px; }
           
-          .total-row { font-size: 20px; }
-          .total-row strong { font-size: 24px; }
+          .total-row { font-size: 15px; }
+          .total-row strong { font-size: 22px; }
         }
       `}</style>
     </>
