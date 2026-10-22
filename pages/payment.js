@@ -138,7 +138,7 @@ export default function PaymentPage() {
         
         <div className="banner-wrapper">
           <img 
-            src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
+            src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-payment.jpg" 
             alt="Secure Payment" 
             className="checkout-banner"
             onError={(e) => { e.target.style.display = 'none'; }}
