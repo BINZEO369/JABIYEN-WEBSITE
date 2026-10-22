@@ -261,19 +261,23 @@ export default function CheckoutPage() {
       <div className="checkout-page">
         <div className="checkout-shell">
           
-          {/* --- Header & Banner Section --- */}
-          <header className="checkout-header">
-            <div className="banner-wrapper">
-              <Link href="/" className="back-btn">← Return to Store</Link>
-              <img 
-                src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
-                alt="Secure Checkout" 
-                className="checkout-banner"
-                onError={(e) => { e.target.style.display = 'none'; }}
-              />
-            </div>
-            <h1 className="checkout-title">Checkout</h1>
-          </header>
+          {/* 1. Return Button (Above Image, with gap from header) */}
+          <div className="top-actions">
+            <Link href="/" className="back-btn">← Return to Store</Link>
+          </div>
+
+          {/* 2. Banner Image */}
+          <div className="banner-wrapper">
+            <img 
+              src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
+              alt="Secure Checkout" 
+              className="checkout-banner"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
+
+          {/* 3. Checkout Text (Centered below image) */}
+          <h1 className="checkout-title">Checkout</h1>
 
           {mounted && cart.length === 0 ? (
             <section className="empty-state">
@@ -282,114 +286,11 @@ export default function CheckoutPage() {
               <Link href="/" className="btn-primary">Explore Collection</Link>
             </section>
           ) : (
-            <div className="checkout-layout">
+            <form className="checkout-form" onSubmit={continueToPayment}>
               
-              {/* Left Column: Forms */}
-              <form className="checkout-form" onSubmit={continueToPayment}>
-                
-                {/* 1. Delivery Method */}
-                <section className="form-block">
-                  <h2 className="section-heading">Delivery Method</h2>
-                  <div className="select-wrapper">
-                    <select 
-                      value={deliveryType} 
-                      onChange={(e) => setDeliveryType(e.target.value)}
-                      className="luxury-select"
-                    >
-                      <option value="Standard">Standard Delivery</option>
-                      <option value="Express">Express Delivery</option>
-                    </select>
-                    <svg className="select-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
-                  </div>
-                  <div className="shipping-info">
-                    {shippingStatus === 'loading' && <span className="text-muted">Calculating...</span>}
-                    {shippingStatus === 'ready' && shippingQuote && (
-                      <span>
-                        {shippingQuote.delivery_fee == null
-                          ? 'Fee informed upon delivery'
-                          : `${formatMoney(shippingQuote.delivery_fee)} · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days`}
-                      </span>
-                    )}
-                    {shippingStatus === 'unavailable' && <span className="text-red">{shippingMessage}</span>}
-                  </div>
-                </section>
-
-                {/* 2. Order Note */}
-                <section className="form-block">
-                  <h2 className="section-heading">Order Notes <span className="optional">(Optional)</span></h2>
-                  <textarea 
-                    value={deliveryNote} 
-                    onChange={(e) => setDeliveryNote(e.target.value.slice(0, 500))} 
-                    maxLength={500} 
-                    rows={3} 
-                    placeholder="Add any special instructions for delivery..." 
-                    className="luxury-textarea"
-                  />
-                </section>
-
-                {/* 3. Account & Delivery (New Layout) */}
-                <section className="form-block profile-block">
-                  <h2 className="section-heading">Account & Delivery</h2>
-                  
-                  {accountLoading ? (
-                    <p className="text-muted">Verifying secure session...</p>
-                  ) : accountStatus === 'signed_out' ? (
-                    <div className="minimal-box">
-                      <p>Please sign in through BINZEO Central Auth to load your delivery details.</p>
-                      <Link href="/auth/signin" className="btn-outline">Sign In Securely</Link>
-                    </div>
-                  ) : profile ? (
-                    <div className="profile-summary">
-                      {/* Profile Header: Avatar Left, Name/Email Right */}
-                      <div className="profile-header">
-                        <div className="avatar">{initials}</div>
-                        <div className="profile-info">
-                          <span className="profile-name">{profile.name}</span>
-                          <span className="profile-email">{profile.email || 'No email provided'}</span>
-                        </div>
-                      </div>
-
-                      <div className="profile-details-bottom">
-                        <div className="info-row">
-                          <span className="label">Phone</span>
-                          <span className="value">{profile.phone || '—'}</span>
-                        </div>
-                        <div className="info-row">
-                          <span className="label">Address</span>
-                          <span className="value">
-                            {address 
-                              ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
-                              : 'No address saved in Central Auth.'}
-                          </span>
-                        </div>
-                        {!address && (
-                          <div style={{ marginTop: '16px' }}>
-                            <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                     <p className="text-red">Unable to load account information.</p>
-                  )}
-                </section>
-
-                {error && <div className="error-msg">{error}</div>}
-
-                {/* Payment Button at the absolute bottom */}
-                <button 
-                  type="submit" 
-                  className="btn-primary full-width" 
-                  disabled={submitting || accountLoading || shippingStatus !== 'ready' || !address}
-                >
-                  {submitting ? 'Processing...' : `Pay ${shippingQuote?.delivery_fee != null ? formatMoney(subtotal + Number(shippingQuote.delivery_fee)) : ''}`}
-                </button>
-              </form>
-
-              {/* Right Column: Order Summary */}
-              <aside className="order-summary">
-                <h2 className="section-heading">In Your Bag</h2>
-                
+              {/* 4. Product Details (Left aligned below Checkout) */}
+              <section className="form-block">
+                <h2 className="section-heading">Your Bag</h2>
                 <div className="summary-list">
                   {cart.map((item, index) => (
                     <div className="summary-item" key={`${item.product_id}-${index}`}>
@@ -400,7 +301,6 @@ export default function CheckoutPage() {
                       <div className="item-details">
                         <h3>{item.title || 'JABIYEN Item'}</h3>
                         <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ')}</p>
-                        
                         <div className="qty-controls">
                           <button type="button" onClick={() => handleQuantityChange(index, -1)} disabled={item.quantity <= 1}>−</button>
                           <span>{item.quantity || 1}</span>
@@ -412,27 +312,108 @@ export default function CheckoutPage() {
                     </div>
                   ))}
                 </div>
+              </section>
 
-                <div className="summary-divider" />
+              {/* 5. Account & Delivery (Profile Left, Name/Email Right) */}
+              <section className="form-block profile-block">
+                <h2 className="section-heading">Account & Delivery</h2>
+                
+                {accountLoading ? (
+                  <p className="text-muted">Verifying secure session...</p>
+                ) : accountStatus === 'signed_out' ? (
+                  <div className="minimal-box">
+                    <p>Please sign in through BINZEO Central Auth to load your delivery details.</p>
+                    <Link href="/auth/signin" className="btn-outline">Sign In Securely</Link>
+                  </div>
+                ) : profile ? (
+                  <div className="profile-summary">
+                    <div className="profile-header">
+                      <div className="avatar">{initials}</div>
+                      <div className="profile-info">
+                        <span className="profile-name">{profile.name}</span>
+                        <span className="profile-email">{profile.email || 'No email provided'}</span>
+                      </div>
+                    </div>
 
-                <div className="summary-totals">
-                  <div className="totals-row">
-                    <span>Subtotal</span>
-                    <span>{formatMoney(subtotal)}</span>
+                    <div className="profile-details-bottom">
+                      <div className="info-row">
+                        <span className="label">Phone</span>
+                        <span className="value">{profile.phone || '—'}</span>
+                      </div>
+                      <div className="info-row">
+                        <span className="label">Address</span>
+                        <span className="value">
+                          {address 
+                            ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
+                            : 'No address saved in Central Auth.'}
+                        </span>
+                      </div>
+                      {!address && (
+                        <div style={{ marginTop: '16px' }}>
+                          <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="totals-row">
-                    <span>Shipping</span>
-                    <span>
-                      {shippingStatus === 'ready' 
-                        ? (shippingQuote.delivery_fee == null ? 'TBD' : formatMoney(shippingQuote.delivery_fee)) 
-                        : '—'}
-                    </span>
-                  </div>
+                ) : (
+                   <p className="text-red">Unable to load account information.</p>
+                )}
+              </section>
+
+              {/* 6. Delivery Method & Notes */}
+              <section className="form-block">
+                <h2 className="section-heading">Delivery Method</h2>
+                <div className="select-wrapper">
+                  <select 
+                    value={deliveryType} 
+                    onChange={(e) => setDeliveryType(e.target.value)}
+                    className="luxury-select"
+                  >
+                    <option value="Standard">Standard Delivery</option>
+                    <option value="Express">Express Delivery</option>
+                  </select>
+                  <svg className="select-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
                 </div>
+                <div className="shipping-info">
+                  {shippingStatus === 'loading' && <span className="text-muted">Calculating...</span>}
+                  {shippingStatus === 'ready' && shippingQuote && (
+                    <span>
+                      {shippingQuote.delivery_fee == null
+                        ? 'Fee informed upon delivery'
+                        : `${formatMoney(shippingQuote.delivery_fee)} · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days`}
+                    </span>
+                  )}
+                  {shippingStatus === 'unavailable' && <span className="text-red">{shippingMessage}</span>}
+                </div>
+              </section>
 
-                <div className="summary-divider" />
+              <section className="form-block">
+                <h2 className="section-heading">Order Notes <span className="optional">(Optional)</span></h2>
+                <textarea 
+                  value={deliveryNote} 
+                  onChange={(e) => setDeliveryNote(e.target.value.slice(0, 500))} 
+                  maxLength={500} 
+                  rows={3} 
+                  placeholder="Add any special instructions for delivery..." 
+                  className="luxury-textarea"
+                />
+              </section>
 
-                <div className="total-row">
+              {/* 7. Order Total & Payment Button at Bottom */}
+              <div className="final-totals">
+                <div className="totals-row">
+                  <span>Subtotal</span>
+                  <span>{formatMoney(subtotal)}</span>
+                </div>
+                <div className="totals-row">
+                  <span>Shipping</span>
+                  <span>
+                    {shippingStatus === 'ready' 
+                      ? (shippingQuote.delivery_fee == null ? 'TBD' : formatMoney(shippingQuote.delivery_fee)) 
+                      : '—'}
+                  </span>
+                </div>
+                <div className="totals-row grand-total">
                   <span>Total</span>
                   <strong>
                     {shippingQuote?.delivery_fee == null 
@@ -440,8 +421,18 @@ export default function CheckoutPage() {
                       : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}
                   </strong>
                 </div>
-              </aside>
-            </div>
+              </div>
+
+              {error && <div className="error-msg">{error}</div>}
+
+              <button 
+                type="submit" 
+                className="btn-primary full-width" 
+                disabled={submitting || accountLoading || shippingStatus !== 'ready' || !address}
+              >
+                {submitting ? 'Processing...' : `Pay ${shippingQuote?.delivery_fee != null ? formatMoney(subtotal + Number(shippingQuote.delivery_fee)) : ''}`}
+              </button>
+            </form>
           )}
         </div>
       </div>
@@ -461,27 +452,34 @@ export default function CheckoutPage() {
         .checkout-page {
           min-height: 100vh;
           background: #ffffff;
-          padding: 40px 20px 60px;
+          /* Increased padding-top so it doesn't stick to the main header */
+          padding: 120px 20px 60px;
         }
 
         .checkout-shell {
           width: 100%;
-          max-width: 1040px;
+          max-width: 600px; /* Single column layout for better flow */
           margin: 0 auto;
         }
 
         /* --- Header & Banner --- */
-        .checkout-header {
-          margin-bottom: 40px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
+        .top-actions {
+          margin-bottom: 16px;
         }
 
+        .back-btn {
+          font-size: 11px;
+          color: #000;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          text-decoration: none;
+          transition: opacity 0.2s;
+        }
+        .back-btn:hover { opacity: 0.5; }
+
         .banner-wrapper {
-          position: relative;
           width: 100%;
-          height: 140px; /* Reduced height */
+          height: 120px;
           overflow: hidden;
           background: #f5f5f5;
         }
@@ -493,36 +491,13 @@ export default function CheckoutPage() {
           display: block;
         }
 
-        .back-btn {
-          position: absolute;
-          top: 16px;
-          left: 16px;
-          z-index: 10;
-          font-size: 11px;
-          color: #000;
-          background: rgba(255, 255, 255, 0.9);
-          padding: 8px 12px;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          text-decoration: none;
-          transition: opacity 0.2s;
-          backdrop-filter: blur(4px);
-        }
-        .back-btn:hover { opacity: 0.7; }
-
         .checkout-title {
           font-size: 28px;
           font-weight: 300;
-          margin: 32px 0 0 0;
+          margin: 32px 0 40px 0;
           letter-spacing: 2px;
           text-transform: uppercase;
           text-align: center;
-        }
-
-        .checkout-layout {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 60px;
         }
 
         /* --- Typography & Forms --- */
@@ -602,7 +577,7 @@ export default function CheckoutPage() {
         .text-muted { color: #888; font-size: 13px; }
         .text-red { color: #d93025; font-size: 13px; }
 
-        /* --- Profile Section (New Layout) --- */
+        /* --- Profile Section --- */
         .profile-block {
           border-top: 1px solid #e5e5e5;
           padding-top: 40px;
@@ -654,7 +629,7 @@ export default function CheckoutPage() {
           display: flex;
           flex-direction: column;
           gap: 16px;
-          padding-left: 64px; /* Align with text */
+          padding-left: 64px;
         }
 
         .info-row {
@@ -687,7 +662,112 @@ export default function CheckoutPage() {
           color: #555;
         }
 
-        /* --- Buttons --- */
+        /* --- Product List --- */
+        .summary-list {
+          display: flex;
+          flex-direction: column;
+          gap: 20px;
+        }
+
+        .summary-item {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+        }
+
+        .item-img-wrap {
+          width: 50px;
+          height: 65px;
+          flex-shrink: 0;
+          background: #f5f5f5;
+        }
+
+        .item-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .item-details {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .item-details h3 {
+          font-size: 12px;
+          font-weight: 500;
+          margin: 0 0 4px;
+          color: #000;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .item-variant {
+          font-size: 11px;
+          color: #777;
+          margin: 0 0 12px;
+        }
+
+        .qty-controls {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .qty-controls button {
+          background: none;
+          border: none;
+          padding: 0;
+          font-size: 15px;
+          color: #000;
+          cursor: pointer;
+          transition: opacity 0.2s;
+        }
+        .qty-controls button:hover:not(:disabled) { opacity: 0.4; }
+        .qty-controls button:disabled { color: #ccc; cursor: not-allowed; }
+        
+        .qty-controls span {
+          font-size: 12px;
+          font-weight: 500;
+          min-width: 14px;
+          text-align: center;
+        }
+
+        .item-price {
+          font-size: 12px;
+          font-weight: 500;
+          color: #000;
+        }
+
+        /* --- Totals & Button --- */
+        .final-totals {
+          margin: 40px 0;
+          padding-top: 24px;
+          border-top: 1px solid #e5e5e5;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .totals-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 12px;
+          color: #555;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+        }
+        .totals-row span:last-child { color: #000; }
+
+        .grand-total {
+          margin-top: 8px;
+          font-size: 14px;
+          font-weight: 500;
+          color: #000;
+        }
+        .grand-total strong { font-size: 20px; font-weight: 500; }
+
         .btn-primary {
           display: inline-flex;
           align-items: center;
@@ -707,7 +787,7 @@ export default function CheckoutPage() {
         }
         .btn-primary:hover:not(:disabled) { background: #333; }
         .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
-        .full-width { width: 100%; margin-top: 10px; }
+        .full-width { width: 100%; }
 
         .btn-outline {
           display: inline-flex;
@@ -741,127 +821,10 @@ export default function CheckoutPage() {
         .error-msg {
           color: #d93025;
           font-size: 12px;
-          margin-top: 16px;
+          margin-bottom: 16px;
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
-
-        /* --- Order Summary --- */
-        .order-summary {
-          background: transparent;
-        }
-
-        .summary-list {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-
-        .summary-item {
-          display: flex;
-          align-items: flex-start;
-          gap: 16px;
-        }
-
-        .item-img-wrap {
-          width: 60px; /* Smaller image */
-          height: 75px;
-          flex-shrink: 0;
-          background: #f5f5f5;
-        }
-
-        .item-img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .item-details {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .item-details h3 {
-          font-size: 12px;
-          font-weight: 500;
-          margin: 0 0 4px;
-          color: #000;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
-        .item-variant {
-          font-size: 11px;
-          color: #777;
-          margin: 0 0 12px;
-        }
-
-        /* Quantity Controls */
-        .qty-controls {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .qty-controls button {
-          background: none;
-          border: none;
-          padding: 0;
-          font-size: 15px;
-          color: #000;
-          cursor: pointer;
-          transition: opacity 0.2s;
-        }
-        .qty-controls button:hover:not(:disabled) { opacity: 0.4; }
-        .qty-controls button:disabled { color: #ccc; cursor: not-allowed; }
-        
-        .qty-controls span {
-          font-size: 12px;
-          font-weight: 500;
-          min-width: 14px;
-          text-align: center;
-        }
-
-        .item-price {
-          font-size: 12px;
-          font-weight: 500;
-          color: #000;
-        }
-
-        .summary-divider {
-          height: 1px;
-          background: #e5e5e5;
-          margin: 24px 0;
-        }
-
-        .summary-totals {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .totals-row {
-          display: flex;
-          justify-content: space-between;
-          font-size: 11px;
-          color: #555;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-        }
-        .totals-row span:last-child { color: #000; }
-
-        .total-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 13px;
-          font-weight: 500;
-          color: #000;
-          text-transform: uppercase;
-          letter-spacing: 1.5px;
-        }
-        .total-row strong { font-size: 18px; font-weight: 400; }
 
         .empty-state {
           text-align: center;
@@ -872,20 +835,14 @@ export default function CheckoutPage() {
 
         /* --- Desktop Responsive --- */
         @media (min-width: 768px) {
-          .checkout-page { padding: 60px 40px 80px; }
+          .checkout-page { padding: 140px 40px 80px; }
           .checkout-title { font-size: 36px; }
-          .checkout-layout { grid-template-columns: 1fr 1fr; gap: 80px; }
           
           .banner-wrapper { height: 180px; }
           
-          .order-summary { position: sticky; top: 120px; }
-          
-          .item-img-wrap { width: 70px; height: 90px; }
+          .item-img-wrap { width: 60px; height: 75px; }
           .item-details h3 { font-size: 13px; }
           .item-price { font-size: 13px; }
-          
-          .total-row { font-size: 15px; }
-          .total-row strong { font-size: 22px; }
         }
       `}</style>
     </>
