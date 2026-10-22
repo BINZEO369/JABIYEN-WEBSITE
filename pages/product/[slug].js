@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
+import { useCartState } from '../../components/layout/CartDrawer';
 
 // ================================================================
 // API Helper Functions
@@ -640,6 +641,7 @@ const CollapsibleSection = ({ icon, title, children, onToggle }) => {
 export default function ProductPage() {
   const router = useRouter();
   const { slug } = router.query;
+  const { addToCart } = useCartState();
 
   // State
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -806,9 +808,7 @@ export default function ProductPage() {
         quantity: 1,
       };
 
-      if (typeof window !== 'undefined' && window.addToCart) {
-        window.addToCart(productId, productData);
-      }
+      addToCart(productId, productData);
       showToast('Added to Bag! 🎉', 'success');
 
       if (buyNow) {
@@ -824,6 +824,7 @@ export default function ProductPage() {
       selectedSizeId,
       showToast,
       router,
+      addToCart,
     ]
   );
 
