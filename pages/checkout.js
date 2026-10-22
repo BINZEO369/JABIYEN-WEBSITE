@@ -261,12 +261,7 @@ export default function CheckoutPage() {
       <div className="checkout-page">
         <div className="checkout-shell">
           
-          {/* 1. Return Button (Above Image, with gap from header) */}
-          <div className="top-actions">
-            <Link href="/" className="back-btn">← Return to Store</Link>
-          </div>
-
-          {/* 2. Banner Image */}
+          {/* Banner Image */}
           <div className="banner-wrapper">
             <img 
               src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
@@ -276,7 +271,7 @@ export default function CheckoutPage() {
             />
           </div>
 
-          {/* 3. Checkout Text (Centered below image) */}
+          {/* Checkout Text (Centered below image) */}
           <h1 className="checkout-title">Checkout</h1>
 
           {mounted && cart.length === 0 ? (
@@ -288,7 +283,7 @@ export default function CheckoutPage() {
           ) : (
             <form className="checkout-form" onSubmit={continueToPayment}>
               
-              {/* 4. Product Details (Left aligned below Checkout) */}
+              {/* 1. Product Details (Left aligned) */}
               <section className="form-block">
                 <h2 className="section-heading">Your Bag</h2>
                 <div className="summary-list">
@@ -314,7 +309,7 @@ export default function CheckoutPage() {
                 </div>
               </section>
 
-              {/* 5. Account & Delivery (Profile Left, Name/Email Right) */}
+              {/* 2. Account & Delivery */}
               <section className="form-block profile-block">
                 <h2 className="section-heading">Account & Delivery</h2>
                 
@@ -360,7 +355,7 @@ export default function CheckoutPage() {
                 )}
               </section>
 
-              {/* 6. Delivery Method & Notes */}
+              {/* 3. Delivery Method & Notes */}
               <section className="form-block">
                 <h2 className="section-heading">Delivery Method</h2>
                 <div className="select-wrapper">
@@ -399,7 +394,7 @@ export default function CheckoutPage() {
                 />
               </section>
 
-              {/* 7. Order Total & Payment Button at Bottom */}
+              {/* 4. Order Total & Payment Button at Bottom */}
               <div className="final-totals">
                 <div className="totals-row">
                   <span>Subtotal</span>
@@ -452,8 +447,8 @@ export default function CheckoutPage() {
         .checkout-page {
           min-height: 100vh;
           background: #ffffff;
-          /* Increased padding-top so it doesn't stick to the main header */
-          padding: 120px 20px 60px;
+          /* Reduced top padding to bring it closer to the main header */
+          padding: 80px 20px 60px;
         }
 
         .checkout-shell {
@@ -462,21 +457,7 @@ export default function CheckoutPage() {
           margin: 0 auto;
         }
 
-        /* --- Header & Banner --- */
-        .top-actions {
-          margin-bottom: 16px;
-        }
-
-        .back-btn {
-          font-size: 11px;
-          color: #000;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          text-decoration: none;
-          transition: opacity 0.2s;
-        }
-        .back-btn:hover { opacity: 0.5; }
-
+        /* --- Banner --- */
         .banner-wrapper {
           width: 100%;
           height: 120px;
@@ -494,7 +475,7 @@ export default function CheckoutPage() {
         .checkout-title {
           font-size: 28px;
           font-weight: 300;
-          margin: 32px 0 40px 0;
+          margin: 24px 0 32px 0;
           letter-spacing: 2px;
           text-transform: uppercase;
           text-align: center;
@@ -835,10 +816,10 @@ export default function CheckoutPage() {
 
         /* --- Desktop Responsive --- */
         @media (min-width: 768px) {
-          .checkout-page { padding: 140px 40px 80px; }
+          .checkout-page { padding: 100px 40px 80px; }
           .checkout-title { font-size: 36px; }
           
-          .banner-wrapper { height: 180px; }
+          .banner-wrapper { height: 160px; }
           
           .item-img-wrap { width: 60px; height: 75px; }
           .item-details h3 { font-size: 13px; }
