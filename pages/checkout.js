@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -65,6 +65,21 @@ export default function CheckoutPage() {
   const [shippingQuote, setShippingQuote] = useState(null);
   const [shippingStatus, setShippingStatus] = useState('idle');
   const [shippingMessage, setShippingMessage] = useState('');
+
+  // Custom Dropdown State
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -259,18 +274,19 @@ export default function CheckoutPage() {
       </Head>
 
       <div className="checkout-page">
+        
+        {/* Full Width Banner Image (Edge-to-Edge) */}
+        <div className="banner-wrapper">
+          <img 
+            src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
+            alt="Secure Checkout" 
+            className="checkout-banner"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        </div>
+
         <div className="checkout-shell">
           
-          {/* Banner Image */}
-          <div className="banner-wrapper">
-            <img 
-              src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
-              alt="Secure Checkout" 
-              className="checkout-banner"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-          </div>
-
           {/* Checkout Text (Centered below image) */}
           <h1 className="checkout-title">Checkout</h1>
 
@@ -358,17 +374,40 @@ export default function CheckoutPage() {
               {/* 3. Delivery Method & Notes */}
               <section className="form-block">
                 <h2 className="section-heading">Delivery Method</h2>
-                <div className="select-wrapper">
-                  <select 
-                    value={deliveryType} 
-                    onChange={(e) => setDeliveryType(e.target.value)}
-                    className="luxury-select"
+                
+                {/* Custom Dropdown Implementation */}
+                <div className="custom-select-wrapper" ref={dropdownRef}>
+                  <div 
+                    className={`custom-select-trigger ${isDropdownOpen ? 'open' : ''}`} 
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   >
-                    <option value="Standard">Standard Delivery</option>
-                    <option value="Express">Express Delivery</option>
-                  </select>
-                  <svg className="select-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                    <span>{deliveryType} Delivery</span>
+                    <svg 
+                      className={`chevron ${isDropdownOpen ? 'open' : ''}`} 
+                      width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                    >
+                      <path d="m6 9 6 6 6-6"/>
+                    </svg>
+                  </div>
+                  
+                  {isDropdownOpen && (
+                    <div className="custom-options">
+                      {['Standard', 'Express'].map((option) => (
+                        <div
+                          key={option}
+                          className={`custom-option ${deliveryType === option ? 'selected' : ''}`}
+                          onClick={() => {
+                            setDeliveryType(option);
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          {option} Delivery
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+
                 <div className="shipping-info">
                   {shippingStatus === 'loading' && <span className="text-muted">Calculating...</span>}
                   {shippingStatus === 'ready' && shippingQuote && (
@@ -447,20 +486,13 @@ export default function CheckoutPage() {
         .checkout-page {
           min-height: 100vh;
           background: #ffffff;
-          /* Reduced top padding to bring it closer to the main header */
-          padding: 80px 20px 60px;
+          padding-top: 80px; /* Space from the main site header */
         }
 
-        .checkout-shell {
-          width: 100%;
-          max-width: 600px; /* Single column layout for better flow */
-          margin: 0 auto;
-        }
-
-        /* --- Banner --- */
+        /* --- Full Width Banner --- */
         .banner-wrapper {
           width: 100%;
-          height: 120px;
+          height: 140px;
           overflow: hidden;
           background: #f5f5f5;
         }
@@ -472,10 +504,18 @@ export default function CheckoutPage() {
           display: block;
         }
 
+        /* --- Main Content Shell (Centered with padding) --- */
+        .checkout-shell {
+          width: 100%;
+          max-width: 600px; 
+          margin: 0 auto;
+          padding: 0 20px 60px; 
+        }
+
         .checkout-title {
           font-size: 28px;
           font-weight: 300;
-          margin: 24px 0 32px 0;
+          margin: 32px 0 40px 0;
           letter-spacing: 2px;
           text-transform: uppercase;
           text-align: center;
@@ -502,34 +542,72 @@ export default function CheckoutPage() {
           margin-bottom: 40px;
         }
 
-        .select-wrapper {
+        /* --- Custom Dropdown Styles --- */
+        .custom-select-wrapper {
           position: relative;
           width: 100%;
         }
 
-        .luxury-select {
-          width: 100%;
+        .custom-select-trigger {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           padding: 12px 0;
-          border: none;
           border-bottom: 1px solid #000;
-          border-radius: 0;
+          cursor: pointer;
           font-size: 14px;
           color: #000;
-          background: transparent;
-          font-family: inherit;
-          appearance: none;
-          outline: none;
-          cursor: pointer;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          transition: opacity 0.2s;
+          user-select: none;
         }
 
-        .select-icon {
+        .custom-select-trigger:hover {
+          opacity: 0.7;
+        }
+
+        .chevron {
+          transition: transform 0.2s ease;
+        }
+
+        .chevron.open {
+          transform: rotate(180deg);
+        }
+
+        .custom-options {
           position: absolute;
-          right: 0;
-          top: 50%;
-          transform: translateY(-50%);
-          pointer-events: none;
+          top: calc(100% + 4px);
+          left: 0;
+          width: 100%;
+          background: #fff;
+          border: 1px solid #e5e5e5;
+          z-index: 50;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          display: flex;
+          flex-direction: column;
         }
 
+        .custom-option {
+          padding: 14px 16px;
+          cursor: pointer;
+          font-size: 13px;
+          color: #000;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          transition: background 0.2s;
+        }
+
+        .custom-option:hover {
+          background: #fafafa;
+        }
+
+        .custom-option.selected {
+          background: #f5f5f5;
+          font-weight: 500;
+        }
+
+        /* --- Other Inputs --- */
         .luxury-textarea {
           width: 100%;
           padding: 12px 0;
@@ -816,10 +894,11 @@ export default function CheckoutPage() {
 
         /* --- Desktop Responsive --- */
         @media (min-width: 768px) {
-          .checkout-page { padding: 100px 40px 80px; }
+          .checkout-page { padding-top: 100px; }
           .checkout-title { font-size: 36px; }
           
-          .banner-wrapper { height: 160px; }
+          /* Desktop banner height */
+          .banner-wrapper { height: 250px; }
           
           .item-img-wrap { width: 60px; height: 75px; }
           .item-details h3 { font-size: 13px; }
