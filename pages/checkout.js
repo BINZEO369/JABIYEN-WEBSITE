@@ -288,10 +288,10 @@ export default function CheckoutPage() {
 
         <div className="checkout-shell">
           
-          <h1 className="checkout-title">Checkout</h1>
+          <h1 className="checkout-title animate-fade-up">Checkout</h1>
 
           {mounted && cart.length === 0 ? (
-            <section className="empty-state">
+            <section className="empty-state animate-fade-up">
               <h2>Your shopping bag is empty</h2>
               <p>Discover our latest collection.</p>
               <Link href="/" className="btn-primary">Explore Collection</Link>
@@ -299,12 +299,16 @@ export default function CheckoutPage() {
           ) : (
             <form className="checkout-form" onSubmit={continueToPayment}>
               
-              {/* 1. Product Details */}
-              <section className="form-block">
+              {/* 1. Product Details - Stagger Animated */}
+              <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Your Bag</h2>
                 <div className="summary-list">
                   {cart.map((item, index) => (
-                    <div className="summary-item" key={`${item.product_id}-${index}`}>
+                    <div 
+                      className="summary-item animate-fade-up" 
+                      key={`${item.product_id}-${index}`}
+                      style={{ animationDelay: `${index * 0.08}s` }}
+                    >
                       <div className="item-img-wrap">
                         <img src={item.img || '/logo.png'} alt="" className="item-img" />
                       </div>
@@ -314,30 +318,38 @@ export default function CheckoutPage() {
                         <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ')}</p>
                         <div className="qty-controls">
                           <button type="button" onClick={() => handleQuantityChange(index, -1)} disabled={item.quantity <= 1}>−</button>
-                          <span>{item.quantity || 1}</span>
+                          <span key={item.quantity} className="qty-value">{item.quantity || 1}</span>
                           <button type="button" onClick={() => handleQuantityChange(index, 1)}>+</button>
                         </div>
                       </div>
 
-                      <span className="item-price">{formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}</span>
+                      <span className="item-price" key={item.quantity}>
+                        {formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
+                      </span>
                     </div>
                   ))}
                 </div>
               </section>
 
-              {/* 2. Account & Delivery */}
+              {/* 2. Account & Delivery (With Skeleton + Animation) */}
               <section className="form-block profile-block">
                 <h2 className="section-heading">Account & Delivery</h2>
                 
                 {accountLoading ? (
-                  <p className="text-muted">Verifying secure session...</p>
+                  <div className="skeleton-profile">
+                    <div className="skeleton-avatar shimmer" />
+                    <div className="skeleton-lines">
+                      <div className="skeleton-line shimmer" style={{ width: '60%' }} />
+                      <div className="skeleton-line shimmer" style={{ width: '80%' }} />
+                    </div>
+                  </div>
                 ) : accountStatus === 'signed_out' ? (
-                  <div className="minimal-box">
+                  <div className="minimal-box animate-fade-up">
                     <p>Please sign in to load your delivery details.</p>
                     <Link href="/auth/signin" className="btn-outline">Sign In</Link>
                   </div>
                 ) : profile ? (
-                  <div className="compact-profile">
+                  <div className="compact-profile animate-fade-up">
                     <div className="profile-top-row">
                       <div className="avatar">{initials}</div>
                       <div className="profile-text">
@@ -359,12 +371,12 @@ export default function CheckoutPage() {
                     </div>
                   </div>
                 ) : (
-                   <p className="text-red">Unable to load account information.</p>
+                   <p className="text-red animate-fade-up">Unable to load account information.</p>
                 )}
               </section>
 
               {/* 3. Delivery Method & Notes */}
-              <section className="form-block">
+              <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Delivery Method</h2>
                 
                 <div className="custom-select-wrapper" ref={dropdownRef}>
@@ -382,7 +394,7 @@ export default function CheckoutPage() {
                   </div>
                   
                   {isDropdownOpen && (
-                    <div className="custom-options">
+                    <div className="custom-options animate-scale-in">
                       {['Standard', 'Express'].map((option) => (
                         <div
                           key={option}
@@ -399,20 +411,20 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
-                <div className="shipping-info">
-                  {shippingStatus === 'loading' && <span className="text-muted">Calculating...</span>}
+                <div className="shipping-info" key={shippingStatus}>
+                  {shippingStatus === 'loading' && <span className="text-muted">Calculating delivery...</span>}
                   {shippingStatus === 'ready' && shippingQuote && (
-                    <span>
+                    <span className="animate-fade-in">
                       {shippingQuote.delivery_fee == null
                         ? 'Fee informed upon delivery'
                         : `${formatMoney(shippingQuote.delivery_fee)} · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days`}
                     </span>
                   )}
-                  {shippingStatus === 'unavailable' && <span className="text-red">{shippingMessage}</span>}
+                  {shippingStatus === 'unavailable' && <span className="text-red animate-fade-in">{shippingMessage}</span>}
                 </div>
               </section>
 
-              <section className="form-block">
+              <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Order Notes <span className="optional">(Optional)</span></h2>
                 <textarea 
                   value={deliveryNote} 
@@ -425,14 +437,14 @@ export default function CheckoutPage() {
               </section>
 
               {/* 4. Order Total & Payment Button */}
-              <div className="final-totals">
+              <div className="final-totals animate-fade-up">
                 <div className="totals-row">
                   <span>Subtotal</span>
-                  <span>{formatMoney(subtotal)}</span>
+                  <span key={`sub-${subtotal}`} className="animate-fade-in">{formatMoney(subtotal)}</span>
                 </div>
                 <div className="totals-row">
                   <span>Shipping</span>
-                  <span>
+                  <span key={`ship-${shippingStatus}-${shippingQuote?.delivery_fee}`} className="animate-fade-in">
                     {shippingStatus === 'ready' 
                       ? (shippingQuote.delivery_fee == null ? 'TBD' : formatMoney(shippingQuote.delivery_fee)) 
                       : '—'}
@@ -440,7 +452,7 @@ export default function CheckoutPage() {
                 </div>
                 <div className="totals-row grand-total">
                   <span>Total</span>
-                  <strong>
+                  <strong key={`total-${subtotal}-${shippingQuote?.delivery_fee}`} className="animate-fade-in">
                     {shippingQuote?.delivery_fee == null 
                       ? 'TBD' 
                       : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}
@@ -448,14 +460,18 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {error && <div className="error-msg">{error}</div>}
+              {error && <div className="error-msg animate-shake">{error}</div>}
 
               <button 
                 type="submit" 
                 className="btn-primary full-width" 
                 disabled={submitting || accountLoading || shippingStatus !== 'ready' || !address}
               >
-                {submitting ? 'Processing...' : `Pay ${shippingQuote?.delivery_fee != null ? formatMoney(subtotal + Number(shippingQuote.delivery_fee)) : ''}`}
+                {submitting ? (
+                  <span className="btn-loading"><span className="btn-spinner" /> Processing...</span>
+                ) : (
+                  `Pay ${shippingQuote?.delivery_fee != null ? formatMoney(subtotal + Number(shippingQuote.delivery_fee)) : ''}`
+                )}
               </button>
             </form>
           )}
@@ -474,6 +490,73 @@ export default function CheckoutPage() {
       `}</style>
 
       <style jsx>{`
+        /* ============================================
+           KEYFRAME ANIMATIONS
+           ============================================ */
+        @keyframes fadeUp {
+          from {
+            opacity: 0;
+            transform: translateY(24px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.96) translateY(-6px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+        }
+
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+
+        /* ============================================
+           ANIMATION UTILITY CLASSES
+           ============================================ */
+        .animate-fade-up {
+          animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+
+        .animate-fade-in {
+          animation: fadeIn 0.4s ease both;
+        }
+
+        .animate-scale-in {
+          animation: scaleIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both;
+          transform-origin: top center;
+        }
+
+        .animate-shake {
+          animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+        }
+
         .checkout-page {
           min-height: 100vh;
           background: #ffffff;
@@ -492,6 +575,7 @@ export default function CheckoutPage() {
           height: 100%;
           object-fit: cover;
           display: block;
+          animation: fadeIn 1s ease both;
         }
 
         .checkout-shell {
@@ -556,7 +640,7 @@ export default function CheckoutPage() {
         }
 
         .chevron {
-          transition: transform 0.2s ease;
+          transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         .chevron.open {
@@ -571,7 +655,7 @@ export default function CheckoutPage() {
           background: #fff;
           border: 1px solid #e5e5e5;
           z-index: 50;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+          box-shadow: 0 8px 20px rgba(0,0,0,0.06);
           display: flex;
           flex-direction: column;
         }
@@ -608,9 +692,13 @@ export default function CheckoutPage() {
           resize: vertical;
           min-height: 80px;
           outline: none;
+          transition: border-color 0.2s;
         }
         .luxury-textarea::placeholder {
           color: #aaa;
+        }
+        .luxury-textarea:focus {
+          border-bottom-color: #555;
         }
 
         .shipping-info {
@@ -618,12 +706,45 @@ export default function CheckoutPage() {
           font-size: 12px;
           color: #555;
           letter-spacing: 0.5px;
+          min-height: 18px;
         }
 
         .text-muted { color: #888; font-size: 13px; }
         .text-red { color: #d93025; font-size: 13px; }
 
-        /* --- COMPACT Account & Delivery Section --- */
+        /* --- Skeleton Loader --- */
+        .skeleton-profile {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .skeleton-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+
+        .skeleton-lines {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          flex: 1;
+        }
+
+        .skeleton-line {
+          height: 12px;
+          border-radius: 4px;
+        }
+
+        .shimmer {
+          background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.4s infinite linear;
+        }
+
+        /* --- Account Section --- */
         .profile-block {
           border-top: 1px solid #e5e5e5;
           padding-top: 32px;
@@ -653,7 +774,9 @@ export default function CheckoutPage() {
           font-size: 15px;
           font-weight: 500;
           flex-shrink: 0;
+          transition: transform 0.2s;
         }
+        .avatar:hover { transform: scale(1.05); }
 
         .profile-text {
           display: flex;
@@ -707,7 +830,9 @@ export default function CheckoutPage() {
           text-underline-offset: 3px;
           margin-top: 2px;
           width: fit-content;
+          transition: opacity 0.2s;
         }
+        .address-link:hover { opacity: 0.6; }
 
         .minimal-box {
           padding: 20px;
@@ -738,12 +863,17 @@ export default function CheckoutPage() {
           height: 65px;
           flex-shrink: 0;
           background: #f5f5f5;
+          overflow: hidden;
         }
 
         .item-img {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .summary-item:hover .item-img {
+          transform: scale(1.06);
         }
 
         .item-details {
@@ -780,9 +910,10 @@ export default function CheckoutPage() {
           font-size: 15px;
           color: #000;
           cursor: pointer;
-          transition: opacity 0.2s;
+          transition: opacity 0.2s, transform 0.15s;
         }
         .qty-controls button:hover:not(:disabled) { opacity: 0.4; }
+        .qty-controls button:active:not(:disabled) { transform: scale(0.85); }
         .qty-controls button:disabled { color: #ccc; cursor: not-allowed; }
         
         .qty-controls span {
@@ -790,12 +921,18 @@ export default function CheckoutPage() {
           font-weight: 500;
           min-width: 14px;
           text-align: center;
+          display: inline-block;
+        }
+
+        .qty-value {
+          animation: fadeIn 0.2s ease both;
         }
 
         .item-price {
           font-size: 12px;
           font-weight: 500;
           color: #000;
+          display: inline-block;
         }
 
         /* --- Totals & Button --- */
@@ -824,7 +961,7 @@ export default function CheckoutPage() {
           font-weight: 500;
           color: #000;
         }
-        .grand-total strong { font-size: 20px; font-weight: 500; }
+        .grand-total strong { font-size: 20px; font-weight: 500; display: inline-block; }
 
         .btn-primary {
           display: inline-flex;
@@ -841,11 +978,32 @@ export default function CheckoutPage() {
           text-transform: uppercase;
           letter-spacing: 2px;
           cursor: pointer;
-          transition: background 0.3s;
+          transition: background 0.3s, transform 0.15s, opacity 0.3s;
         }
-        .btn-primary:hover:not(:disabled) { background: #333; }
+        .btn-primary:hover:not(:disabled) { 
+          background: #333; 
+          transform: translateY(-1px);
+        }
+        .btn-primary:active:not(:disabled) { 
+          transform: translateY(0);
+        }
         .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
         .full-width { width: 100%; }
+
+        .btn-loading {
+          display: inline-flex;
+          align-items: center;
+          gap: 10px;
+        }
+
+        .btn-spinner {
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: spin 0.7s linear infinite;
+        }
 
         .btn-outline {
           display: inline-flex;
@@ -885,18 +1043,16 @@ export default function CheckoutPage() {
         @media (min-width: 768px) {
           .checkout-page { padding-top: 120px; }
           
-          /* Making the container WIDER on desktop */
           .checkout-shell { 
             max-width: 800px; 
             padding: 0 40px 80px;
           }
           
-          .banner-wrapper { height: 320px; } /* Taller banner */
+          .banner-wrapper { height: 320px; }
           
           .checkout-title { font-size: 42px; margin: 48px 0 56px 0; }
           .section-heading { font-size: 13px; margin-bottom: 28px; }
           
-          /* Bigger Products */
           .summary-item { gap: 24px; }
           .item-img-wrap { width: 80px; height: 100px; }
           .item-details h3 { font-size: 16px; }
@@ -905,27 +1061,46 @@ export default function CheckoutPage() {
           .qty-controls span { font-size: 15px; }
           .item-price { font-size: 16px; }
           
-          /* Bigger Account Section */
+          .skeleton-avatar { width: 56px; height: 56px; }
           .avatar { width: 56px; height: 56px; font-size: 22px; }
           .profile-name { font-size: 18px; }
           .profile-meta { font-size: 14px; }
           .address-label { font-size: 12px; }
           .address-value { font-size: 14px; }
           
-          /* Bigger Form Elements */
           .custom-select-trigger { font-size: 16px; padding: 16px 0; }
           .custom-option { font-size: 15px; padding: 16px; }
           .luxury-textarea { font-size: 16px; padding: 16px 0; }
           .shipping-info { font-size: 14px; }
           
-          /* Bigger Totals */
           .totals-row { font-size: 14px; margin-bottom: 8px; }
           .grand-total { font-size: 18px; margin-top: 16px; }
           .grand-total strong { font-size: 32px; }
           
-          /* Massive Full Width Button */
           .btn-primary { height: 72px; font-size: 14px; letter-spacing: 3px; }
           .final-totals { padding-top: 32px; margin: 48px 0; gap: 16px; }
+        }
+
+        /* --- Accessibility: Respect reduced motion --- */
+        @media (prefers-reduced-motion: reduce) {
+          .animate-fade-up,
+          .animate-fade-in,
+          .animate-scale-in,
+          .animate-shake,
+          .shimmer,
+          .btn-spinner,
+          .checkout-banner,
+          .qty-value {
+            animation: none !important;
+          }
+          .item-img,
+          .avatar,
+          .btn-primary,
+          .custom-select-trigger,
+          .chevron,
+          .qty-controls button {
+            transition: none !important;
+          }
         }
       `}</style>
     </>
