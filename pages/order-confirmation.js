@@ -61,7 +61,7 @@ export default function OrderConfirmationPage() {
                 <div className="success-mark" aria-hidden="true">✓</div>
                 <span className="eyebrow">ORDER RECEIVED</span>
                 <h1>Thank you<span>.</span></h1>
-                <p>Your JABIYEN order is in. We’ll call to confirm the delivery fee and final amount before dispatch.</p>
+                <p>Your JABIYEN order is in. The delivery charge and total below are calculated in BDT from your saved delivery address.</p>
               </section>
               <section className="order-card">
                 <div className="order-top"><div><span className="eyebrow">YOUR ORDER NUMBER</span><h2>{order.order_number}</h2></div><span className="status-pill"><i /> {String(order.status || 'pending_confirmation').replaceAll('_', ' ')}</span></div>
@@ -76,13 +76,14 @@ export default function OrderConfirmationPage() {
                 </div>
                 <div className="totals">
                   <div><span>Items subtotal</span><strong>{money(order.subtotal)}</strong></div>
-                  <div><span>Delivery fee</span><strong className="pending-fee">To be confirmed</strong></div>
-                  <div className="due-row"><span>Cash due at delivery</span><strong>{order.total_amount == null ? 'Confirmed by phone' : money(order.total_amount)}</strong></div>
+                  <div><span>{order.delivery_type || 'Standard'} delivery fee</span><strong className={order.delivery_fee == null ? 'pending-fee' : ''}>{order.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : order.delivery_fee === 0 ? '৳0.00' : money(order.delivery_fee)}</strong></div>
+                  <div><span>Estimated delivery</span><strong>{order.estimated_days_min && order.estimated_days_max ? `${order.estimated_days_min}–${order.estimated_days_max} days` : 'আপনাকে পরে জানানো হবে'}</strong></div>
+                  <div className="due-row"><span>Cash due at delivery · BDT</span><strong>{order.total_amount == null ? 'আপনাকে পরে জানানো হবে' : money(order.total_amount)}</strong></div>
                 </div>
-                <div className="cod-note"><span aria-hidden="true">৳</span><p><strong>No online payment was taken.</strong><br />The delivery fee and exact COD amount will be agreed with you by phone before dispatch.</p></div>
+                <div className="cod-note"><span aria-hidden="true">৳</span><p><strong>No online payment was taken.</strong><br />Pay the displayed total in BDT when your order arrives. JABIYEN may contact you to confirm delivery details.</p></div>
               </section>
               <section className="delivery-card">
-                <div><span className="eyebrow">DELIVERING TO</span><h2>{order.customer?.name || 'Customer'}</h2><p>{order.customer?.phone}</p><p>{[order.shipping_address?.line1, order.shipping_address?.line2, order.shipping_address?.city, order.shipping_address?.district, order.shipping_address?.postal_code].filter(Boolean).join(', ')}</p></div>
+                <div><span className="eyebrow">DELIVERING TO</span><h2>{order.customer?.name || 'Customer'}</h2><p>{order.customer?.phone}</p><p>{[order.shipping_address?.line1, order.shipping_address?.line2, order.shipping_address?.city, order.shipping_address?.state || order.shipping_address?.state_province || order.shipping_address?.district, order.shipping_address?.postal_code, order.shipping_address?.country_code].filter(Boolean).join(', ')}</p></div>
                 <span className="delivery-icon" aria-hidden="true">⌂</span>
               </section>
               <div className="bottom-actions"><Link className="dark-button" href="/">Continue shopping <span>↗</span></Link><span>We’ll contact you if any detail needs confirming.</span></div>

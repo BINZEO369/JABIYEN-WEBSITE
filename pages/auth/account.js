@@ -71,6 +71,10 @@ function getAddressLine(address) {
     .join(', ');
 }
 
+function countryName(countryCode) {
+  return ({ BD: 'Bangladesh', US: 'United States' })[String(countryCode || '').toUpperCase()] || countryCode || '';
+}
+
 // --- SVG Icons ---
 const Icons = {
   ChevronRight: () => <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#999" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>,
@@ -340,7 +344,7 @@ export default function AccountPage() {
                             {addr.is_primary && <span className="badge">Primary</span>}
                           </div>
                           <p className="address-line">{getAddressLine(addr)}</p>
-                          <p className="address-line">{addr.city}, {addr.state_province} {addr.postal_code}</p>
+                          <p className="address-line">{[addr.city, addr.state_province || addr.state, addr.postal_code, addr.country_code ? `${countryName(addr.country_code)} (${String(addr.country_code).toUpperCase()})` : ''].filter(Boolean).join(', ')}</p>
                         </div>
                       ))}
                     </div>

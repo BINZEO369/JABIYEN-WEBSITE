@@ -34,6 +34,7 @@ function addressFields(address, profile = {}) {
   return {
     line1: streets[0] || '',
     line2: [...streets.slice(1), address?.area].filter((part) => typeof part === 'string' && part.trim()).join(', '),
+    state: address?.state_province || address?.state || address?.district || '',
     district: address?.district || address?.state_province || address?.city || address?.area || '',
     city: address?.city || address?.area || address?.district || address?.state_province || '',
     postal_code: address?.postal_code || '',
@@ -43,6 +44,10 @@ function addressFields(address, profile = {}) {
 
 function money(value) {
   return `৳${Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function countryName(countryCode) {
+  return ({ BD: 'Bangladesh', US: 'United States' })[countryCode] || countryCode || 'Unknown country';
 }
 
 export default function CheckoutPage() {
@@ -58,6 +63,10 @@ export default function CheckoutPage() {
   const [profile, setProfile] = useState(null);
   const [primaryAddress, setPrimaryAddress] = useState(null);
   const [deliveryNote, setDeliveryNote] = useState('');
+  const [deliveryType, setDeliveryType] = useState('Standard');
+  const [shippingQuote, setShippingQuote] = useState(null);
+  const [shippingStatus, setShippingStatus] = useState('idle');
+  const [shippingMessage, setShippingMessage] = useState('');
 
   useEffect(() => {
     setMounted(true);
@@ -143,7 +152,55 @@ export default function CheckoutPage() {
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
   const totalItems = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
-  const address = primaryAddress ? addressFields(primaryAddress, profile) : null;
+  const address = useMemo(() => primaryAddress ? addressFields(primaryAddress, profile) : null, [primaryAddress, profile]);
+
+  useEffect(() => {
+    if (!address || subtotal <= 0) {
+      setShippingQuote(null);
+      setShippingStatus('idle');
+      setShippingMessage('');
+      return undefined;
+    }
+
+    let active = true;
+    const controller = new AbortController();
+    const query = new URLSearchParams({
+      country_code: address.country_code || 'BD',
+      state: address.state || address.district || '',
+      city: address.city || '',
+      postal_code: address.postal_code || '',
+      delivery_type: deliveryType,
+      subtotal: String(subtotal),
+    });
+    setShippingStatus('loading');
+    setShippingQuote(null);
+    setShippingMessage('');
+    fetch(`/api/shipping/quote?${query.toString()}`, {
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      credentials: 'same-origin',
+      signal: controller.signal,
+    }).then(async (response) => {
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.success || !result.quote) {
+        throw new Error(result?.error || 'Delivery is not available for this address.');
+      }
+      if (active) {
+        setShippingQuote(result.quote);
+        setShippingStatus('ready');
+      }
+    }).catch((quoteError) => {
+      if (!active || quoteError?.name === 'AbortError') return;
+      setShippingQuote(null);
+      setShippingStatus('unavailable');
+      setShippingMessage(quoteError instanceof Error ? quoteError.message : 'Shipping prices are temporarily unavailable.');
+    });
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [address, deliveryType, subtotal]);
 
   const continueToPayment = async (event) => {
     event.preventDefault();
@@ -166,6 +223,10 @@ export default function CheckoutPage() {
         : 'Your saved address could not be verified. Check it in BINZEO Central Management or refresh this page.');
       return;
     }
+    if (shippingStatus !== 'ready' || !shippingQuote) {
+      setError(shippingMessage || 'A delivery quote is required before continuing. Please wait for the BDT delivery fee to load.');
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -179,6 +240,8 @@ export default function CheckoutPage() {
           address,
           delivery_notes: deliveryNote.trim(),
         },
+        delivery_type: deliveryType,
+        shipping_quote: shippingQuote,
         items: cart.map((item) => ({
           product_id: item.product_id,
           variant_id: item.variant_id || null,
@@ -250,23 +313,42 @@ export default function CheckoutPage() {
                         <div className="profile-detail"><span>Full name</span><strong>{profile.name || 'Not available'}</strong></div>
                         <div className="profile-detail"><span>Mobile number</span><strong>{profile.phone || 'Not available'}</strong></div>
                         <div className="profile-detail"><span>Email</span><strong>{profile.email || 'Not provided'}</strong></div>
-                        <div className="profile-detail"><span>Country code</span><strong>{address?.country_code || '—'}</strong></div>
-                        <div className="profile-detail full"><span>Primary delivery address</span><strong>{address ? [address.line1, address.line2, address.city, address.district, address.postal_code].filter(Boolean).join(', ') : 'No saved address'}</strong></div>
+                        <div className="profile-detail"><span>Country</span><strong>{address ? `${countryName(address.country_code)} (${address.country_code})` : '—'}</strong></div>
+                        <div className="profile-detail"><span>State / Province</span><strong>{address?.state || '—'}</strong></div>
+                        <div className="profile-detail full"><span>Primary delivery address</span><strong>{address ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') : 'No saved address'}</strong></div>
                       </div>
                       {profile && primaryAddress && <p className="confirm-hint">Continuing to payment confirms this Central Auth profile and primary delivery address for your order.</p>}
                     </div>
                   )}
                 </section>
 
+                <section className="form-section">
+                  <div className="section-title"><span className="section-number">02</span><div><span className="eyebrow">DELIVERY RATE</span><h2>Choose delivery speed</h2></div></div>
+                  <label htmlFor="delivery-type" style={{ display: 'grid', gap: 8, color: '#6f6a60', fontSize: 11, fontWeight: 700 }}>
+                    Delivery type
+                    <select id="delivery-type" value={deliveryType} onChange={(event) => setDeliveryType(event.target.value)} style={{ width: '100%', padding: '12px', border: '1px solid #e5e1d9', borderRadius: 9, background: '#fff', color: '#292823', font: '600 12px Inter,Arial,sans-serif' }}>
+                      <option value="Standard">Standard</option>
+                      <option value="Express">Express</option>
+                    </select>
+                  </label>
+                  <p role="status" aria-live="polite" style={{ margin: '12px 0 0', color: shippingStatus === 'unavailable' ? '#8b423d' : '#77736b', fontSize: 10, lineHeight: 1.6 }}>
+                    {shippingStatus === 'loading' && 'Calculating the BDT delivery fee for your saved address…'}
+                    {shippingStatus === 'ready' && shippingQuote && (shippingQuote.delivery_fee == null
+                      ? 'এই ঠিকানার ডেলিভারি চার্জ আপনাকে পরে জানানো হবে · BDT'
+                      : `${money(shippingQuote.delivery_fee)} ${deliveryType.toLowerCase()} delivery · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days · BDT`)}
+                    {shippingStatus === 'unavailable' && shippingMessage}
+                  </p>
+                </section>
+
                 <section className="form-section note-section">
-                  <div className="section-title"><span className="section-number">02</span><div><span className="eyebrow">OPTIONAL</span><h2>Order note</h2></div></div>
+                  <div className="section-title"><span className="section-number">03</span><div><span className="eyebrow">OPTIONAL</span><h2>Order note</h2></div></div>
                   <label className="note-label" htmlFor="delivery-note">Note for the delivery team</label>
                   <textarea id="delivery-note" value={deliveryNote} onChange={(event) => setDeliveryNote(event.target.value.slice(0, 500))} maxLength={500} rows={4} placeholder="Add a delivery instruction or note (optional)." />
                   <small>{deliveryNote.length}/500 characters</small>
                 </section>
 
                 {error && <div className="error-alert" role="alert"><span aria-hidden="true">!</span><p>{error}</p></div>}
-                <button className="continue-button" type="submit" disabled={submitting || accountLoading || (mounted && !cart.length)}>
+                <button className="continue-button" type="submit" disabled={submitting || accountLoading || shippingStatus !== 'ready' || (mounted && !cart.length)}>
                   {submitting ? <><span className="spinner" /> Preparing payment…</> : <>Continue to Payment <span aria-hidden="true">↗</span></>}
                 </button>
                 <p className="privacy-copy">Your profile is read-only here. Continuing confirms it for this order; update personal details or addresses only in BINZEO Central Auth.</p>
@@ -285,10 +367,10 @@ export default function CheckoutPage() {
                 </div>
                 <div className="summary-rule" />
                 <div className="summary-row"><span>Items ({totalItems})</span><span>{money(subtotal)}</span></div>
-                <div className="summary-row"><span>Delivery</span><span className="to-confirm">To be confirmed</span></div>
+                <div className="summary-row"><span>{deliveryType} delivery</span><span className="to-confirm">{shippingStatus === 'ready' ? (shippingQuote.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : money(shippingQuote.delivery_fee)) : shippingStatus === 'loading' ? 'Calculating…' : shippingStatus === 'unavailable' ? 'Unavailable' : '—'}</span></div>
                 <div className="summary-rule" />
-                <div className="summary-row total-row"><span>Current subtotal</span><strong>{money(subtotal)}</strong></div>
-                <p className="summary-footnote">You will choose the available payment method on the next page. Delivery fee is confirmed before dispatch.</p>
+                <div className="summary-row total-row"><span>Total due at delivery</span><strong>{shippingQuote?.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : money(subtotal + Number(shippingQuote.delivery_fee))}</strong></div>
+                <p className="summary-footnote">Delivery and order prices are in BDT. The Central API verifies the final fee before accepting your order.</p>
                 <div className="summary-trust"><span>✓</span><span>Profile confirmed securely<br /><small>Read from Central Auth</small></span></div>
               </aside>
             </div>

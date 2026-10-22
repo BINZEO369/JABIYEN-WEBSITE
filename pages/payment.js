@@ -42,7 +42,7 @@ export default function PaymentPage() {
     try {
       const parsed = JSON.parse(window.sessionStorage.getItem(CHECKOUT_DRAFT_KEY) || 'null');
       const age = Date.now() - Number(parsed?.created_at || 0);
-      if (parsed?.version === 1 && age >= 0 && age <= DRAFT_TTL_MS && Array.isArray(parsed.items) && parsed.items.length > 0 && parsed.customer?.address) {
+      if (parsed?.version === 1 && age >= 0 && age <= DRAFT_TTL_MS && Array.isArray(parsed.items) && parsed.items.length > 0 && parsed.customer?.address && ['Standard', 'Express'].includes(parsed.delivery_type) && parsed.shipping_quote) {
         setDraft(parsed);
         setDraftStatus('ready');
       } else {
@@ -57,6 +57,8 @@ export default function PaymentPage() {
   const items = draft?.display_items || [];
   const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [items]);
   const totalItems = useMemo(() => items.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [items]);
+  const deliveryFee = draft?.shipping_quote?.delivery_fee == null ? null : Number(draft.shipping_quote.delivery_fee);
+  const totalAmount = deliveryFee == null ? null : subtotal + deliveryFee;
 
   const placeOrder = async (event) => {
     event.preventDefault();
@@ -74,7 +76,14 @@ export default function PaymentPage() {
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         cache: 'no-store',
         credentials: 'same-origin',
-        body: JSON.stringify({ ...keys, customer: draft.customer, items: draft.items, website: draft.website || '' }),
+        body: JSON.stringify({
+          ...keys,
+          customer: draft.customer,
+          items: draft.items,
+          delivery_type: draft.delivery_type,
+          quoted_delivery_fee: deliveryFee,
+          website: draft.website || '',
+        }),
       });
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success || !result.order?.order_number) {
@@ -107,7 +116,7 @@ export default function PaymentPage() {
           {draftStatus === 'missing' && <section className="state-card"><span className="eyebrow">CHECKOUT DETAILS EXPIRED</span><h1>Let’s confirm your order again<span>.</span></h1><p>Your secure checkout details are unavailable or expired. Return to checkout to review your profile.</p><Link className="dark-button" href="/checkout">Return to checkout <span>↗</span></Link></section>}
           {draftStatus === 'ready' && (
             <>
-              <header className="page-heading"><span className="eyebrow">STEP 02 · PAYMENT</span><h1>Choose how to pay<span>.</span></h1><p>Your confirmed profile, address, and note are carried securely to this payment step.</p></header>
+              <header className="page-heading"><span className="eyebrow">STEP 02 · PAYMENT</span><h1>Choose how to pay<span>.</span></h1><p>Your confirmed profile, address, delivery type, and BDT quote are carried securely to this payment step.</p></header>
               <div className="payment-layout">
                 <form className="payment-form" onSubmit={placeOrder}>
                   <section className="payment-card">
@@ -115,7 +124,7 @@ export default function PaymentPage() {
                     <label className="method-option">
                       <input type="radio" name="payment_method" value="cash_on_delivery" checked readOnly />
                       <span className="method-icon" aria-hidden="true">৳</span>
-                      <span className="method-copy"><strong>Cash on delivery</strong><small>Pay when your order arrives. The delivery fee and final amount will be confirmed before dispatch.</small></span>
+                      <span className="method-copy"><strong>Cash on delivery</strong><small>{totalAmount == null ? 'The delivery charge and final BDT total will be advised later. No online payment is taken.' : `Pay the displayed ${money(totalAmount)} BDT total when your order arrives. No online payment is taken.`}</small></span>
                       <span className="available-tag">AVAILABLE</span>
                     </label>
                     {draft.customer.delivery_notes && <div className="note-preview"><span className="eyebrow">YOUR ORDER NOTE</span><p>{draft.customer.delivery_notes}</p></div>}
@@ -139,10 +148,11 @@ export default function PaymentPage() {
                   </div>
                   <div className="rule" />
                   <div className="summary-row"><span>Items ({totalItems})</span><span>{money(subtotal)}</span></div>
-                  <div className="summary-row"><span>Delivery</span><span className="pending">To be confirmed</span></div>
+                  <div className="summary-row"><span>{draft.delivery_type} delivery</span><span>{deliveryFee == null ? 'আপনাকে পরে জানানো হবে' : deliveryFee === 0 ? 'Free' : money(deliveryFee)}</span></div>
+                  {draft.shipping_quote.estimated_days_min && draft.shipping_quote.estimated_days_max && <div className="summary-row"><span>Estimated delivery</span><span>{draft.shipping_quote.estimated_days_min}–{draft.shipping_quote.estimated_days_max} days</span></div>}
                   <div className="rule" />
-                  <div className="summary-row total"><span>Current subtotal</span><strong>{money(subtotal)}</strong></div>
-                  <div className="profile-summary"><span className="eyebrow">DELIVERING TO</span><strong>{draft.customer.name}</strong><span>{[draft.customer.address.line1, draft.customer.address.city, draft.customer.address.district, draft.customer.address.country_code].filter(Boolean).join(', ')}</span></div>
+                  <div className="summary-row total"><span>Total due at delivery</span><strong>{totalAmount == null ? 'আপনাকে পরে জানানো হবে' : money(totalAmount)}</strong></div>
+                  <div className="profile-summary"><span className="eyebrow">DELIVERING TO · BDT</span><strong>{draft.customer.name}</strong><span>{[draft.customer.address.line1, draft.customer.address.city, draft.customer.address.state, draft.customer.address.district, draft.customer.address.postal_code, draft.shipping_quote.country_name || draft.customer.address.country_code].filter(Boolean).join(', ')}</span></div>
                 </aside>
               </div>
             </>
