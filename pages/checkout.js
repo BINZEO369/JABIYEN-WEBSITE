@@ -69,16 +69,15 @@ export default function CheckoutPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // ✅ FIX: mousedown → click + অপশনে ক্লিক হলে প্রোপাগেশন বন্ধ
+  // ✅ FIX: Document listener সরানো হয়েছে। শুধু Escape key এর জন্য একটা listener।
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsDropdownOpen(false);
-      }
+    if (!isDropdownOpen) return undefined;
+    function handleKeyDown(e) {
+      if (e.key === 'Escape') setIsDropdownOpen(false);
     }
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isDropdownOpen]);
 
   useEffect(() => {
     setMounted(true);
@@ -379,7 +378,7 @@ export default function CheckoutPage() {
                 <div className="custom-select-wrapper" ref={dropdownRef}>
                   <div 
                     className={`custom-select-trigger ${isDropdownOpen ? 'open' : ''}`} 
-                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    onClick={() => setIsDropdownOpen((v) => !v)}
                   >
                     <span>{deliveryType} Delivery</span>
                     <svg 
@@ -391,22 +390,32 @@ export default function CheckoutPage() {
                   </div>
                   
                   {isDropdownOpen && (
-                    <div className="custom-options animate-scale-in">
-                      {['Standard', 'Express'].map((option) => (
-                        <div
-                          key={option}
-                          className={`custom-option ${deliveryType === option ? 'selected' : ''}`}
-                          // ✅ FIX: onClick + stopPropagation
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeliveryType(option);
-                            setIsDropdownOpen(false);
-                          }}
-                        >
-                          {option} Delivery
-                        </div>
-                      ))}
-                    </div>
+                    <>
+                      {/* ✅ Backdrop: Clicking outside closes the dropdown reliably */}
+                      <div 
+                        className="dropdown-backdrop" 
+                        onClick={() => setIsDropdownOpen(false)}
+                        aria-hidden="true"
+                      />
+                      {/* ✅ Options with onMouseDown for bulletproof selection */}
+                      <div className="custom-options">
+                        {['Standard', 'Express'].map((option) => (
+                          <div
+                            key={option}
+                            className={`custom-option ${deliveryType === option ? 'selected' : ''}`}
+                            // ✅ FIX: onMouseDown instead of onClick + preventDefault
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeliveryType(option);
+                              setIsDropdownOpen(false);
+                            }}
+                          >
+                            {option} Delivery
+                          </div>
+                        ))}
+                      </div>
+                    </>
                   )}
                 </div>
 
@@ -490,14 +499,12 @@ export default function CheckoutPage() {
       <style jsx>{`
         @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes scaleIn { from { opacity: 0; transform: scale(0.96) translateY(-6px); } to { opacity: 1; transform: scale(1) translateY(0); } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-fade-in { animation: fadeIn 0.4s ease both; }
-        .animate-scale-in { animation: scaleIn 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; transform-origin: top center; }
         .animate-shake { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
         .checkout-page { min-height: 100vh; background: #ffffff; padding-top: 80px; }
@@ -509,15 +516,74 @@ export default function CheckoutPage() {
         .section-heading .optional { color: #888; font-weight: 400; text-transform: none; letter-spacing: 0; }
         .form-block { margin-bottom: 32px; }
 
-        .custom-select-wrapper { position: relative; width: 100%; }
-        .custom-select-trigger { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #000; cursor: pointer; font-size: 14px; color: #000; text-transform: uppercase; letter-spacing: 1px; transition: opacity 0.2s; user-select: none; }
+        /* ============================================
+           CUSTOM DROPDOWN (Fixed)
+           ============================================ */
+        .custom-select-wrapper { 
+          position: relative; 
+          width: 100%; 
+          z-index: 20;
+        }
+        
+        .custom-select-trigger { 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: center; 
+          padding: 12px 0; 
+          border-bottom: 1px solid #000; 
+          cursor: pointer; 
+          font-size: 14px; 
+          color: #000; 
+          text-transform: uppercase; 
+          letter-spacing: 1px; 
+          transition: opacity 0.2s; 
+          user-select: none; 
+          -webkit-user-select: none;
+          -webkit-tap-highlight-color: transparent;
+        }
         .custom-select-trigger:hover { opacity: 0.7; }
+        
         .chevron { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
         .chevron.open { transform: rotate(180deg); }
-        .custom-options { position: absolute; top: calc(100% + 4px); left: 0; width: 100%; background: #fff; border: 1px solid #e5e5e5; z-index: 50; box-shadow: 0 8px 20px rgba(0,0,0,0.06); display: flex; flex-direction: column; }
-        .custom-option { padding: 14px 16px; cursor: pointer; font-size: 13px; color: #000; text-transform: uppercase; letter-spacing: 1px; transition: background 0.2s; }
+        
+        /* Backdrop to close dropdown when clicking outside */
+        .dropdown-backdrop {
+          position: fixed;
+          inset: 0;
+          z-index: 40;
+          background: transparent;
+        }
+        
+        /* Options - positioned above backdrop */
+        .custom-options { 
+          position: absolute; 
+          top: calc(100% + 4px); 
+          left: 0; 
+          width: 100%; 
+          background: #fff; 
+          border: 1px solid #e5e5e5; 
+          z-index: 50; 
+          box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+          display: flex; 
+          flex-direction: column; 
+          animation: fadeIn 0.2s ease both;
+        }
+        
+        .custom-option { 
+          padding: 14px 16px; 
+          cursor: pointer; 
+          font-size: 13px; 
+          color: #000; 
+          text-transform: uppercase; 
+          letter-spacing: 1px; 
+          transition: background 0.2s;
+          user-select: none;
+          -webkit-user-select: none;
+          -webkit-tap-highlight-color: transparent;
+        }
         .custom-option:hover { background: #fafafa; }
         .custom-option.selected { background: #f5f5f5; font-weight: 500; }
+        .custom-option:active { background: #f0f0f0; }
 
         .luxury-textarea { width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid #000; border-radius: 0; font-size: 14px; color: #000; background: transparent; font-family: inherit; resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s; }
         .luxury-textarea::placeholder { color: #aaa; }
@@ -620,7 +686,7 @@ export default function CheckoutPage() {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .animate-fade-up, .animate-fade-in, .animate-scale-in, .animate-shake, .shimmer, .btn-spinner, .checkout-banner, .qty-value { animation: none !important; }
+          .animate-fade-up, .animate-fade-in, .animate-shake, .shimmer, .btn-spinner, .checkout-banner, .qty-value, .custom-options { animation: none !important; }
           .item-img, .avatar, .btn-primary, .custom-select-trigger, .chevron, .qty-controls button { transition: none !important; }
         }
       `}</style>
