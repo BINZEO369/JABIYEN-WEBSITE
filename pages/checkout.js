@@ -249,6 +249,8 @@ export default function CheckoutPage() {
     }
   };
 
+  const initials = profile?.name ? profile.name.charAt(0).toUpperCase() : 'U';
+
   return (
     <>
       <Head>
@@ -259,12 +261,10 @@ export default function CheckoutPage() {
       <div className="checkout-page">
         <div className="checkout-shell">
           
+          {/* --- Header & Banner Section --- */}
           <header className="checkout-header">
-            <Link href="/" className="back-btn">← Return to Store</Link>
-            <h1>Checkout</h1>
-            
-            {/* Banner Image Inserted Here */}
             <div className="banner-wrapper">
+              <Link href="/" className="back-btn">← Return to Store</Link>
               <img 
                 src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
                 alt="Secure Checkout" 
@@ -272,6 +272,7 @@ export default function CheckoutPage() {
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
             </div>
+            <h1 className="checkout-title">Checkout</h1>
           </header>
 
           {mounted && cart.length === 0 ? (
@@ -326,7 +327,7 @@ export default function CheckoutPage() {
                   />
                 </section>
 
-                {/* 3. Account & Delivery (At Bottom) */}
+                {/* 3. Account & Delivery (New Layout) */}
                 <section className="form-block profile-block">
                   <h2 className="section-heading">Account & Delivery</h2>
                   
@@ -339,27 +340,34 @@ export default function CheckoutPage() {
                     </div>
                   ) : profile ? (
                     <div className="profile-summary">
-                      <div className="info-row">
-                        <span className="label">Name</span>
-                        <span className="value">{profile.name}</span>
-                      </div>
-                      <div className="info-row">
-                        <span className="label">Phone</span>
-                        <span className="value">{profile.phone || '—'}</span>
-                      </div>
-                      <div className="info-row">
-                        <span className="label">Address</span>
-                        <span className="value">
-                          {address 
-                            ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
-                            : 'No address saved in Central Auth.'}
-                        </span>
-                      </div>
-                      {!address && (
-                        <div style={{ marginTop: '16px' }}>
-                          <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
+                      {/* Profile Header: Avatar Left, Name/Email Right */}
+                      <div className="profile-header">
+                        <div className="avatar">{initials}</div>
+                        <div className="profile-info">
+                          <span className="profile-name">{profile.name}</span>
+                          <span className="profile-email">{profile.email || 'No email provided'}</span>
                         </div>
-                      )}
+                      </div>
+
+                      <div className="profile-details-bottom">
+                        <div className="info-row">
+                          <span className="label">Phone</span>
+                          <span className="value">{profile.phone || '—'}</span>
+                        </div>
+                        <div className="info-row">
+                          <span className="label">Address</span>
+                          <span className="value">
+                            {address 
+                              ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
+                              : 'No address saved in Central Auth.'}
+                          </span>
+                        </div>
+                        {!address && (
+                          <div style={{ marginTop: '16px' }}>
+                            <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   ) : (
                      <p className="text-red">Unable to load account information.</p>
@@ -368,6 +376,7 @@ export default function CheckoutPage() {
 
                 {error && <div className="error-msg">{error}</div>}
 
+                {/* Payment Button at the absolute bottom */}
                 <button 
                   type="submit" 
                   className="btn-primary full-width" 
@@ -452,7 +461,7 @@ export default function CheckoutPage() {
         .checkout-page {
           min-height: 100vh;
           background: #ffffff;
-          padding: 80px 20px 60px;
+          padding: 40px 20px 60px;
         }
 
         .checkout-shell {
@@ -463,33 +472,16 @@ export default function CheckoutPage() {
 
         /* --- Header & Banner --- */
         .checkout-header {
-          margin-bottom: 60px;
+          margin-bottom: 40px;
           display: flex;
           flex-direction: column;
-        }
-
-        .back-btn {
-          font-size: 11px;
-          color: #000;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          text-decoration: none;
-          margin-bottom: 24px;
-          transition: opacity 0.2s;
-        }
-        .back-btn:hover { opacity: 0.5; }
-
-        .checkout-header h1 {
-          font-size: 32px;
-          font-weight: 300;
-          margin: 0 0 32px 0;
-          letter-spacing: 2px;
-          text-transform: uppercase;
+          align-items: center;
         }
 
         .banner-wrapper {
+          position: relative;
           width: 100%;
-          height: 180px;
+          height: 140px; /* Reduced height */
           overflow: hidden;
           background: #f5f5f5;
         }
@@ -499,6 +491,32 @@ export default function CheckoutPage() {
           height: 100%;
           object-fit: cover;
           display: block;
+        }
+
+        .back-btn {
+          position: absolute;
+          top: 16px;
+          left: 16px;
+          z-index: 10;
+          font-size: 11px;
+          color: #000;
+          background: rgba(255, 255, 255, 0.9);
+          padding: 8px 12px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          text-decoration: none;
+          transition: opacity 0.2s;
+          backdrop-filter: blur(4px);
+        }
+        .back-btn:hover { opacity: 0.7; }
+
+        .checkout-title {
+          font-size: 28px;
+          font-weight: 300;
+          margin: 32px 0 0 0;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          text-align: center;
         }
 
         .checkout-layout {
@@ -525,7 +543,7 @@ export default function CheckoutPage() {
         }
 
         .form-block {
-          margin-bottom: 48px;
+          margin-bottom: 40px;
         }
 
         .select-wrapper {
@@ -546,7 +564,6 @@ export default function CheckoutPage() {
           appearance: none;
           outline: none;
           cursor: pointer;
-          transition: border-color 0.2s;
         }
 
         .select-icon {
@@ -570,7 +587,6 @@ export default function CheckoutPage() {
           resize: vertical;
           min-height: 80px;
           outline: none;
-          transition: border-color 0.2s;
         }
         .luxury-textarea::placeholder {
           color: #aaa;
@@ -586,7 +602,7 @@ export default function CheckoutPage() {
         .text-muted { color: #888; font-size: 13px; }
         .text-red { color: #d93025; font-size: 13px; }
 
-        /* --- Profile Section --- */
+        /* --- Profile Section (New Layout) --- */
         .profile-block {
           border-top: 1px solid #e5e5e5;
           padding-top: 40px;
@@ -595,7 +611,50 @@ export default function CheckoutPage() {
         .profile-summary {
           display: flex;
           flex-direction: column;
+          gap: 24px;
+        }
+
+        .profile-header {
+          display: flex;
+          align-items: center;
           gap: 16px;
+        }
+
+        .avatar {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: #000;
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          font-weight: 500;
+        }
+
+        .profile-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .profile-name {
+          font-size: 16px;
+          font-weight: 500;
+          color: #000;
+        }
+
+        .profile-email {
+          font-size: 13px;
+          color: #777;
+        }
+
+        .profile-details-bottom {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          padding-left: 64px; /* Align with text */
         }
 
         .info-row {
@@ -648,7 +707,7 @@ export default function CheckoutPage() {
         }
         .btn-primary:hover:not(:disabled) { background: #333; }
         .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
-        .full-width { width: 100%; margin-top: 20px; }
+        .full-width { width: 100%; margin-top: 10px; }
 
         .btn-outline {
           display: inline-flex;
@@ -695,18 +754,18 @@ export default function CheckoutPage() {
         .summary-list {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 20px;
         }
 
         .summary-item {
           display: flex;
           align-items: flex-start;
-          gap: 20px;
+          gap: 16px;
         }
 
         .item-img-wrap {
-          width: 80px;
-          height: 100px;
+          width: 60px; /* Smaller image */
+          height: 75px;
           flex-shrink: 0;
           background: #f5f5f5;
         }
@@ -724,7 +783,7 @@ export default function CheckoutPage() {
         }
 
         .item-details h3 {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
           margin: 0 0 4px;
           color: #000;
@@ -733,23 +792,23 @@ export default function CheckoutPage() {
         }
 
         .item-variant {
-          font-size: 12px;
+          font-size: 11px;
           color: #777;
-          margin: 0 0 16px;
+          margin: 0 0 12px;
         }
 
         /* Quantity Controls */
         .qty-controls {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 12px;
         }
 
         .qty-controls button {
           background: none;
           border: none;
           padding: 0;
-          font-size: 16px;
+          font-size: 15px;
           color: #000;
           cursor: pointer;
           transition: opacity 0.2s;
@@ -758,14 +817,14 @@ export default function CheckoutPage() {
         .qty-controls button:disabled { color: #ccc; cursor: not-allowed; }
         
         .qty-controls span {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
-          min-width: 16px;
+          min-width: 14px;
           text-align: center;
         }
 
         .item-price {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 500;
           color: #000;
         }
@@ -773,7 +832,7 @@ export default function CheckoutPage() {
         .summary-divider {
           height: 1px;
           background: #e5e5e5;
-          margin: 32px 0;
+          margin: 24px 0;
         }
 
         .summary-totals {
@@ -806,21 +865,24 @@ export default function CheckoutPage() {
 
         .empty-state {
           text-align: center;
-          padding: 100px 0;
+          padding: 80px 0;
         }
         .empty-state h2 { font-size: 18px; font-weight: 400; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1.5px; }
         .empty-state p { color: #777; margin: 0 0 32px; font-size: 13px; }
 
         /* --- Desktop Responsive --- */
         @media (min-width: 768px) {
-          .checkout-page { padding: 100px 40px 80px; }
-          .checkout-header h1 { font-size: 42px; }
-          .checkout-layout { grid-template-columns: 1fr 1fr; gap: 100px; }
+          .checkout-page { padding: 60px 40px 80px; }
+          .checkout-title { font-size: 36px; }
+          .checkout-layout { grid-template-columns: 1fr 1fr; gap: 80px; }
+          
+          .banner-wrapper { height: 180px; }
           
           .order-summary { position: sticky; top: 120px; }
           
-          .item-img-wrap { width: 100px; height: 125px; }
-          .item-details h3 { font-size: 14px; }
+          .item-img-wrap { width: 70px; height: 90px; }
+          .item-details h3 { font-size: 13px; }
+          .item-price { font-size: 13px; }
           
           .total-row { font-size: 15px; }
           .total-row strong { font-size: 22px; }
