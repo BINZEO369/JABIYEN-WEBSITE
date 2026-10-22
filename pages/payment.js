@@ -61,8 +61,8 @@ export default function PaymentPage() {
   const placeOrder = async (event) => {
     event.preventDefault();
     setError('');
-    if (!draft?.items?.length || !draft.customer?.name || !draft.customer?.phone || !draft.customer?.address) {
-      setError('The checkout details are incomplete. Return to checkout and confirm your profile again.');
+    if (!draft?.items?.length || !draft.customer?.address || typeof draft.customer.address !== 'object') {
+      setError('Your saved delivery address is missing. Return to checkout and confirm the address again.');
       return;
     }
 
