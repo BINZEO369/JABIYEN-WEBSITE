@@ -154,7 +154,7 @@ export default function PaymentPage() {
           {draftStatus === 'ready' && (
             <form className="checkout-form" onSubmit={placeOrder}>
               
-              {/* 1. Product Details - EXACT same as Checkout */}
+              {/* 1. Product Details */}
               <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Your Bag <span className="item-count-label">({totalItems})</span></h2>
                 <div className="summary-list">
@@ -164,7 +164,7 @@ export default function PaymentPage() {
                       <div 
                         className="summary-item animate-fade-up" 
                         key={`${item.title}-${index}`}
-                        style={{ animationDelay: `${index * 0.08}s` }}
+                        style={{ animationDelay: `${index * 0.06}s` }}
                       >
                         <div className="item-img-wrap">
                           <img 
@@ -173,17 +173,16 @@ export default function PaymentPage() {
                             className="item-img"
                             onError={(e) => { e.currentTarget.src = '/logo.png'; }}
                           />
+                          <span className="item-qty-badge">{item.quantity || 1}</span>
                         </div>
                         
                         <div className="item-details">
                           <h3>{item.title || 'JABIYEN Item'}</h3>
                           <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</p>
-                          <span className="item-quantity">Qty: {item.quantity || 1}</span>
+                          <span className="item-price">
+                            {formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
+                          </span>
                         </div>
-
-                        <span className="item-price">
-                          {formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
-                        </span>
                       </div>
                     );
                   })}
@@ -214,7 +213,7 @@ export default function PaymentPage() {
                 )}
               </section>
 
-              {/* 3. Payment Method - ULTRA COMPACT */}
+              {/* 3. Payment Method */}
               <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Payment Method</h2>
                 
@@ -306,94 +305,35 @@ export default function PaymentPage() {
         .animate-fade-in { animation: fadeIn 0.4s ease both; }
         .animate-shake { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
-        /* ============================================
-           EXACT SAME AS CHECKOUT PAGE
-           ============================================ */
         .checkout-page { min-height: 100vh; background: #ffffff; padding-top: 80px; }
         .banner-wrapper { width: 100%; height: 140px; overflow: hidden; background: #f5f5f5; }
         .checkout-banner { width: 100%; height: 100%; object-fit: cover; display: block; animation: fadeIn 1s ease both; }
         .checkout-shell { width: 100%; max-width: 600px; margin: 0 auto; padding: 0 20px 60px; }
         .checkout-title { font-size: 28px; font-weight: 300; margin: 32px 0 40px 0; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
-        .section-heading { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 20px 0; color: #000; display: flex; align-items: center; gap: 8px; }
+        .section-heading { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 16px 0; color: #000; display: flex; align-items: center; gap: 8px; }
         .item-count-label { color: #999; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 11px; }
-        .form-block { margin-bottom: 32px; }
+        .form-block { margin-bottom: 24px; }
 
-        /* ============================================
-           PRODUCT LIST - EXACT MATCH WITH CHECKOUT
-           ============================================ */
-        .summary-list { display: flex; flex-direction: column; gap: 20px; }
-        
-        .summary-item { 
-          display: flex; 
-          align-items: flex-start; 
-          gap: 16px; 
-        }
-        
-        .item-img-wrap { 
-          width: 50px; 
-          height: 65px; 
-          flex-shrink: 0; 
-          background: #f5f5f5; 
-          overflow: hidden;
-        }
-        
-        .item-img { 
-          width: 100%; 
-          height: 100%; 
-          object-fit: cover; 
-          display: block;
-          transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        
-        .summary-item:hover .item-img { 
-          transform: scale(1.06); 
-        }
-        
-        .item-details { 
-          flex: 1; 
-          display: flex; 
-          flex-direction: column; 
-        }
-        
-        .item-details h3 { 
-          font-size: 12px; 
-          font-weight: 500; 
-          margin: 0 0 4px; 
-          color: #000; 
-          text-transform: uppercase; 
-          letter-spacing: 0.5px; 
-        }
-        
-        .item-variant { 
-          font-size: 11px; 
-          color: #777; 
-          margin: 0 0 8px; 
-        }
-        
-        .item-quantity {
-          font-size: 11px;
-          font-weight: 500;
-          color: #000;
-          letter-spacing: 0.5px;
-        }
-        
-        .item-price { 
-          font-size: 12px; 
-          font-weight: 500; 
-          color: #000; 
-          display: inline-block;
-          flex-shrink: 0;
-        }
+        /* Product List */
+        .summary-list { display: flex; flex-direction: column; gap: 12px; }
+        .summary-item { display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid #f0f0f0; background: #fafafa; }
+        .item-img-wrap { position: relative; width: 48px; height: 60px; flex-shrink: 0; background: #ffffff; overflow: visible; }
+        .item-img { width: 100%; height: 100%; object-fit: cover; display: block; border: 1px solid #eaeaea; }
+        .item-qty-badge { position: absolute; top: -6px; right: -6px; background: #000; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; border: 2px solid #fff; z-index: 2; }
+        .item-details { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .item-details h3 { font-size: 11px; font-weight: 500; margin: 0; color: #000; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-variant { font-size: 10px; color: #777; margin: 0; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-price { font-size: 11px; font-weight: 600; color: #000; display: inline-block; margin-top: 2px; }
 
-        /* Profile Section */
-        .profile-block { border-top: 1px solid #e5e5e5; padding-top: 32px; }
-        .compact-profile { display: flex; flex-direction: column; gap: 14px; }
+        /* Profile */
+        .profile-block { border-top: 1px solid #e5e5e5; padding-top: 24px; }
+        .compact-profile { display: flex; flex-direction: column; gap: 12px; }
         .profile-top-row { display: flex; align-items: center; gap: 12px; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; flex-shrink: 0; }
         .profile-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .profile-name { font-size: 14px; font-weight: 600; color: #000; line-height: 1.3; }
         .profile-meta { font-size: 12px; color: #777; line-height: 1.4; overflow-wrap: anywhere; }
-        .profile-address { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+        .profile-address { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
         .address-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
         .address-value { font-size: 12px; color: #333; line-height: 1.5; overflow-wrap: anywhere; }
 
@@ -404,7 +344,7 @@ export default function PaymentPage() {
         .skeleton-line { height: 12px; border-radius: 4px; }
         .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; }
 
-        /* Payment Method - Ultra Compact */
+        /* Payment Method */
         .payment-method-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #000; background: #fafafa; }
         .selector-radio { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; }
         .selector-radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #000; }
@@ -414,7 +354,7 @@ export default function PaymentPage() {
         .order-note-display { padding: 14px; background: #fafafa; border-left: 2px solid #000; font-size: 12px; color: #333; line-height: 1.6; white-space: pre-wrap; }
 
         /* Totals */
-        .final-totals { margin: 32px 0; padding-top: 24px; border-top: 1px solid #e5e5e5; display: flex; flex-direction: column; gap: 12px; }
+        .final-totals { margin: 24px 0; padding-top: 20px; border-top: 1px solid #e5e5e5; display: flex; flex-direction: column; gap: 10px; }
         .totals-row { display: flex; justify-content: space-between; font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
         .totals-row span:last-child { color: #000; }
         .grand-total { margin-top: 8px; font-size: 14px; font-weight: 500; color: #000; }
@@ -437,51 +377,43 @@ export default function PaymentPage() {
         .minimal-box { padding: 24px; background: #fafafa; text-align: center; }
         .minimal-box p { margin: 0 0 16px; font-size: 13px; color: #555; line-height: 1.6; }
 
-        /* ============================================
-           DESKTOP - EXACT MATCH WITH CHECKOUT
-           ============================================ */
+        /* Desktop */
         @media (min-width: 768px) {
           .checkout-page { padding-top: 120px; }
           .checkout-shell { max-width: 800px; padding: 0 40px 80px; }
           .banner-wrapper { height: 320px; }
           .checkout-title { font-size: 42px; margin: 48px 0 56px 0; }
-          .section-heading { font-size: 13px; margin-bottom: 28px; }
+          .section-heading { font-size: 13px; margin-bottom: 20px; }
           .item-count-label { font-size: 13px; }
-          .form-block { margin-bottom: 40px; }
-          
-          .summary-list { gap: 24px; }
-          .summary-item { gap: 24px; }
-          .item-img-wrap { width: 80px; height: 100px; }
-          .item-details h3 { font-size: 16px; }
-          .item-variant { font-size: 14px; margin-bottom: 10px; }
-          .item-quantity { font-size: 14px; }
-          .item-price { font-size: 16px; }
-          
+          .form-block { margin-bottom: 32px; }
+          .summary-list { gap: 14px; }
+          .summary-item { gap: 16px; padding: 10px; }
+          .item-img-wrap { width: 64px; height: 80px; }
+          .item-qty-badge { width: 24px; height: 24px; font-size: 11px; top: -7px; right: -7px; }
+          .item-details h3 { font-size: 13px; }
+          .item-variant { font-size: 12px; }
+          .item-price { font-size: 13px; }
           .skeleton-avatar { width: 56px; height: 56px; }
           .avatar { width: 56px; height: 56px; font-size: 22px; }
           .profile-name { font-size: 18px; }
           .profile-meta { font-size: 14px; }
           .address-label { font-size: 12px; }
           .address-value { font-size: 14px; }
-          
           .payment-method-option { padding: 14px 18px; gap: 14px; }
           .selector-radio { width: 20px; height: 20px; }
           .selector-radio-dot { width: 9px; height: 9px; }
           .method-label { font-size: 14px; letter-spacing: 1.5px; }
-          
           .order-note-display { font-size: 14px; padding: 20px; }
-          
           .totals-row { font-size: 14px; margin-bottom: 8px; }
           .grand-total { font-size: 18px; margin-top: 16px; }
           .grand-total strong { font-size: 32px; }
-          
           .btn-primary { height: 72px; font-size: 14px; letter-spacing: 3px; }
-          .final-totals { padding-top: 32px; margin: 48px 0; gap: 16px; }
+          .final-totals { padding-top: 32px; margin: 40px 0; gap: 14px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
           .animate-fade-up, .animate-fade-in, .animate-shake, .shimmer, .btn-spinner, .checkout-banner { animation: none !important; }
-          .btn-primary, .item-img { transition: none !important; }
+          .btn-primary { transition: none !important; }
         }
       `}</style>
     </>
