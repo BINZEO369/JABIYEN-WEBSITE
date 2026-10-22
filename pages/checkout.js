@@ -34,7 +34,7 @@ function addressFields(address, profile = {}) {
   return {
     line1: streets[0] || '',
     line2: [...streets.slice(1), address?.area].filter((part) => typeof part === 'string' && part.trim()).join(', '),
-    district: address?.district || address?.state_province || address?.city || '',
+    district: address?.district || address?.state_province || address?.city || address?.area || '',
     city: address?.city || address?.area || address?.district || address?.state_province || '',
     postal_code: address?.postal_code || '',
     country_code: /^[A-Z]{2}$/.test(rawCountryCode) ? rawCountryCode : 'BD',
@@ -57,9 +57,7 @@ export default function CheckoutPage() {
   const [accountMessage, setAccountMessage] = useState('');
   const [profile, setProfile] = useState(null);
   const [primaryAddress, setPrimaryAddress] = useState(null);
-  const [addressLoadFailed, setAddressLoadFailed] = useState(false);
   const [deliveryNote, setDeliveryNote] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -110,6 +108,7 @@ export default function CheckoutPage() {
           headers, cache: 'no-store', credentials: 'same-origin', signal: controller.signal,
         });
         const addressResult = await addressResponse.json().catch(() => null);
+        if (addressResponse.status === 401) throw new Error('Your Central Auth session expired. Sign in again to continue.');
         if (!addressResponse.ok || addressResult?.success === false) throw new Error('Saved Central Auth delivery address is temporarily unavailable.');
         const rows = addressResult?.data?.addresses ?? addressResult?.addresses ?? [];
         if (!Array.isArray(rows)) throw new Error('Saved Central Auth delivery address could not be read.');
@@ -117,15 +116,13 @@ export default function CheckoutPage() {
         const selected = addresses.find((address) => address.is_primary) || addresses[0] || null;
         if (active) {
           setPrimaryAddress(selected);
-          setAddressLoadFailed(false);
           setAccountMessage(selected
-            ? 'Review your saved profile and primary delivery address, then confirm to continue.'
-            : 'No saved delivery address was found in Central Auth. Add one there to continue.');
+            ? 'Your Central Auth account and saved delivery address are ready.'
+            : 'No saved delivery address was found. Add one in Central Management to continue.');
         }
       } catch (loadError) {
         if (active) {
-          setAccountStatus(loadError?.name === 'AbortError' ? 'unavailable' : 'unavailable');
-          setAddressLoadFailed(true);
+          setAccountStatus(loadError?.message?.includes('session expired') ? 'signed_out' : 'unavailable');
           setAccountMessage(loadError?.name === 'AbortError'
             ? 'Loading your Central Auth details timed out. Refresh this page to retry.'
             : (loadError instanceof Error ? loadError.message : 'Saved account details could not be loaded.'));
@@ -147,8 +144,6 @@ export default function CheckoutPage() {
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
   const totalItems = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
   const address = primaryAddress ? addressFields(primaryAddress, profile) : null;
-  const profileReady = Boolean(profile?.name?.trim() && profile?.phone?.trim());
-  const addressReady = Boolean(address?.line1?.trim() && address?.district?.trim() && address?.city?.trim());
 
   const continueToPayment = async (event) => {
     event.preventDefault();
@@ -157,12 +152,18 @@ export default function CheckoutPage() {
       setError('Your shopping bag is empty. Add an item before checking out.');
       return;
     }
-    if (!profileReady || !addressReady) {
-      setError('A complete Central Auth profile and saved delivery address are required.');
+    if (accountStatus === 'signed_out') {
+      setError('You are not signed in. Sign in through BINZEO Central Auth before continuing.');
       return;
     }
-    if (!confirmed) {
-      setError('Please confirm that you want to use this Central Auth profile for the order.');
+    if (!profile) {
+      setError('Your Central Auth session could not be verified. Refresh the page and sign in again if needed.');
+      return;
+    }
+    if (!primaryAddress) {
+      setError(accountStatus === 'connected'
+        ? 'No saved delivery address was found. Add or correct it in BINZEO Central Management, then return here.'
+        : 'Your saved address could not be verified. Check it in BINZEO Central Management or refresh this page.');
       return;
     }
 
@@ -238,8 +239,8 @@ export default function CheckoutPage() {
                       <strong>{accountLoading ? 'Loading your Central Auth profile' : accountStatus === 'connected' ? 'BINZEO Central Auth connected' : 'Central Auth profile required'}</strong>
                       <p>{accountMessage}</p>
                       {accountStatus === 'signed_out' && <Link href="/auth/signin">Sign in securely</Link>}
-                      {accountStatus === 'unavailable' && <Link href={CENTRAL_AUTH_ACCOUNT_URL}>Open Central Auth</Link>}
-                      {accountStatus === 'connected' && !primaryAddress && !accountLoading && <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer">Manage saved address in Central Auth</a>}
+                      {accountStatus === 'unavailable' && <Link href={CENTRAL_AUTH_ACCOUNT_URL}>Open Central Management</Link>}
+                      {accountStatus === 'connected' && !primaryAddress && !accountLoading && <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer">Manage saved address in Central Management</a>}
                     </div>
                   </div>
 
@@ -252,12 +253,7 @@ export default function CheckoutPage() {
                         <div className="profile-detail"><span>Country code</span><strong>{address?.country_code || '—'}</strong></div>
                         <div className="profile-detail full"><span>Primary delivery address</span><strong>{address ? [address.line1, address.line2, address.city, address.district, address.postal_code].filter(Boolean).join(', ') : 'No saved address'}</strong></div>
                       </div>
-                      {profileReady && addressReady && (
-                        <label className="confirm-profile">
-                          <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
-                          <span>I confirm this Central Auth profile and primary delivery address for my order.</span>
-                        </label>
-                      )}
+                      {profile && primaryAddress && <p className="confirm-hint">Continuing to payment confirms this Central Auth profile and primary delivery address for your order.</p>}
                     </div>
                   )}
                 </section>
@@ -270,10 +266,10 @@ export default function CheckoutPage() {
                 </section>
 
                 {error && <div className="error-alert" role="alert"><span aria-hidden="true">!</span><p>{error}</p></div>}
-                <button className="continue-button" type="submit" disabled={submitting || accountLoading || !profileReady || !addressReady || !confirmed || (mounted && !cart.length)}>
+                <button className="continue-button" type="submit" disabled={submitting || accountLoading || (mounted && !cart.length)}>
                   {submitting ? <><span className="spinner" /> Preparing payment…</> : <>Continue to Payment <span aria-hidden="true">↗</span></>}
                 </button>
-                <p className="privacy-copy">Your profile is read-only here. Update personal details or addresses only in BINZEO Central Auth.</p>
+                <p className="privacy-copy">Your profile is read-only here. Continuing confirms it for this order; update personal details or addresses only in BINZEO Central Auth.</p>
               </form>
 
               <aside className="order-summary" aria-label="Order summary">
