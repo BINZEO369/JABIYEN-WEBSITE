@@ -356,7 +356,7 @@ export default function OrderConfirmationPage() {
       <div className="checkout-page">
         <div className="banner-wrapper">
           <img
-            src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg"
+            src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-order-confirm.jpg"
             alt="Order Confirmed"
             className="checkout-banner"
             onError={(e) => { e.target.style.display = 'none'; }}
