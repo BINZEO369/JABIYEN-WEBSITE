@@ -43,10 +43,6 @@ function addressFields(address, profile = {}) {
   };
 }
 
-function money(value) {
-  return `৳${Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 function countryName(countryCode) {
   return ({ BD: 'Bangladesh', US: 'United States' })[countryCode] || countryCode || 'Unknown country';
 }
@@ -275,113 +271,588 @@ export default function CheckoutPage() {
         <meta name="robots" content="noindex, nofollow" />
         <meta name="referrer" content="no-referrer" />
       </Head>
-      <main className="checkout-page">
+
+      <div className="checkout-page">
         <div className="checkout-shell">
+          
           <div className="checkout-topline">
             <Link href="/" className="back-link">← Continue shopping</Link>
-            <span className="secure-note"><span aria-hidden="true">◆</span> PROFILE CONFIRMATION</span>
           </div>
+
           <header className="checkout-heading">
-            <div><span className="eyebrow">JABIYEN · YOUR ORDER</span><h1>Checkout<span>.</span></h1><p>Confirm the profile and delivery address saved in BINZEO Central Auth.</p></div>
-            <div className="step-marker"><span>01 PROFILE</span><i /><span>02 PAYMENT</span></div>
+            <h1>Checkout.</h1>
+            <p>Confirm your profile and delivery details to proceed.</p>
           </header>
 
           {mounted && cart.length === 0 ? (
-            <section className="empty-card">
-              <span className="eyebrow">NOTHING IN YOUR BAG YET</span>
-              <h2>Your next favourite starts here.</h2>
+            <section className="empty-state">
+              <h2>Your bag is empty.</h2>
               <p>Choose something from the collection and it will be waiting here at checkout.</p>
-              <Link href="/" className="dark-button">Explore the collection <span>↗</span></Link>
+              <Link href="/" className="btn-primary">Explore the collection</Link>
             </section>
           ) : (
             <div className="checkout-layout">
               <form className="checkout-form" onSubmit={continueToPayment}>
+                
+                {/* Section 01: Profile */}
                 <section className="form-section">
-                  <div className="section-title"><span className="section-number">01</span><div><span className="eyebrow">CENTRAL AUTH PROFILE</span><h2>Confirm your profile</h2></div></div>
-                  <div className={`account-notice ${accountStatus === 'connected' ? 'is-connected' : ''}`} role="status" aria-live="polite">
-                    <span className="account-notice-icon">{accountLoading ? '…' : accountStatus === 'connected' ? '✓' : 'i'}</span>
-                    <div className="account-notice-copy">
-                      <strong>{accountLoading ? 'Loading your Central Auth profile' : accountStatus === 'connected' ? 'BINZEO Central Auth connected' : 'Central Auth profile required'}</strong>
-                      <p>{accountMessage}</p>
-                      {accountStatus === 'signed_out' && <Link href="/auth/signin">Sign in securely</Link>}
-                      {accountStatus === 'unavailable' && <Link href={CENTRAL_AUTH_ACCOUNT_URL}>Open Central Management</Link>}
-                      {accountStatus === 'connected' && !primaryAddress && !accountLoading && <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer">Manage saved address in Central Management</a>}
-                    </div>
+                  <h2 className="section-title">01. Profile</h2>
+                  
+                  <div className="account-notice">
+                    {accountLoading ? (
+                      <p>Loading your Central Auth profile...</p>
+                    ) : accountStatus === 'connected' ? (
+                      <p className="success-text">✓ BINZEO Central Auth connected</p>
+                    ) : (
+                      <p className="error-text">! Central Auth profile required</p>
+                    )}
+                    <p className="notice-desc">{accountMessage}</p>
+                    {accountStatus === 'signed_out' && <Link href="/auth/signin" className="text-link">Sign in securely</Link>}
+                    {accountStatus === 'unavailable' && <a href={CENTRAL_AUTH_ACCOUNT_URL} className="text-link">Open Central Management</a>}
+                    {accountStatus === 'connected' && !primaryAddress && !accountLoading && (
+                      <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage saved address</a>
+                    )}
                   </div>
 
                   {profile && (
-                    <div className="profile-card" aria-label="Read-only Central Auth profile">
-                      <div className="profile-details">
-                        <div className="profile-detail"><span>Full name</span><strong>{profile.name || 'Not available'}</strong></div>
-                        <div className="profile-detail"><span>Mobile number</span><strong>{profile.phone || 'Not available'}</strong></div>
-                        <div className="profile-detail"><span>Email</span><strong>{profile.email || 'Not provided'}</strong></div>
-                        <div className="profile-detail"><span>Country</span><strong>{address ? `${countryName(address.country_code)} (${address.country_code})` : '—'}</strong></div>
-                        <div className="profile-detail"><span>State / Province</span><strong>{address?.state || '—'}</strong></div>
-                        <div className="profile-detail full"><span>Primary delivery address</span><strong>{address ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') : 'No saved address'}</strong></div>
+                    <div className="profile-details">
+                      <div className="profile-row">
+                        <span>Name</span>
+                        <strong>{profile.name || 'Not available'}</strong>
                       </div>
-                      {profile && primaryAddress && <p className="confirm-hint">Continuing to payment confirms this Central Auth profile and primary delivery address for your order.</p>}
+                      <div className="profile-row">
+                        <span>Phone</span>
+                        <strong>{profile.phone || 'Not available'}</strong>
+                      </div>
+                      <div className="profile-row">
+                        <span>Email</span>
+                        <strong>{profile.email || 'Not provided'}</strong>
+                      </div>
+                      <div className="profile-row">
+                        <span>Address</span>
+                        <strong>
+                          {address 
+                            ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
+                            : 'No saved address'}
+                        </strong>
+                      </div>
                     </div>
                   )}
                 </section>
 
+                {/* Section 02: Delivery */}
                 <section className="form-section">
-                  <div className="section-title"><span className="section-number">02</span><div><span className="eyebrow">DELIVERY RATE</span><h2>Choose delivery speed</h2></div></div>
-                  <label htmlFor="delivery-type" style={{ display: 'grid', gap: 8, color: '#6f6a60', fontSize: 11, fontWeight: 700 }}>
-                    Delivery type
-                    <select id="delivery-type" value={deliveryType} onChange={(event) => setDeliveryType(event.target.value)} style={{ width: '100%', padding: '12px', border: '1px solid #e5e1d9', borderRadius: 9, background: '#fff', color: '#292823', font: '600 12px Inter,Arial,sans-serif' }}>
-                      <option value="Standard">Standard</option>
-                      <option value="Express">Express</option>
+                  <h2 className="section-title">02. Delivery Speed</h2>
+                  
+                  <div className="input-group">
+                    <label htmlFor="delivery-type">Delivery type</label>
+                    <select 
+                      id="delivery-type" 
+                      value={deliveryType} 
+                      onChange={(event) => setDeliveryType(event.target.value)}
+                    >
+                      <option value="Standard">Standard Delivery</option>
+                      <option value="Express">Express Delivery</option>
                     </select>
-                  </label>
-                  <p role="status" aria-live="polite" style={{ margin: '12px 0 0', color: shippingStatus === 'unavailable' ? '#8b423d' : '#77736b', fontSize: 10, lineHeight: 1.6 }}>
-                    {shippingStatus === 'loading' && 'Calculating the BDT delivery fee for your saved address…'}
-                    {shippingStatus === 'ready' && shippingQuote && (shippingQuote.delivery_fee == null
-                      ? 'এই ঠিকানার ডেলিভারি চার্জ আপনাকে পরে জানানো হবে · BDT'
-                      : `${formatMoney(shippingQuote.delivery_fee)} ${deliveryType.toLowerCase()} delivery · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days · ${selectedCurrency.currency_code}`)}
-                    {shippingStatus === 'unavailable' && shippingMessage}
-                  </p>
+                  </div>
+
+                  <div className="shipping-status">
+                    {shippingStatus === 'loading' && <p>Calculating delivery fee...</p>}
+                    {shippingStatus === 'ready' && shippingQuote && (
+                      <p>
+                        {shippingQuote.delivery_fee == null
+                          ? 'Delivery charge will be informed later · BDT'
+                          : `${formatMoney(shippingQuote.delivery_fee)} · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days`}
+                      </p>
+                    )}
+                    {shippingStatus === 'unavailable' && <p className="error-text">{shippingMessage}</p>}
+                  </div>
                 </section>
 
-                <section className="form-section note-section">
-                  <div className="section-title"><span className="section-number">03</span><div><span className="eyebrow">OPTIONAL</span><h2>Order note</h2></div></div>
-                  <label className="note-label" htmlFor="delivery-note">Note for the delivery team</label>
-                  <textarea id="delivery-note" value={deliveryNote} onChange={(event) => setDeliveryNote(event.target.value.slice(0, 500))} maxLength={500} rows={4} placeholder="Add a delivery instruction or note (optional)." />
-                  <small>{deliveryNote.length}/500 characters</small>
+                {/* Section 03: Note */}
+                <section className="form-section">
+                  <h2 className="section-title">03. Order Note (Optional)</h2>
+                  <div className="input-group">
+                    <textarea 
+                      id="delivery-note" 
+                      value={deliveryNote} 
+                      onChange={(event) => setDeliveryNote(event.target.value.slice(0, 500))} 
+                      maxLength={500} 
+                      rows={3} 
+                      placeholder="Add a delivery instruction..." 
+                    />
+                  </div>
                 </section>
 
-                {error && <div className="error-alert" role="alert"><span aria-hidden="true">!</span><p>{error}</p></div>}
-                <button className="continue-button" type="submit" disabled={submitting || accountLoading || shippingStatus !== 'ready' || (mounted && !cart.length)}>
-                  {submitting ? <><span className="spinner" /> Preparing payment…</> : <>Continue to Payment <span aria-hidden="true">↗</span></>}
+                {error && <div className="error-alert">{error}</div>}
+
+                <button 
+                  className="btn-primary full-width" 
+                  type="submit" 
+                  disabled={submitting || accountLoading || shippingStatus !== 'ready' || (mounted && !cart.length)}
+                >
+                  {submitting ? 'Preparing payment...' : 'Continue to Payment'}
                 </button>
-                <p className="privacy-copy">Your profile is read-only here. Continuing confirms it for this order; update personal details or addresses only in BINZEO Central Auth.</p>
               </form>
 
-              <aside className="order-summary" aria-label="Order summary">
-                <div className="summary-heading"><div><span className="eyebrow">YOUR SELECTION</span><h2>Order summary</h2></div><span className="item-count">{String(totalItems).padStart(2, '0')}</span></div>
+              {/* Order Summary */}
+              <aside className="order-summary">
+                <h2 className="section-title">Order Summary</h2>
+                
                 <div className="summary-items">
                   {cart.map((item, index) => (
                     <div className="summary-item" key={`${item.product_id}-${item.variant_id || index}-${item.id || index}`}>
-                      <div className="summary-image-wrap"><img src={item.img || '/logo.png'} alt="" className="summary-image" onError={(event) => { event.currentTarget.src = '/logo.png'; }} /><span className="quantity-badge">{item.quantity || 1}</span></div>
-                      <div className="summary-item-copy"><strong>{item.title || 'JABIYEN item'}</strong><span>{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</span></div>
-                      <strong className="summary-item-price">{formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}</strong>
+                      <div className="item-img-wrap">
+                        <img src={item.img || '/logo.png'} alt="" onError={(e) => { e.currentTarget.src = '/logo.png'; }} />
+                        <span className="qty">{item.quantity || 1}</span>
+                      </div>
+                      <div className="item-info">
+                        <strong>{item.title || 'JABIYEN item'}</strong>
+                        <span>{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</span>
+                      </div>
+                      <span className="item-price">{formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}</span>
                     </div>
                   ))}
                 </div>
-                <div className="summary-rule" />
-                <div className="summary-row"><span>Items ({totalItems})</span><span>{formatMoney(subtotal)}</span></div>
-                <div className="summary-row"><span>{deliveryType} delivery</span><span className="to-confirm">{shippingStatus === 'ready' ? (shippingQuote.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : formatMoney(shippingQuote.delivery_fee)) : shippingStatus === 'loading' ? 'Calculating…' : shippingStatus === 'unavailable' ? 'Unavailable' : '—'}</span></div>
-                <div className="summary-rule" />
-                <div className="summary-row total-row"><span>Estimated total · {selectedCurrency.currency_code}</span><strong>{shippingQuote?.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}</strong></div>
-                <p className="summary-footnote">Displayed in {selectedCurrency.currency_code} using the configured rate. Order totals and cash-on-delivery collection remain in BDT; the Central API verifies the final fee.</p>
-                <div className="summary-trust"><span>✓</span><span>Profile confirmed securely<br /><small>Read from Central Auth</small></span></div>
+
+                <div className="summary-totals">
+                  <div className="totals-row">
+                    <span>Subtotal ({totalItems} items)</span>
+                    <span>{formatMoney(subtotal)}</span>
+                  </div>
+                  <div className="totals-row">
+                    <span>Delivery</span>
+                    <span>
+                      {shippingStatus === 'ready' 
+                        ? (shippingQuote.delivery_fee == null ? 'TBD' : formatMoney(shippingQuote.delivery_fee)) 
+                        : '—'}
+                    </span>
+                  </div>
+                  <div className="totals-row grand-total">
+                    <span>Total</span>
+                    <strong>
+                      {shippingQuote?.delivery_fee == null 
+                        ? 'TBD' 
+                        : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}
+                    </strong>
+                  </div>
+                </div>
+                
+                <p className="summary-note">Total shown in {selectedCurrency.currency_code}. Final verification occurs securely on the server.</p>
               </aside>
             </div>
           )}
-          <footer className="checkout-footer"><span>JABIYEN · MADE FOR EVERY DAY</span><Link href="/">Return to store</Link></footer>
         </div>
-      </main>
+      </div>
+
+      <style jsx global>{`
+        body {
+          margin: 0;
+          padding: 0;
+          background-color: #ffffff;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+          -webkit-font-smoothing: antialiased;
+        }
+      `}</style>
+
       <style jsx>{`
-        .checkout-page{min-height:calc(100vh - 150px);padding:clamp(100px,11vw,132px) 18px 66px;background:#f5f3ef;color:#171715}.checkout-shell{width:min(100%,1120px);margin:0 auto}.checkout-topline{display:flex;align-items:center;justify-content:space-between;padding-bottom:22px;border-bottom:1px solid #dfdbd3}.back-link{color:#49473f;text-decoration:none;font-size:11px;font-weight:700}.back-link:hover{color:#a47241}.secure-note,.eyebrow{color:#8a857b;font-size:9px;font-weight:850;letter-spacing:.15em}.secure-note{display:flex;gap:8px;align-items:center}.secure-note span{font-size:7px;color:#a77e4f}.checkout-heading{display:flex;justify-content:space-between;align-items:flex-end;padding:42px 0 29px}.checkout-heading h1{margin:9px 0 8px;font:400 clamp(42px,7vw,66px)/.98 Georgia,'Times New Roman',serif;letter-spacing:-.055em}.checkout-heading h1 span{color:#b17d46}.checkout-heading p{margin:0;color:#77736b;font-size:12px}.step-marker{display:flex;align-items:center;gap:9px;color:#8a857b;font:700 9px Inter,sans-serif;letter-spacing:.08em}.step-marker span:first-child{color:#1d1c18}.step-marker i{width:28px;height:1px;background:#ddd8cf}.checkout-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(280px,.8fr);align-items:start;gap:22px}.checkout-form{min-width:0}.form-section,.order-summary,.empty-card{border:1px solid #e5e1d9;border-radius:16px;background:#fff;box-shadow:0 10px 32px rgba(33,31,26,.025)}.form-section{padding:clamp(20px,3vw,30px);margin-bottom:14px}.section-title{display:flex;align-items:center;gap:14px;margin-bottom:21px}.section-number{display:grid;width:34px;height:34px;flex:0 0 34px;place-items:center;border:1px solid #e9e5dd;border-radius:50%;color:#9a764e;font:italic 14px Georgia,serif}.section-title h2,.summary-heading h2{margin:4px 0 0;color:#26251f;font:400 23px Georgia,'Times New Roman',serif;letter-spacing:-.025em}.account-notice{display:flex;align-items:flex-start;gap:10px;margin:-4px 0 18px;padding:12px 13px;border:1px solid #e8e3da;border-radius:11px;background:#faf9f6}.account-notice.is-connected{border-color:#d8e6d8;background:#f6faf5}.account-notice-icon{display:grid;width:22px;height:22px;flex:0 0 22px;place-items:center;border-radius:50%;background:#eae5dc;color:#80623e;font-size:12px;font-weight:800}.account-notice.is-connected .account-notice-icon{background:#e1eee0;color:#4c754e}.account-notice-copy{display:grid;gap:4px}.account-notice-copy strong{color:#3a3932;font-size:10px}.account-notice-copy p{margin:0;color:#77736a;font-size:9px;line-height:1.55}.account-notice-copy a{width:fit-content;color:#8c6741;font-size:9px;font-weight:750;text-decoration:underline;text-underline-offset:2px}.profile-card{padding:16px;border:1px solid #eae6de;border-radius:12px;background:#fcfbf8}.profile-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.profile-detail{display:grid;gap:6px;min-width:0}.profile-detail.full{grid-column:1/-1}.profile-detail span,.note-label{color:#8a857b;font-size:9px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}.profile-detail strong{overflow-wrap:anywhere;color:#302e28;font-size:12px;font-weight:650;line-height:1.6}.confirm-profile{display:flex;align-items:flex-start;gap:10px;margin-top:18px;padding-top:15px;border-top:1px solid #e9e5dd;color:#514f47;font-size:10px;line-height:1.55;cursor:pointer}.confirm-profile input{width:16px;height:16px;flex:0 0 16px;margin:1px 0 0;accent-color:#1b1a17}.note-section textarea{display:block;width:100%;min-height:96px;margin-top:8px;padding:12px;border:1px solid #e5e1d9;border-radius:9px;outline:none;background:#fff;color:#292823;font:500 12px Inter,Arial,sans-serif;resize:vertical}.note-section textarea:focus{border-color:#a77b4c;box-shadow:0 0 0 3px rgba(167,123,76,.1)}.note-section textarea::placeholder{color:#aaa59b}.note-section small{display:block;margin-top:6px;color:#9b958a;font-size:9px}.continue-button,.dark-button{display:flex;width:100%;min-height:52px;align-items:center;justify-content:center;gap:14px;border:0;border-radius:999px;background:#1b1a17;color:#fff;font-size:11px;font-weight:800;text-decoration:none;cursor:pointer;transition:background .18s,transform .18s}.continue-button:hover:not(:disabled),.dark-button:hover{background:#3e3b33;transform:translateY(-1px)}.continue-button:disabled{opacity:.55;cursor:not-allowed}.continue-button span{font-size:15px}.privacy-copy{margin:11px 0 0;color:#928c82;font-size:9px;line-height:1.6;text-align:center}.error-alert{display:flex;align-items:flex-start;gap:9px;margin-bottom:13px;padding:13px 14px;border:1px solid #ebcac5;border-radius:10px;background:#fff8f6;color:#8b423d}.error-alert>span{display:grid;width:17px;height:17px;flex:0 0 17px;place-items:center;border:1px solid #d9aaa2;border-radius:50%;font-size:10px}.error-alert p{margin:0;font-size:11px;line-height:1.55}.spinner{width:15px;height:15px;border:2px solid rgba(255,255,255,.28);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.order-summary{position:sticky;top:112px;padding:24px}.summary-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:19px}.item-count{color:#b5aea2;font:italic 29px Georgia,serif}.summary-items{display:grid;gap:15px;max-height:330px;overflow-y:auto;padding-right:2px}.summary-item{display:flex;align-items:center;gap:10px;min-width:0}.summary-image-wrap{position:relative;width:51px;height:58px;flex:0 0 51px}.summary-image{width:100%;height:100%;border:1px solid #eeeae3;border-radius:8px;background:#f6f4ef;object-fit:cover}.quantity-badge{position:absolute;top:-6px;right:-6px;display:grid;width:18px;height:18px;place-items:center;border-radius:50%;background:#2a2924;color:#fff;font-size:9px;font-weight:800}.summary-item-copy{display:grid;min-width:0;flex:1;gap:5px}.summary-item-copy strong{overflow:hidden;color:#3c3a34;font-size:10px;text-overflow:ellipsis;white-space:nowrap}.summary-item-copy span{overflow:hidden;color:#8f897e;font-size:9px;text-overflow:ellipsis;white-space:nowrap}.summary-item-price{flex:0 0 auto;color:#39372f;font-size:10px}.summary-rule{height:1px;margin:18px 0;background:#eeeae3}.summary-row{display:flex;justify-content:space-between;gap:12px;margin:11px 0;color:#77736a;font-size:10px}.summary-row>span:last-child{color:#45433c;font-weight:700}.summary-row .to-confirm{color:#997444!important;font-weight:650}.total-row{align-items:center;color:#292823;font-size:11px}.total-row strong{font:400 23px Georgia,'Times New Roman',serif}.summary-footnote{margin:12px 0 17px;padding:11px;border-radius:8px;background:#f7f5f0;color:#827d72;font-size:9px;line-height:1.6}.summary-trust{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid #f0eee9;color:#514f47;font-size:9px;font-weight:700;line-height:1.5}.summary-trust>span:first-child{display:grid;width:22px;height:22px;flex:0 0 22px;place-items:center;border-radius:50%;background:#edf3ec;color:#547554;font-size:11px}.summary-trust small{color:#969084;font-size:8px;font-weight:500}.empty-card{display:flex;min-height:290px;flex-direction:column;align-items:flex-start;justify-content:center;padding:clamp(25px,6vw,56px)}.empty-card h2{margin:9px 0;font:400 clamp(27px,4vw,36px) Georgia,serif}.empty-card p{max-width:430px;margin:0 0 22px;color:#77736b;font-size:12px;line-height:1.7}.dark-button{width:auto;padding:0 20px}.checkout-footer{display:flex;justify-content:space-between;gap:10px;margin-top:36px;padding-top:17px;border-top:1px solid #dfdbd3;color:#9a9489;font-size:8px;font-weight:800;letter-spacing:.12em}.checkout-footer a{color:#625e55;text-decoration:none;letter-spacing:normal}@media(max-width:800px){.checkout-layout{grid-template-columns:minmax(0,1fr) minmax(260px,.8fr);gap:13px}.order-summary{padding:18px}.form-section{padding:21px 18px}}@media(max-width:680px){.checkout-page{padding:97px 14px 48px}.checkout-heading{align-items:flex-start;flex-direction:column;gap:18px;padding:32px 0 23px}.step-marker{gap:5px}.step-marker i{width:16px}.checkout-layout{grid-template-columns:1fr}.order-summary{position:static;grid-row:1;padding:19px}.checkout-form{grid-row:2}.summary-items{max-height:250px}.checkout-footer{margin-top:25px}}@media(max-width:430px){.profile-details{grid-template-columns:1fr}.profile-detail.full{grid-column:auto}.checkout-heading p{max-width:270px;line-height:1.55}.secure-note{font-size:8px}.form-section{padding:19px 15px}}@media(prefers-reduced-motion:reduce){.spinner{animation-duration:2s}.continue-button,.dark-button{transition:none}}
+        /* --- Base Layout --- */
+        .checkout-page {
+          min-height: 100vh;
+          background: #ffffff;
+          padding: 80px 20px 60px;
+          color: #111;
+        }
+
+        .checkout-shell {
+          width: 100%;
+          max-width: 1000px; /* Desktop width */
+          margin: 0 auto;
+        }
+
+        /* --- Header --- */
+        .checkout-topline {
+          margin-bottom: 40px;
+        }
+
+        .back-link {
+          font-size: 14px;
+          font-weight: 500;
+          color: #777;
+          text-decoration: none;
+        }
+        .back-link:hover {
+          color: #111;
+        }
+
+        .checkout-heading {
+          margin-bottom: 40px;
+        }
+
+        .checkout-heading h1 {
+          font-size: 32px;
+          font-weight: 600;
+          margin: 0 0 8px;
+          letter-spacing: -0.5px;
+        }
+
+        .checkout-heading p {
+          font-size: 15px;
+          color: #777;
+          margin: 0;
+        }
+
+        /* --- Grid Layout --- */
+        .checkout-layout {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 40px;
+        }
+
+        /* --- Sections --- */
+        .form-section {
+          margin-bottom: 40px;
+        }
+
+        .section-title {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0 0 20px;
+          color: #111;
+        }
+
+        /* --- Account Info --- */
+        .account-notice {
+          margin-bottom: 24px;
+        }
+
+        .account-notice p {
+          font-size: 14px;
+          margin: 0 0 4px;
+          color: #777;
+        }
+        .account-notice .success-text {
+          color: #111;
+          font-weight: 600;
+        }
+        .account-notice .error-text {
+          color: #d93025;
+          font-weight: 600;
+        }
+        .notice-desc {
+          color: #888 !important;
+          font-size: 13px !important;
+        }
+
+        .text-link {
+          display: inline-block;
+          font-size: 13px;
+          color: #111;
+          font-weight: 500;
+          text-decoration: underline;
+          margin-top: 8px;
+        }
+
+        .profile-details {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .profile-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          gap: 20px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .profile-row:last-child {
+          border-bottom: none;
+        }
+
+        .profile-row span {
+          font-size: 14px;
+          color: #888;
+          min-width: 80px;
+        }
+
+        .profile-row strong {
+          font-size: 14px;
+          font-weight: 500;
+          color: #111;
+          text-align: right;
+          max-width: 70%;
+        }
+
+        /* --- Forms --- */
+        .input-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .input-group label {
+          font-size: 13px;
+          font-weight: 500;
+          color: #777;
+        }
+
+        .input-group select,
+        .input-group textarea {
+          width: 100%;
+          padding: 14px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          font-size: 14px;
+          color: #111;
+          background: #fff;
+          font-family: inherit;
+          outline: none;
+        }
+
+        .input-group select:focus,
+        .input-group textarea:focus {
+          border-color: #111;
+        }
+
+        .input-group textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+
+        .shipping-status {
+          margin-top: 12px;
+          font-size: 13px;
+          color: #777;
+        }
+        .shipping-status p {
+          margin: 0;
+        }
+
+        /* --- Buttons & Alerts --- */
+        .btn-primary {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          height: 52px;
+          padding: 0 32px;
+          background: #111;
+          color: #fff;
+          border: none;
+          border-radius: 100px;
+          font-size: 15px;
+          font-weight: 600;
+          cursor: pointer;
+          text-decoration: none;
+        }
+        .btn-primary:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        .full-width {
+          width: 100%;
+          margin-top: 10px;
+        }
+
+        .error-alert {
+          padding: 16px;
+          background: #fff;
+          border: 1px solid #d93025;
+          color: #d93025;
+          border-radius: 8px;
+          font-size: 14px;
+          margin-bottom: 20px;
+        }
+
+        /* --- Order Summary --- */
+        .order-summary {
+          background: #ffffff;
+        }
+
+        .summary-items {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .summary-item {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .item-img-wrap {
+          position: relative;
+          width: 60px;
+          height: 70px;
+          flex-shrink: 0;
+        }
+
+        .item-img-wrap img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          border-radius: 6px;
+          border: 1px solid #f0f0f0;
+        }
+
+        .qty {
+          position: absolute;
+          top: -6px;
+          right: -6px;
+          background: #111;
+          color: #fff;
+          font-size: 11px;
+          font-weight: 600;
+          width: 20px;
+          height: 20px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+
+        .item-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          flex: 1;
+          min-width: 0;
+        }
+
+        .item-info strong {
+          font-size: 14px;
+          font-weight: 500;
+          color: #111;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .item-info span {
+          font-size: 13px;
+          color: #888;
+        }
+
+        .item-price {
+          font-size: 14px;
+          font-weight: 500;
+          color: #111;
+        }
+
+        .summary-totals {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          padding-top: 24px;
+          border-top: 1px solid #f0f0f0;
+        }
+
+        .totals-row {
+          display: flex;
+          justify-content: space-between;
+          font-size: 14px;
+          color: #777;
+        }
+
+        .totals-row span:last-child {
+          color: #111;
+        }
+
+        .grand-total {
+          font-size: 18px;
+          font-weight: 600;
+          color: #111;
+          margin-top: 8px;
+        }
+
+        .grand-total strong {
+          font-size: 20px;
+        }
+
+        .summary-note {
+          margin-top: 20px;
+          font-size: 12px;
+          color: #aaa;
+          line-height: 1.5;
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 60px 0;
+        }
+        .empty-state h2 {
+          font-size: 24px;
+          font-weight: 500;
+          margin: 0 0 12px;
+        }
+        .empty-state p {
+          color: #777;
+          margin-bottom: 24px;
+        }
+
+        /* --- Desktop Responsive --- */
+        @media (min-width: 768px) {
+          .checkout-page {
+            padding: 120px 40px 80px;
+          }
+
+          .checkout-heading h1 {
+            font-size: 42px;
+          }
+
+          .checkout-heading p {
+            font-size: 17px;
+          }
+
+          .checkout-layout {
+            grid-template-columns: 1.2fr 0.8fr; /* Two columns for desktop */
+            gap: 60px;
+          }
+
+          .section-title {
+            font-size: 22px;
+            margin-bottom: 24px;
+          }
+
+          .profile-row span, .profile-row strong {
+            font-size: 16px;
+          }
+
+          .input-group select, .input-group textarea {
+            font-size: 16px;
+            padding: 16px;
+          }
+
+          .btn-primary {
+            height: 60px;
+            font-size: 17px;
+          }
+
+          .order-summary {
+            position: sticky;
+            top: 120px; /* Sticky summary on desktop */
+          }
+
+          .item-img-wrap {
+            width: 70px;
+            height: 85px;
+          }
+
+          .item-info strong {
+            font-size: 16px;
+          }
+          
+          .item-price, .totals-row {
+            font-size: 16px;
+          }
+
+          .grand-total strong {
+            font-size: 24px;
+          }
+        }
       `}</style>
     </>
   );
