@@ -32,7 +32,8 @@ function checkoutKeys() {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart, clearCart } = useCartState();
+  const { cart: storedCart, clearCart } = useCartState();
+  const [cart, setCart] = useState([]);
   const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -42,7 +43,8 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    setCart(Array.isArray(storedCart) ? storedCart : []);
+  }, [storedCart]);
 
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
   const totalItems = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
