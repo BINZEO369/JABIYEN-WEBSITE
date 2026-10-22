@@ -325,7 +325,7 @@ export default function CheckoutPage() {
                 </div>
               </section>
 
-              {/* 2. Account & Delivery (COMPACT VERSION) */}
+              {/* 2. Account & Delivery */}
               <section className="form-block profile-block">
                 <h2 className="section-heading">Account & Delivery</h2>
                 
@@ -338,7 +338,6 @@ export default function CheckoutPage() {
                   </div>
                 ) : profile ? (
                   <div className="compact-profile">
-                    {/* Row 1: Avatar + Name + Contact */}
                     <div className="profile-top-row">
                       <div className="avatar">{initials}</div>
                       <div className="profile-text">
@@ -349,7 +348,6 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     
-                    {/* Row 2: Address line */}
                     <div className="profile-address">
                       <span className="address-label">Delivering to</span>
                       <span className="address-value">{fullAddressLine || 'No address saved in Central Auth'}</span>
@@ -885,12 +883,49 @@ export default function CheckoutPage() {
 
         /* --- Desktop Responsive --- */
         @media (min-width: 768px) {
-          .checkout-page { padding-top: 100px; }
-          .checkout-title { font-size: 36px; }
-          .banner-wrapper { height: 250px; }
-          .item-img-wrap { width: 60px; height: 75px; }
-          .item-details h3 { font-size: 13px; }
-          .item-price { font-size: 13px; }
+          .checkout-page { padding-top: 120px; }
+          
+          /* Making the container WIDER on desktop */
+          .checkout-shell { 
+            max-width: 800px; 
+            padding: 0 40px 80px;
+          }
+          
+          .banner-wrapper { height: 320px; } /* Taller banner */
+          
+          .checkout-title { font-size: 42px; margin: 48px 0 56px 0; }
+          .section-heading { font-size: 13px; margin-bottom: 28px; }
+          
+          /* Bigger Products */
+          .summary-item { gap: 24px; }
+          .item-img-wrap { width: 80px; height: 100px; }
+          .item-details h3 { font-size: 16px; }
+          .item-variant { font-size: 14px; margin-bottom: 16px; }
+          .qty-controls button { font-size: 20px; }
+          .qty-controls span { font-size: 15px; }
+          .item-price { font-size: 16px; }
+          
+          /* Bigger Account Section */
+          .avatar { width: 56px; height: 56px; font-size: 22px; }
+          .profile-name { font-size: 18px; }
+          .profile-meta { font-size: 14px; }
+          .address-label { font-size: 12px; }
+          .address-value { font-size: 14px; }
+          
+          /* Bigger Form Elements */
+          .custom-select-trigger { font-size: 16px; padding: 16px 0; }
+          .custom-option { font-size: 15px; padding: 16px; }
+          .luxury-textarea { font-size: 16px; padding: 16px 0; }
+          .shipping-info { font-size: 14px; }
+          
+          /* Bigger Totals */
+          .totals-row { font-size: 14px; margin-bottom: 8px; }
+          .grand-total { font-size: 18px; margin-top: 16px; }
+          .grand-total strong { font-size: 32px; }
+          
+          /* Massive Full Width Button */
+          .btn-primary { height: 72px; font-size: 14px; letter-spacing: 3px; }
+          .final-totals { padding-top: 32px; margin: 48px 0; gap: 16px; }
         }
       `}</style>
     </>
