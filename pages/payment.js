@@ -103,7 +103,6 @@ export default function PaymentPage() {
     }
   };
 
-  // Customer address line for display
   const customerAddress = draft?.customer?.address;
   const fullAddressLine = customerAddress
     ? [customerAddress.line1, customerAddress.line2, customerAddress.city, customerAddress.state, customerAddress.district, customerAddress.postal_code, customerAddress.country_code].filter(Boolean).join(', ')
@@ -122,7 +121,6 @@ export default function PaymentPage() {
 
       <div className="checkout-page">
         
-        {/* Full Width Banner Image (Edge-to-Edge) */}
         <div className="banner-wrapper">
           <img 
             src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
@@ -160,34 +158,43 @@ export default function PaymentPage() {
           {draftStatus === 'ready' && (
             <form className="checkout-form" onSubmit={placeOrder}>
               
-              {/* 1. Product Details */}
+              {/* 1. Product Details - COMPACT */}
               <section className="form-block animate-fade-up">
-                <h2 className="section-heading">Your Bag</h2>
+                <h2 className="section-heading">Your Bag <span className="item-count-label">({totalItems})</span></h2>
                 <div className="summary-list">
-                  {items.map((item, index) => (
-                    <div 
-                      className="summary-item animate-fade-up" 
-                      key={`${item.title}-${index}`}
-                      style={{ animationDelay: `${index * 0.08}s` }}
-                    >
-                      <div className="item-img-wrap">
-                        <div className="item-qty-badge">{item.quantity || 1}</div>
+                  {items.map((item, index) => {
+                    // ✅ Image fallback chain
+                    const imageSrc = item.img || item.image || '/logo.png';
+                    return (
+                      <div 
+                        className="summary-item animate-fade-up" 
+                        key={`${item.title}-${index}`}
+                        style={{ animationDelay: `${index * 0.06}s` }}
+                      >
+                        <div className="item-img-wrap">
+                          <img 
+                            src={imageSrc} 
+                            alt={item.title || 'JABIYEN item'}
+                            className="item-img"
+                            onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+                          />
+                          <span className="item-qty-badge">{item.quantity || 1}</span>
+                        </div>
+                        
+                        <div className="item-details">
+                          <h3>{item.title || 'JABIYEN Item'}</h3>
+                          <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</p>
+                          <span className="item-price">
+                            {formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
+                          </span>
+                        </div>
                       </div>
-                      
-                      <div className="item-details">
-                        <h3>{item.title || 'JABIYEN Item'}</h3>
-                        <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</p>
-                      </div>
-
-                      <span className="item-price">
-                        {formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
 
-              {/* 2. Account & Delivery (From Draft) */}
+              {/* 2. Account & Delivery */}
               <section className="form-block profile-block">
                 <h2 className="section-heading">Account & Delivery</h2>
                 
@@ -316,43 +323,111 @@ export default function PaymentPage() {
         .checkout-banner { width: 100%; height: 100%; object-fit: cover; display: block; animation: fadeIn 1s ease both; }
         .checkout-shell { width: 100%; max-width: 600px; margin: 0 auto; padding: 0 20px 60px; }
         .checkout-title { font-size: 28px; font-weight: 300; margin: 32px 0 40px 0; letter-spacing: 2px; text-transform: uppercase; text-align: center; }
-        .section-heading { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 20px 0; color: #000; }
-        .form-block { margin-bottom: 32px; }
+        .section-heading { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 16px 0; color: #000; display: flex; align-items: center; gap: 8px; }
+        .item-count-label { color: #999; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 11px; }
+        .form-block { margin-bottom: 24px; }
 
-        /* --- Product List --- */
-        .summary-list { display: flex; flex-direction: column; gap: 20px; }
-        .summary-item { display: flex; align-items: flex-start; gap: 16px; }
-        .item-img-wrap { position: relative; width: 50px; height: 65px; flex-shrink: 0; background: #f5f5f5; overflow: hidden; border-radius: 2px; }
+        /* ============================================
+           COMPACT Product List
+           ============================================ */
+        .summary-list { 
+          display: flex; 
+          flex-direction: column; 
+          gap: 12px; 
+        }
+        
+        .summary-item { 
+          display: flex; 
+          align-items: center; 
+          gap: 12px; 
+          padding: 8px;
+          border: 1px solid #f0f0f0;
+          background: #fafafa;
+        }
+        
+        .item-img-wrap { 
+          position: relative; 
+          width: 48px; 
+          height: 60px; 
+          flex-shrink: 0; 
+          background: #ffffff; 
+          overflow: visible;
+        }
+        
+        .item-img { 
+          width: 100%; 
+          height: 100%; 
+          object-fit: cover; 
+          display: block;
+          border: 1px solid #eaeaea;
+        }
+        
         .item-qty-badge { 
           position: absolute; 
-          top: 50%; 
-          left: 50%; 
-          transform: translate(-50%, -50%); 
+          top: -6px; 
+          right: -6px; 
           background: #000; 
           color: #fff; 
-          width: 24px; 
-          height: 24px; 
+          width: 20px; 
+          height: 20px; 
           border-radius: 50%; 
           display: flex; 
           align-items: center; 
           justify-content: center; 
+          font-size: 10px; 
+          font-weight: 600;
+          border: 2px solid #fff;
+          z-index: 2;
+        }
+        
+        .item-details { 
+          flex: 1; 
+          display: flex; 
+          flex-direction: column; 
+          gap: 3px;
+          min-width: 0;
+        }
+        
+        .item-details h3 { 
           font-size: 11px; 
           font-weight: 500; 
+          margin: 0; 
+          color: #000; 
+          text-transform: uppercase; 
+          letter-spacing: 0.5px;
+          line-height: 1.3;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
-        .item-details { flex: 1; display: flex; flex-direction: column; }
-        .item-details h3 { font-size: 12px; font-weight: 500; margin: 0 0 4px; color: #000; text-transform: uppercase; letter-spacing: 0.5px; }
-        .item-variant { font-size: 11px; color: #777; margin: 0; }
-        .item-price { font-size: 12px; font-weight: 500; color: #000; display: inline-block; }
+        
+        .item-variant { 
+          font-size: 10px; 
+          color: #777; 
+          margin: 0;
+          line-height: 1.3;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .item-price { 
+          font-size: 11px; 
+          font-weight: 600; 
+          color: #000; 
+          display: inline-block;
+          margin-top: 2px;
+        }
 
         /* --- Profile Section --- */
-        .profile-block { border-top: 1px solid #e5e5e5; padding-top: 32px; }
-        .compact-profile { display: flex; flex-direction: column; gap: 14px; }
+        .profile-block { border-top: 1px solid #e5e5e5; padding-top: 24px; }
+        .compact-profile { display: flex; flex-direction: column; gap: 12px; }
         .profile-top-row { display: flex; align-items: center; gap: 12px; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; flex-shrink: 0; }
         .profile-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .profile-name { font-size: 14px; font-weight: 600; color: #000; line-height: 1.3; }
         .profile-meta { font-size: 12px; color: #777; line-height: 1.4; overflow-wrap: anywhere; }
-        .profile-address { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
+        .profile-address { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
         .address-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
         .address-value { font-size: 12px; color: #333; line-height: 1.5; overflow-wrap: anywhere; }
 
@@ -423,7 +498,7 @@ export default function PaymentPage() {
         }
 
         /* --- Totals & Button --- */
-        .final-totals { margin: 32px 0; padding-top: 24px; border-top: 1px solid #e5e5e5; display: flex; flex-direction: column; gap: 12px; }
+        .final-totals { margin: 24px 0; padding-top: 20px; border-top: 1px solid #e5e5e5; display: flex; flex-direction: column; gap: 10px; }
         .totals-row { display: flex; justify-content: space-between; font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
         .totals-row span:last-child { color: #000; }
         .grand-total { margin-top: 8px; font-size: 14px; font-weight: 500; color: #000; }
@@ -459,14 +534,18 @@ export default function PaymentPage() {
           .checkout-shell { max-width: 800px; padding: 0 40px 80px; }
           .banner-wrapper { height: 320px; }
           .checkout-title { font-size: 42px; margin: 48px 0 56px 0; }
-          .section-heading { font-size: 13px; margin-bottom: 28px; }
+          .section-heading { font-size: 13px; margin-bottom: 20px; }
+          .item-count-label { font-size: 13px; }
+          .form-block { margin-bottom: 32px; }
           
-          .summary-item { gap: 24px; }
-          .item-img-wrap { width: 80px; height: 100px; }
-          .item-qty-badge { width: 32px; height: 32px; font-size: 14px; }
-          .item-details h3 { font-size: 16px; }
-          .item-variant { font-size: 14px; }
-          .item-price { font-size: 16px; }
+          .summary-list { gap: 14px; }
+          .summary-item { gap: 16px; padding: 10px; }
+          .item-img-wrap { width: 64px; height: 80px; }
+          .item-img { border: 1px solid #eaeaea; }
+          .item-qty-badge { width: 24px; height: 24px; font-size: 11px; top: -7px; right: -7px; }
+          .item-details h3 { font-size: 13px; }
+          .item-variant { font-size: 12px; }
+          .item-price { font-size: 13px; }
           
           .skeleton-avatar { width: 56px; height: 56px; }
           .avatar { width: 56px; height: 56px; font-size: 22px; }
@@ -488,7 +567,7 @@ export default function PaymentPage() {
           .grand-total strong { font-size: 32px; }
           
           .btn-primary { height: 72px; font-size: 14px; letter-spacing: 3px; }
-          .final-totals { padding-top: 32px; margin: 48px 0; gap: 16px; }
+          .final-totals { padding-top: 32px; margin: 40px 0; gap: 14px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
