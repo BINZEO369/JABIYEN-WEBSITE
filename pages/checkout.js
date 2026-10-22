@@ -4,6 +4,43 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCartState } from '../components/layout/CartDrawer';
 
+const AUTH_SESSION_KEY = 'jayenware_session';
+const ACCOUNT_REQUEST_TIMEOUT_MS = 12000;
+const CENTRAL_AUTH_ACCOUNT_URL = 'https://auth-binzeo.vercel.app/account';
+
+function readCentralAccessToken() {
+  try {
+    const session = JSON.parse(window.localStorage.getItem(AUTH_SESSION_KEY) || 'null');
+    return typeof session?.access_token === 'string' && session.access_token ? session.access_token : null;
+  } catch {
+    return null;
+  }
+}
+
+function profileName(profile) {
+  const name = [profile?.first_name, profile?.last_name].filter((part) => typeof part === 'string' && part.trim()).join(' ').trim();
+  return name || profile?.display_name || profile?.full_name || '';
+}
+
+function addressFields(address) {
+  const streets = [address?.address_line_1, address?.address_line_2, address?.address_line_3]
+    .filter((part) => typeof part === 'string' && part.trim())
+    .map((part) => part.trim());
+  return {
+    line1: streets[0] || '',
+    line2: [...streets.slice(1), address?.area].filter((part) => typeof part === 'string' && part.trim()).join(', '),
+    district: address?.district || address?.state_province || address?.city || '',
+    city: address?.city || address?.area || address?.district || address?.state_province || '',
+    postal_code: address?.postal_code || '',
+  };
+}
+
+function addressLabel(address, index) {
+  const label = address?.label || address?.address_type || (address?.is_primary ? 'Primary address' : `Saved address ${index + 1}`);
+  const place = [address?.area, address?.city, address?.district || address?.state_province].filter(Boolean).join(', ');
+  return place ? `${label} — ${place}` : label;
+}
+
 function money(value) {
   return `৳${Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
@@ -37,6 +74,12 @@ export default function CheckoutPage() {
   const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [accountLoading, setAccountLoading] = useState(true);
+  const [accountStatus, setAccountStatus] = useState('loading');
+  const [accountMessage, setAccountMessage] = useState('');
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [addressLoadFailed, setAddressLoadFailed] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState('');
   const [form, setForm] = useState({
     name: '', phone: '', email: '', line1: '', line2: '', district: '', city: '', postal_code: '', delivery_notes: '',
   });
@@ -46,6 +89,108 @@ export default function CheckoutPage() {
     setCart(Array.isArray(storedCart) ? storedCart : []);
   }, [storedCart]);
 
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), ACCOUNT_REQUEST_TIMEOUT_MS);
+
+    const loadCentralAccount = async () => {
+      const token = readCentralAccessToken();
+      if (!token) {
+        if (active) {
+          setAccountStatus('signed_out');
+          setAccountMessage('Sign in through BINZEO Central Auth to load your saved account details automatically.');
+          setAccountLoading(false);
+        }
+        window.clearTimeout(timeout);
+        return;
+      }
+
+      const headers = { Accept: 'application/json', Authorization: `Bearer ${token}` };
+      try {
+        const profileResponse = await fetch('/api/me', {
+          headers,
+          cache: 'no-store',
+          credentials: 'same-origin',
+          signal: controller.signal,
+        });
+        const profileResult = await profileResponse.json().catch(() => null);
+        if (profileResponse.status === 401) throw new Error('Your Central Auth session expired. Sign in again to load your saved details.');
+        if (!profileResponse.ok || profileResult?.success === false) throw new Error('Your Central Auth profile could not be loaded right now.');
+
+        const payload = profileResult?.data ?? profileResult ?? {};
+        const user = payload.user || {};
+        const profile = payload.profile || {};
+        if (active) {
+          setForm((previous) => ({
+            ...previous,
+            name: previous.name || profileName(profile),
+            phone: previous.phone || user.phone || profile.phone || '',
+            email: previous.email || user.email || profile.email || '',
+          }));
+          setAccountStatus('connected');
+        }
+
+        try {
+          const addressResponse = await fetch('/api/me/addresses', {
+            headers,
+            cache: 'no-store',
+            credentials: 'same-origin',
+            signal: controller.signal,
+          });
+          const addressResult = await addressResponse.json().catch(() => null);
+          if (!addressResponse.ok || addressResult?.success === false) throw new Error('Saved delivery addresses are temporarily unavailable.');
+
+          const rows = addressResult?.data?.addresses ?? addressResult?.addresses ?? [];
+          if (!Array.isArray(rows)) throw new Error('Saved delivery addresses could not be read.');
+          const addresses = rows.filter((address) => address && typeof address === 'object');
+          const primaryAddress = addresses.find((address) => address.is_primary) || addresses[0] || null;
+          if (active) {
+            setSavedAddresses(addresses);
+            setAddressLoadFailed(false);
+            setSelectedAddressId(primaryAddress?.id != null ? String(primaryAddress.id) : '');
+            if (primaryAddress) {
+              const fields = addressFields(primaryAddress);
+              setForm((previous) => ({
+                ...previous,
+                line1: previous.line1 || fields.line1,
+                line2: previous.line2 || fields.line2,
+                district: previous.district || fields.district,
+                city: previous.city || fields.city,
+                postal_code: previous.postal_code || fields.postal_code,
+              }));
+              setAccountMessage('Your Central Auth profile and saved delivery address have been filled in.');
+            } else {
+              setAccountMessage('Your account details are filled in, but you have no saved delivery address. Add one in Central Auth or complete the address below.');
+            }
+          }
+        } catch {
+          if (active) {
+            setAddressLoadFailed(true);
+            setAccountMessage('Your contact details are filled in. Saved addresses could not be loaded, so please check the delivery address below.');
+          }
+        }
+      } catch (loadError) {
+        if (active) {
+          setAccountStatus('unavailable');
+          setAccountMessage(loadError?.name === 'AbortError'
+            ? 'Loading your saved account details timed out. You can retry by refreshing this page.'
+            : (loadError instanceof Error ? loadError.message : 'Saved account details could not be loaded.'));
+        }
+      } finally {
+        window.clearTimeout(timeout);
+        if (active) setAccountLoading(false);
+      }
+    };
+
+    void loadCentralAccount();
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, []);
+
   const subtotal = useMemo(() => cart.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [cart]);
   const totalItems = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
 
@@ -53,6 +198,14 @@ export default function CheckoutPage() {
     const { name, value } = event.target;
     setForm((previous) => ({ ...previous, [name]: value }));
     if (error) setError('');
+  };
+
+  const chooseSavedAddress = (event) => {
+    const addressId = event.target.value;
+    const address = savedAddresses.find((item) => String(item.id) === addressId);
+    if (!address) return;
+    setSelectedAddressId(addressId);
+    setForm((previous) => ({ ...previous, ...addressFields(address) }));
   };
 
   const placeOrder = async (event) => {
@@ -142,6 +295,15 @@ export default function CheckoutPage() {
               <form className="checkout-form" onSubmit={placeOrder}>
                 <section className="form-section">
                   <div className="section-title"><span className="section-number">01</span><div><span className="eyebrow">WHO SHOULD WE CONTACT?</span><h2>Contact details</h2></div></div>
+                  <div className={`account-notice ${accountStatus === 'connected' ? 'is-connected' : ''}`} role="status" aria-live="polite">
+                    <span className="account-notice-icon">{accountLoading ? '…' : accountStatus === 'connected' ? '✓' : 'i'}</span>
+                    <div className="account-notice-copy">
+                      <strong>{accountLoading ? 'Loading your Central Auth details' : accountStatus === 'connected' ? 'BINZEO Central Auth connected' : 'Account details not loaded'}</strong>
+                      <p>{accountMessage}</p>
+                      {(accountStatus === 'signed_out' || accountStatus === 'unavailable') && <Link href="/auth/signin">Sign in to BINZEO Central Auth</Link>}
+                      {accountStatus === 'connected' && !accountLoading && savedAddresses.length === 0 && <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer">{addressLoadFailed ? 'Open Central Auth to check your saved address' : 'Add a delivery address to Central Auth'}</a>}
+                    </div>
+                  </div>
                   <div className="field-grid">
                     <label className="field full"><span>Full name <b>*</b></span><input name="name" autoComplete="name" value={form.name} onChange={update} required minLength={2} maxLength={120} placeholder="Name for the delivery" /></label>
                     <label className="field"><span>Mobile number <b>*</b></span><input name="phone" type="tel" inputMode="tel" autoComplete="tel" value={form.phone} onChange={update} required pattern="[0-9+() .-]{8,24}" placeholder="01XXXXXXXXX" /><small>Bangladesh mobile number</small></label>
@@ -152,6 +314,15 @@ export default function CheckoutPage() {
                 <section className="form-section">
                   <div className="section-title"><span className="section-number">02</span><div><span className="eyebrow">WHERE SHOULD WE DELIVER?</span><h2>Delivery address</h2></div></div>
                   <div className="field-grid">
+                    {savedAddresses.length > 0 && (
+                      <label className="field full saved-address-field">
+                        <span>Saved delivery address</span>
+                        <select value={selectedAddressId} onChange={chooseSavedAddress} aria-label="Choose a saved Central Auth delivery address">
+                          {savedAddresses.map((address, index) => <option key={address.id ?? index} value={String(address.id)}>{addressLabel(address, index)}</option>)}
+                        </select>
+                        <small>Primary address selected automatically; choose another saved address if needed.</small>
+                      </label>
+                    )}
                     <label className="field full"><span>Street address <b>*</b></span><input name="line1" autoComplete="address-line1" value={form.line1} onChange={update} required minLength={4} maxLength={240} placeholder="House, road, building, area" /></label>
                     <label className="field full"><span>Apartment, floor, landmark <em>Optional</em></span><input name="line2" autoComplete="address-line2" value={form.line2} onChange={update} maxLength={240} placeholder="Additional directions for the courier" /></label>
                     <label className="field"><span>District <b>*</b></span><input name="district" autoComplete="address-level1" value={form.district} onChange={update} required minLength={2} maxLength={100} placeholder="District" /></label>
@@ -174,7 +345,7 @@ export default function CheckoutPage() {
                 </section>
 
                 {error && <div className="error-alert" role="alert"><span aria-hidden="true">!</span><p>{error}</p></div>}
-                <button className="place-order-button" type="submit" disabled={submitting || (mounted && !cart.length)}>
+                <button className="place-order-button" type="submit" disabled={submitting || accountLoading || (mounted && !cart.length)}>
                   {submitting ? <><span className="spinner" /> Submitting your order…</> : <>Place COD order <span aria-hidden="true">↗</span></>}
                 </button>
                 <p className="privacy-copy">By placing your order, you agree that JABIYEN may contact you to confirm delivery details.</p>
@@ -228,14 +399,22 @@ export default function CheckoutPage() {
         .section-title { display:flex; align-items:center; gap:14px; margin-bottom:24px; }
         .section-number { display:grid; width:34px; height:34px; flex:0 0 34px; place-items:center; border:1px solid #e9e5dd; border-radius:50%; color:#9a764e; font:italic 14px Georgia,serif; }
         .section-title h2,.summary-heading h2 { margin:4px 0 0; color:#26251f; font:400 23px Georgia,'Times New Roman',serif; letter-spacing:-.025em; }
+        .account-notice { display:flex; align-items:flex-start; gap:10px; margin:-6px 0 19px; padding:12px 13px; border:1px solid #e8e3da; border-radius:11px; background:#faf9f6; }
+        .account-notice.is-connected { border-color:#d8e6d8; background:#f6faf5; }
+        .account-notice-icon { display:grid; width:22px; height:22px; flex:0 0 22px; place-items:center; border-radius:50%; background:#eae5dc; color:#80623e; font-size:12px; font-weight:800; }
+        .account-notice.is-connected .account-notice-icon { background:#e1eee0; color:#4c754e; }
+        .account-notice-copy { display:grid; gap:4px; }
+        .account-notice-copy strong { color:#3a3932; font-size:10px; }
+        .account-notice-copy p { margin:0; color:#77736a; font-size:9px; line-height:1.55; }
+        .account-notice-copy a { width:fit-content; color:#8c6741; font-size:9px; font-weight:750; text-decoration:underline; text-underline-offset:2px; }
         .field-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:17px 13px; }
         .field { display:flex; min-width:0; flex-direction:column; gap:7px; }
         .field.full { grid-column:1/-1; }
         .field>span { color:#4e4b43; font-size:10px; font-weight:750; }
         .field b { color:#ab684b; }
         .field em { margin-left:4px; color:#a29c91; font-size:9px; font-style:normal; font-weight:500; }
-        .field input,.field textarea { width:100%; min-height:45px; padding:11px 12px; border:1px solid #e5e1d9; border-radius:9px; outline:none; background:#fff; color:#292823; font:500 12px Inter,Arial,sans-serif; transition:border .15s,box-shadow .15s; }
-        .field input:focus,.field textarea:focus { border-color:#a77b4c; box-shadow:0 0 0 3px rgba(167,123,76,.1); }
+        .field input,.field textarea,.field select { width:100%; min-height:45px; padding:11px 12px; border:1px solid #e5e1d9; border-radius:9px; outline:none; background:#fff; color:#292823; font:500 12px Inter,Arial,sans-serif; transition:border .15s,box-shadow .15s; }
+        .field input:focus,.field textarea:focus,.field select:focus { border-color:#a77b4c; box-shadow:0 0 0 3px rgba(167,123,76,.1); }
         .field input::placeholder,.field textarea::placeholder { color:#aaa59b; font-weight:400; }
         .field input[readonly] { background:#f8f7f4; color:#827d72; }
         .field small { color:#9b958a; font-size:9px; }
