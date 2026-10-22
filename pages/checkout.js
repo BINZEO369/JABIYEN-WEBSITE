@@ -49,15 +49,16 @@ function countryName(countryCode) {
 
 export default function CheckoutPage() {
   const router = useRouter();
-  const { cart: storedCart } = useCartState();
+  // Assuming your useCartState provides an update method. If not, adjust accordingly.
+  const { cart: storedCart, updateCart } = useCartState(); 
   const { formatMoney, selectedCurrency } = useCurrency();
+  
   const [cart, setCart] = useState([]);
   const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [accountLoading, setAccountLoading] = useState(true);
   const [accountStatus, setAccountStatus] = useState('loading');
-  const [accountMessage, setAccountMessage] = useState('');
   const [profile, setProfile] = useState(null);
   const [primaryAddress, setPrimaryAddress] = useState(null);
   const [deliveryNote, setDeliveryNote] = useState('');
@@ -66,6 +67,7 @@ export default function CheckoutPage() {
   const [shippingStatus, setShippingStatus] = useState('idle');
   const [shippingMessage, setShippingMessage] = useState('');
 
+  // Sync cart from global state to local state
   useEffect(() => {
     setMounted(true);
     setCart(Array.isArray(storedCart) ? storedCart : []);
@@ -81,7 +83,6 @@ export default function CheckoutPage() {
       if (!token) {
         if (active) {
           setAccountStatus('signed_out');
-          setAccountMessage('Sign in through BINZEO Central Auth to load the profile used for this order.');
           setAccountLoading(false);
         }
         window.clearTimeout(timeout);
@@ -94,8 +95,9 @@ export default function CheckoutPage() {
           headers, cache: 'no-store', credentials: 'same-origin', signal: controller.signal,
         });
         const profileResult = await profileResponse.json().catch(() => null);
-        if (profileResponse.status === 401) throw new Error('Your Central Auth session expired. Sign in again to continue.');
-        if (!profileResponse.ok || profileResult?.success === false) throw new Error('Your Central Auth profile could not be loaded right now.');
+        
+        if (profileResponse.status === 401) throw new Error('session_expired');
+        if (!profileResponse.ok || profileResult?.success === false) throw new Error('profile_unavailable');
 
         const payload = profileResult?.data ?? profileResult ?? {};
         const user = payload.user || {};
@@ -115,24 +117,18 @@ export default function CheckoutPage() {
           headers, cache: 'no-store', credentials: 'same-origin', signal: controller.signal,
         });
         const addressResult = await addressResponse.json().catch(() => null);
-        if (addressResponse.status === 401) throw new Error('Your Central Auth session expired. Sign in again to continue.');
-        if (!addressResponse.ok || addressResult?.success === false) throw new Error('Saved Central Auth delivery address is temporarily unavailable.');
+        if (!addressResponse.ok || addressResult?.success === false) throw new Error('address_unavailable');
+        
         const rows = addressResult?.data?.addresses ?? addressResult?.addresses ?? [];
-        if (!Array.isArray(rows)) throw new Error('Saved Central Auth delivery address could not be read.');
-        const addresses = rows.filter((address) => address && typeof address === 'object');
+        const addresses = Array.isArray(rows) ? rows.filter((address) => address && typeof address === 'object') : [];
         const selected = addresses.find((address) => address.is_primary) || addresses[0] || null;
         if (active) {
           setPrimaryAddress(selected);
-          setAccountMessage(selected
-            ? 'Your Central Auth account and saved delivery address are ready.'
-            : 'No saved delivery address was found. Add one in Central Management to continue.');
         }
       } catch (loadError) {
         if (active) {
-          setAccountStatus(loadError?.message?.includes('session expired') ? 'signed_out' : 'unavailable');
-          setAccountMessage(loadError?.name === 'AbortError'
-            ? 'Loading your Central Auth details timed out. Refresh this page to retry.'
-            : (loadError instanceof Error ? loadError.message : 'Saved account details could not be loaded.'));
+          setAccountStatus(loadError?.message === 'session_expired' ? 'signed_out' : 'unavailable');
+          if (loadError?.message === 'session_expired') setError('Your session expired. Please sign in again.');
         }
       } finally {
         window.clearTimeout(timeout);
@@ -152,11 +148,11 @@ export default function CheckoutPage() {
   const totalItems = useMemo(() => cart.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [cart]);
   const address = useMemo(() => primaryAddress ? addressFields(primaryAddress, profile) : null, [primaryAddress, profile]);
 
+  // Fetch Shipping Quote when cart subtotal or address changes
   useEffect(() => {
     if (!address || subtotal <= 0) {
       setShippingQuote(null);
       setShippingStatus('idle');
-      setShippingMessage('');
       return undefined;
     }
 
@@ -172,7 +168,7 @@ export default function CheckoutPage() {
     });
     setShippingStatus('loading');
     setShippingQuote(null);
-    setShippingMessage('');
+    
     fetch(`/api/shipping/quote?${query.toString()}`, {
       headers: { Accept: 'application/json' },
       cache: 'no-store',
@@ -181,7 +177,7 @@ export default function CheckoutPage() {
     }).then(async (response) => {
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.success || !result.quote) {
-        throw new Error(result?.error || 'Delivery is not available for this address.');
+        throw new Error(result?.error || 'Delivery is not available.');
       }
       if (active) {
         setShippingQuote(result.quote);
@@ -191,7 +187,7 @@ export default function CheckoutPage() {
       if (!active || quoteError?.name === 'AbortError') return;
       setShippingQuote(null);
       setShippingStatus('unavailable');
-      setShippingMessage(quoteError instanceof Error ? quoteError.message : 'Shipping prices are temporarily unavailable.');
+      setShippingMessage(quoteError instanceof Error ? quoteError.message : 'Shipping temporarily unavailable.');
     });
 
     return () => {
@@ -200,31 +196,28 @@ export default function CheckoutPage() {
     };
   }, [address, deliveryType, subtotal]);
 
+  // Handle Local Quantity Change
+  const handleQuantityChange = (index, delta) => {
+    const newCart = [...cart];
+    const newQty = Math.max(1, Number(newCart[index].quantity || 1) + delta);
+    if (newQty === newCart[index].quantity) return; // No change
+    
+    newCart[index].quantity = newQty;
+    setCart(newCart);
+    
+    // TODO: If your global cart context needs to be updated, call it here
+    // Example: if (updateCart) updateCart(newCart);
+  };
+
   const continueToPayment = async (event) => {
     event.preventDefault();
     setError('');
-    if (!cart.length) {
-      setError('Your shopping bag is empty. Add an item before checking out.');
-      return;
-    }
-    if (accountStatus === 'signed_out') {
-      setError('You are not signed in. Sign in through BINZEO Central Auth before continuing.');
-      return;
-    }
-    if (!profile) {
-      setError('Your Central Auth session could not be verified. Refresh the page and sign in again if needed.');
-      return;
-    }
-    if (!primaryAddress) {
-      setError(accountStatus === 'connected'
-        ? 'No saved delivery address was found. Add or correct it in BINZEO Central Management, then return here.'
-        : 'Your saved address could not be verified. Check it in BINZEO Central Management or refresh this page.');
-      return;
-    }
-    if (shippingStatus !== 'ready' || !shippingQuote) {
-      setError(shippingMessage || 'A delivery quote is required before continuing. Please wait for the BDT delivery fee to load.');
-      return;
-    }
+    
+    if (!cart.length) return setError('Your bag is empty.');
+    if (accountStatus === 'signed_out') return setError('Please sign in to continue.');
+    if (!profile) return setError('Profile could not be verified.');
+    if (!primaryAddress) return setError('No delivery address found. Please add one in Central Auth.');
+    if (shippingStatus !== 'ready' || !shippingQuote) return setError('Delivery quote is still calculating.');
 
     setSubmitting(true);
     try {
@@ -257,7 +250,7 @@ export default function CheckoutPage() {
       window.sessionStorage.setItem(CHECKOUT_DRAFT_KEY, JSON.stringify(checkoutDraft));
       await router.push('/payment');
     } catch {
-      setError('Checkout could not continue on this device. Please try again.');
+      setError('Checkout could not continue. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -267,157 +260,156 @@ export default function CheckoutPage() {
     <>
       <Head>
         <title>Checkout | JABIYEN</title>
-        <meta name="description" content="Confirm your Central Auth profile and review your JABIYEN order." />
         <meta name="robots" content="noindex, nofollow" />
-        <meta name="referrer" content="no-referrer" />
       </Head>
 
       <div className="checkout-page">
         <div className="checkout-shell">
           
-          <div className="checkout-topline">
-            <Link href="/" className="back-link">← Continue shopping</Link>
-          </div>
-
-          <header className="checkout-heading">
-            <h1>Checkout.</h1>
-            <p>Confirm your profile and delivery details to proceed.</p>
+          <header className="checkout-header">
+            <Link href="/" className="back-btn">← Back</Link>
+            <h1>Checkout</h1>
           </header>
 
           {mounted && cart.length === 0 ? (
             <section className="empty-state">
-              <h2>Your bag is empty.</h2>
-              <p>Choose something from the collection and it will be waiting here at checkout.</p>
-              <Link href="/" className="btn-primary">Explore the collection</Link>
+              <h2>Your bag is empty</h2>
+              <p>Add something beautiful to your collection.</p>
+              <Link href="/" className="btn-primary">Explore Collection</Link>
             </section>
           ) : (
             <div className="checkout-layout">
+              
+              {/* Left Side: Forms */}
               <form className="checkout-form" onSubmit={continueToPayment}>
                 
-                {/* Section 01: Profile */}
-                <section className="form-section">
-                  <h2 className="section-title">01. Profile</h2>
-                  
-                  <div className="account-notice">
-                    {accountLoading ? (
-                      <p>Loading your Central Auth profile...</p>
-                    ) : accountStatus === 'connected' ? (
-                      <p className="success-text">✓ BINZEO Central Auth connected</p>
-                    ) : (
-                      <p className="error-text">! Central Auth profile required</p>
-                    )}
-                    <p className="notice-desc">{accountMessage}</p>
-                    {accountStatus === 'signed_out' && <Link href="/auth/signin" className="text-link">Sign in securely</Link>}
-                    {accountStatus === 'unavailable' && <a href={CENTRAL_AUTH_ACCOUNT_URL} className="text-link">Open Central Management</a>}
-                    {accountStatus === 'connected' && !primaryAddress && !accountLoading && (
-                      <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage saved address</a>
-                    )}
+                {/* 1. Profile Info */}
+                <section className="form-block">
+                  <div className="block-header">
+                    <h2>Profile</h2>
+                    {accountStatus === 'connected' && <span className="status-dot connected">Connected</span>}
+                    {accountStatus === 'signed_out' && <span className="status-dot error">Sign in required</span>}
                   </div>
 
-                  {profile && (
-                    <div className="profile-details">
-                      <div className="profile-row">
+                  {accountLoading ? (
+                    <p className="text-muted">Verifying session...</p>
+                  ) : accountStatus === 'signed_out' ? (
+                    <div className="action-box">
+                      <p>Sign in through BINZEO Central Auth to load your delivery details.</p>
+                      <Link href="/auth/signin" className="text-link">Sign In →</Link>
+                    </div>
+                  ) : profile ? (
+                    <div className="profile-grid">
+                      <div className="data-row">
                         <span>Name</span>
-                        <strong>{profile.name || 'Not available'}</strong>
+                        <p>{profile.name}</p>
                       </div>
-                      <div className="profile-row">
+                      <div className="data-row">
                         <span>Phone</span>
-                        <strong>{profile.phone || 'Not available'}</strong>
+                        <p>{profile.phone || '—'}</p>
                       </div>
-                      <div className="profile-row">
-                        <span>Email</span>
-                        <strong>{profile.email || 'Not provided'}</strong>
-                      </div>
-                      <div className="profile-row">
-                        <span>Address</span>
-                        <strong>
+                      <div className="data-row full">
+                        <span>Delivery Address</span>
+                        <p>
                           {address 
                             ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
-                            : 'No saved address'}
-                        </strong>
+                            : 'No address saved in Central Auth.'}
+                        </p>
                       </div>
+                      {!address && (
+                        <div className="action-box full">
+                          <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ) : null}
                 </section>
 
-                {/* Section 02: Delivery */}
-                <section className="form-section">
-                  <h2 className="section-title">02. Delivery Speed</h2>
-                  
-                  <div className="input-group">
-                    <label htmlFor="delivery-type">Delivery type</label>
+                {/* 2. Delivery Options */}
+                <section className="form-block">
+                  <div className="block-header">
+                    <h2>Delivery Speed</h2>
+                  </div>
+                  <div className="input-row">
                     <select 
-                      id="delivery-type" 
                       value={deliveryType} 
-                      onChange={(event) => setDeliveryType(event.target.value)}
+                      onChange={(e) => setDeliveryType(e.target.value)}
+                      className="clean-select"
                     >
                       <option value="Standard">Standard Delivery</option>
                       <option value="Express">Express Delivery</option>
                     </select>
                   </div>
-
-                  <div className="shipping-status">
-                    {shippingStatus === 'loading' && <p>Calculating delivery fee...</p>}
+                  <div className="shipping-info">
+                    {shippingStatus === 'loading' && <span className="text-muted">Calculating fee...</span>}
                     {shippingStatus === 'ready' && shippingQuote && (
-                      <p>
+                      <span>
                         {shippingQuote.delivery_fee == null
-                          ? 'Delivery charge will be informed later · BDT'
+                          ? 'Fee informed upon delivery'
                           : `${formatMoney(shippingQuote.delivery_fee)} · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days`}
-                      </p>
+                      </span>
                     )}
-                    {shippingStatus === 'unavailable' && <p className="error-text">{shippingMessage}</p>}
+                    {shippingStatus === 'unavailable' && <span className="text-red">{shippingMessage}</span>}
                   </div>
                 </section>
 
-                {/* Section 03: Note */}
-                <section className="form-section">
-                  <h2 className="section-title">03. Order Note (Optional)</h2>
-                  <div className="input-group">
-                    <textarea 
-                      id="delivery-note" 
-                      value={deliveryNote} 
-                      onChange={(event) => setDeliveryNote(event.target.value.slice(0, 500))} 
-                      maxLength={500} 
-                      rows={3} 
-                      placeholder="Add a delivery instruction..." 
-                    />
+                {/* 3. Order Note */}
+                <section className="form-block">
+                  <div className="block-header">
+                    <h2>Order Note <span>(Optional)</span></h2>
                   </div>
+                  <textarea 
+                    value={deliveryNote} 
+                    onChange={(e) => setDeliveryNote(e.target.value.slice(0, 500))} 
+                    maxLength={500} 
+                    rows={3} 
+                    placeholder="Any special instructions for delivery?" 
+                    className="clean-textarea"
+                  />
                 </section>
 
-                {error && <div className="error-alert">{error}</div>}
+                {error && <div className="error-msg">{error}</div>}
 
                 <button 
-                  className="btn-primary full-width" 
                   type="submit" 
-                  disabled={submitting || accountLoading || shippingStatus !== 'ready' || (mounted && !cart.length)}
+                  className="btn-primary full-width" 
+                  disabled={submitting || accountLoading || shippingStatus !== 'ready' || !address}
                 >
-                  {submitting ? 'Preparing payment...' : 'Continue to Payment'}
+                  {submitting ? 'Processing...' : 'Continue to Payment'}
                 </button>
               </form>
 
-              {/* Order Summary */}
+              {/* Right Side: Summary */}
               <aside className="order-summary">
-                <h2 className="section-title">Order Summary</h2>
+                <h2 className="summary-title">Order Summary</h2>
                 
-                <div className="summary-items">
+                <div className="summary-list">
                   {cart.map((item, index) => (
-                    <div className="summary-item" key={`${item.product_id}-${item.variant_id || index}-${item.id || index}`}>
-                      <div className="item-img-wrap">
-                        <img src={item.img || '/logo.png'} alt="" onError={(e) => { e.currentTarget.src = '/logo.png'; }} />
-                        <span className="qty">{item.quantity || 1}</span>
+                    <div className="summary-item" key={`${item.product_id}-${index}`}>
+                      <img src={item.img || '/logo.png'} alt="" className="item-img" />
+                      
+                      <div className="item-details">
+                        <h3>{item.title || 'JABIYEN Item'}</h3>
+                        <p>{[item.color_name, item.size_name].filter(Boolean).join(' · ')}</p>
+                        
+                        {/* Quantity Controls */}
+                        <div className="qty-controls">
+                          <button type="button" onClick={() => handleQuantityChange(index, -1)} disabled={item.quantity <= 1}>−</button>
+                          <span>{item.quantity || 1}</span>
+                          <button type="button" onClick={() => handleQuantityChange(index, 1)}>+</button>
+                        </div>
                       </div>
-                      <div className="item-info">
-                        <strong>{item.title || 'JABIYEN item'}</strong>
-                        <span>{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</span>
-                      </div>
+
                       <span className="item-price">{formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}</span>
                     </div>
                   ))}
                 </div>
 
+                <div className="summary-divider" />
+
                 <div className="summary-totals">
                   <div className="totals-row">
-                    <span>Subtotal ({totalItems} items)</span>
+                    <span>Subtotal</span>
                     <span>{formatMoney(subtotal)}</span>
                   </div>
                   <div className="totals-row">
@@ -428,17 +420,19 @@ export default function CheckoutPage() {
                         : '—'}
                     </span>
                   </div>
-                  <div className="totals-row grand-total">
-                    <span>Total</span>
-                    <strong>
-                      {shippingQuote?.delivery_fee == null 
-                        ? 'TBD' 
-                        : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}
-                    </strong>
-                  </div>
                 </div>
-                
-                <p className="summary-note">Total shown in {selectedCurrency.currency_code}. Final verification occurs securely on the server.</p>
+
+                <div className="summary-divider" />
+
+                <div className="total-row">
+                  <span>Total</span>
+                  <strong>
+                    {shippingQuote?.delivery_fee == null 
+                      ? 'TBD' 
+                      : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}
+                  </strong>
+                </div>
+
               </aside>
             </div>
           )}
@@ -456,7 +450,6 @@ export default function CheckoutPage() {
       `}</style>
 
       <style jsx>{`
-        /* --- Base Layout --- */
         .checkout-page {
           min-height: 100vh;
           background: #ffffff;
@@ -466,203 +459,162 @@ export default function CheckoutPage() {
 
         .checkout-shell {
           width: 100%;
-          max-width: 1000px; /* Desktop width */
+          max-width: 1000px;
           margin: 0 auto;
         }
 
-        /* --- Header --- */
-        .checkout-topline {
-          margin-bottom: 40px;
-        }
-
-        .back-link {
-          font-size: 14px;
-          font-weight: 500;
-          color: #777;
-          text-decoration: none;
-        }
-        .back-link:hover {
-          color: #111;
-        }
-
-        .checkout-heading {
-          margin-bottom: 40px;
-        }
-
-        .checkout-heading h1 {
-          font-size: 32px;
-          font-weight: 600;
-          margin: 0 0 8px;
-          letter-spacing: -0.5px;
-        }
-
-        .checkout-heading p {
-          font-size: 15px;
-          color: #777;
-          margin: 0;
-        }
-
-        /* --- Grid Layout --- */
-        .checkout-layout {
-          display: grid;
-          grid-template-columns: 1fr;
-          gap: 40px;
-        }
-
-        /* --- Sections --- */
-        .form-section {
-          margin-bottom: 40px;
-        }
-
-        .section-title {
-          font-size: 18px;
-          font-weight: 600;
-          margin: 0 0 20px;
-          color: #111;
-        }
-
-        /* --- Account Info --- */
-        .account-notice {
-          margin-bottom: 24px;
-        }
-
-        .account-notice p {
-          font-size: 14px;
-          margin: 0 0 4px;
-          color: #777;
-        }
-        .account-notice .success-text {
-          color: #111;
-          font-weight: 600;
-        }
-        .account-notice .error-text {
-          color: #d93025;
-          font-weight: 600;
-        }
-        .notice-desc {
-          color: #888 !important;
-          font-size: 13px !important;
-        }
-
-        .text-link {
-          display: inline-block;
-          font-size: 13px;
-          color: #111;
-          font-weight: 500;
-          text-decoration: underline;
-          margin-top: 8px;
-        }
-
-        .profile-details {
+        .checkout-header {
+          margin-bottom: 48px;
           display: flex;
           flex-direction: column;
           gap: 16px;
         }
 
-        .profile-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          gap: 20px;
-          padding-bottom: 12px;
-          border-bottom: 1px solid #f0f0f0;
+        .back-btn {
+          font-size: 14px;
+          color: #777;
+          text-decoration: none;
+          width: fit-content;
+          transition: color 0.2s;
         }
-        .profile-row:last-child {
-          border-bottom: none;
+        .back-btn:hover { color: #111; }
+
+        .checkout-header h1 {
+          font-size: 32px;
+          font-weight: 600;
+          margin: 0;
+          letter-spacing: -0.5px;
         }
 
-        .profile-row span {
-          font-size: 14px;
-          color: #888;
-          min-width: 80px;
-        }
-
-        .profile-row strong {
-          font-size: 14px;
-          font-weight: 500;
-          color: #111;
-          text-align: right;
-          max-width: 70%;
+        .checkout-layout {
+          display: grid;
+          grid-template-columns: 1fr;
+          gap: 48px;
         }
 
         /* --- Forms --- */
-        .input-group {
+        .form-block {
+          margin-bottom: 40px;
+        }
+
+        .block-header {
           display: flex;
-          flex-direction: column;
-          gap: 8px;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 16px;
         }
 
-        .input-group label {
-          font-size: 13px;
+        .block-header h2 {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0;
+        }
+        
+        .block-header h2 span {
+          color: #999;
+          font-weight: 400;
+          font-size: 15px;
+        }
+
+        .status-dot {
+          font-size: 12px;
           font-weight: 500;
-          color: #777;
+          padding: 4px 10px;
+          border-radius: 100px;
+        }
+        .status-dot.connected { background: #f0f0f0; color: #111; }
+        .status-dot.error { background: #fff; color: #d93025; border: 1px solid #d93025; }
+
+        .profile-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 20px;
         }
 
-        .input-group select,
-        .input-group textarea {
-          width: 100%;
-          padding: 14px;
-          border: 1px solid #ddd;
+        .data-row { display: flex; flex-direction: column; gap: 6px; }
+        .data-row.full { grid-column: 1 / -1; }
+        
+        .data-row span {
+          font-size: 12px;
+          color: #999;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+        .data-row p {
+          margin: 0;
+          font-size: 15px;
+          color: #111;
+          line-height: 1.5;
+        }
+
+        .action-box {
+          padding: 16px;
+          background: #fafafa;
           border-radius: 8px;
+        }
+        .action-box p {
+          margin: 0 0 8px;
           font-size: 14px;
+          color: #555;
+        }
+
+        .text-link {
+          font-size: 14px;
+          color: #111;
+          font-weight: 500;
+          text-decoration: underline;
+        }
+
+        /* Inputs */
+        .clean-select, .clean-textarea {
+          width: 100%;
+          padding: 14px 16px;
+          border: 1px solid #e5e5e5;
+          border-radius: 8px;
+          font-size: 15px;
           color: #111;
           background: #fff;
           font-family: inherit;
           outline: none;
+          transition: border-color 0.2s;
         }
-
-        .input-group select:focus,
-        .input-group textarea:focus {
+        .clean-select:focus, .clean-textarea:focus {
           border-color: #111;
         }
+        .clean-textarea { resize: vertical; min-height: 90px; }
 
-        .input-group textarea {
-          resize: vertical;
-          min-height: 100px;
-        }
-
-        .shipping-status {
+        .shipping-info {
           margin-top: 12px;
-          font-size: 13px;
-          color: #777;
-        }
-        .shipping-status p {
-          margin: 0;
+          font-size: 14px;
+          color: #555;
         }
 
-        /* --- Buttons & Alerts --- */
+        .text-muted { color: #888; font-size: 14px; }
+        .text-red { color: #d93025; font-size: 14px; }
+
+        /* Buttons */
         .btn-primary {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          height: 52px;
+          height: 56px;
           padding: 0 32px;
           background: #111;
           color: #fff;
           border: none;
           border-radius: 100px;
-          font-size: 15px;
-          font-weight: 600;
+          font-size: 16px;
+          font-weight: 500;
           cursor: pointer;
-          text-decoration: none;
+          transition: opacity 0.2s;
         }
-        .btn-primary:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        .full-width {
-          width: 100%;
-          margin-top: 10px;
-        }
+        .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+        .full-width { width: 100%; margin-top: 16px; }
 
-        .error-alert {
-          padding: 16px;
-          background: #fff;
-          border: 1px solid #d93025;
+        .error-msg {
           color: #d93025;
-          border-radius: 8px;
           font-size: 14px;
-          margin-bottom: 20px;
+          margin-top: 16px;
         }
 
         /* --- Order Summary --- */
@@ -670,70 +622,83 @@ export default function CheckoutPage() {
           background: #ffffff;
         }
 
-        .summary-items {
+        .summary-title {
+          font-size: 18px;
+          font-weight: 600;
+          margin: 0 0 24px;
+        }
+
+        .summary-list {
           display: flex;
           flex-direction: column;
-          gap: 16px;
-          margin-bottom: 24px;
+          gap: 24px;
         }
 
         .summary-item {
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 16px;
         }
 
-        .item-img-wrap {
-          position: relative;
-          width: 60px;
-          height: 70px;
-          flex-shrink: 0;
-        }
-
-        .item-img-wrap img {
-          width: 100%;
-          height: 100%;
+        .item-img {
+          width: 70px;
+          height: 85px;
           object-fit: cover;
           border-radius: 6px;
-          border: 1px solid #f0f0f0;
+          background: #f5f5f5;
         }
 
-        .qty {
-          position: absolute;
-          top: -6px;
-          right: -6px;
-          background: #111;
-          color: #fff;
-          font-size: 11px;
-          font-weight: 600;
-          width: 20px;
-          height: 20px;
+        .item-details {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .item-details h3 {
+          font-size: 14px;
+          font-weight: 500;
+          margin: 0 0 4px;
+          color: #111;
+        }
+
+        .item-details p {
+          font-size: 13px;
+          color: #888;
+          margin: 0 0 12px;
+        }
+
+        /* Quantity Controls (Plus/Minus) */
+        .qty-controls {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          border: 1px solid #e5e5e5;
+          border-radius: 100px;
+          width: fit-content;
+          padding: 2px 4px;
+        }
+
+        .qty-controls button {
+          background: none;
+          border: none;
+          width: 24px;
+          height: 24px;
           display: flex;
           align-items: center;
           justify-content: center;
+          font-size: 16px;
+          color: #111;
+          cursor: pointer;
           border-radius: 50%;
         }
-
-        .item-info {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          flex: 1;
-          min-width: 0;
-        }
-
-        .item-info strong {
-          font-size: 14px;
-          font-weight: 500;
-          color: #111;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        .item-info span {
+        .qty-controls button:hover:not(:disabled) { background: #f0f0f0; }
+        .qty-controls button:disabled { color: #ccc; cursor: not-allowed; }
+        
+        .qty-controls span {
           font-size: 13px;
-          color: #888;
+          font-weight: 500;
+          min-width: 12px;
+          text-align: center;
         }
 
         .item-price {
@@ -742,12 +707,16 @@ export default function CheckoutPage() {
           color: #111;
         }
 
+        .summary-divider {
+          height: 1px;
+          background: #f0f0f0;
+          margin: 24px 0;
+        }
+
         .summary-totals {
           display: flex;
           flex-direction: column;
           gap: 12px;
-          padding-top: 24px;
-          border-top: 1px solid #f0f0f0;
         }
 
         .totals-row {
@@ -756,102 +725,43 @@ export default function CheckoutPage() {
           font-size: 14px;
           color: #777;
         }
+        .totals-row span:last-child { color: #111; }
 
-        .totals-row span:last-child {
-          color: #111;
-        }
-
-        .grand-total {
+        .total-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
           font-size: 18px;
           font-weight: 600;
           color: #111;
-          margin-top: 8px;
         }
-
-        .grand-total strong {
-          font-size: 20px;
-        }
-
-        .summary-note {
-          margin-top: 20px;
-          font-size: 12px;
-          color: #aaa;
-          line-height: 1.5;
-        }
+        .total-row strong { font-size: 20px; }
 
         .empty-state {
           text-align: center;
-          padding: 60px 0;
+          padding: 80px 0;
         }
-        .empty-state h2 {
-          font-size: 24px;
-          font-weight: 500;
-          margin: 0 0 12px;
-        }
-        .empty-state p {
-          color: #777;
-          margin-bottom: 24px;
-        }
+        .empty-state h2 { font-size: 24px; margin: 0 0 12px; }
+        .empty-state p { color: #777; margin: 0 0 24px; }
 
         /* --- Desktop Responsive --- */
         @media (min-width: 768px) {
-          .checkout-page {
-            padding: 120px 40px 80px;
-          }
-
-          .checkout-heading h1 {
-            font-size: 42px;
-          }
-
-          .checkout-heading p {
-            font-size: 17px;
-          }
-
-          .checkout-layout {
-            grid-template-columns: 1.2fr 0.8fr; /* Two columns for desktop */
-            gap: 60px;
-          }
-
-          .section-title {
-            font-size: 22px;
-            margin-bottom: 24px;
-          }
-
-          .profile-row span, .profile-row strong {
-            font-size: 16px;
-          }
-
-          .input-group select, .input-group textarea {
-            font-size: 16px;
-            padding: 16px;
-          }
-
-          .btn-primary {
-            height: 60px;
-            font-size: 17px;
-          }
-
-          .order-summary {
-            position: sticky;
-            top: 120px; /* Sticky summary on desktop */
-          }
-
-          .item-img-wrap {
-            width: 70px;
-            height: 85px;
-          }
-
-          .item-info strong {
-            font-size: 16px;
-          }
+          .checkout-page { padding: 120px 40px 80px; }
+          .checkout-header h1 { font-size: 42px; }
+          .checkout-layout { grid-template-columns: 1.1fr 0.9fr; gap: 80px; }
           
-          .item-price, .totals-row {
-            font-size: 16px;
-          }
-
-          .grand-total strong {
-            font-size: 24px;
-          }
+          .block-header h2 { font-size: 20px; }
+          .data-row p { font-size: 16px; }
+          
+          .order-summary { position: sticky; top: 120px; }
+          .summary-title { font-size: 20px; }
+          
+          .item-img { width: 80px; height: 96px; }
+          .item-details h3 { font-size: 16px; }
+          .item-price { font-size: 16px; }
+          
+          .total-row { font-size: 20px; }
+          .total-row strong { font-size: 24px; }
         }
       `}</style>
     </>
