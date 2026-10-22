@@ -69,15 +69,15 @@ export default function CheckoutPage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // ✅ FIX: Document listener সরানো হয়েছে। শুধু Escape key এর জন্য একটা listener।
   useEffect(() => {
-    if (!isDropdownOpen) return undefined;
-    function handleKeyDown(e) {
-      if (e.key === 'Escape') setIsDropdownOpen(false);
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
     }
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isDropdownOpen]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     setMounted(true);
@@ -213,6 +213,11 @@ export default function CheckoutPage() {
     
     newCart[index].quantity = newQty;
     setCart(newCart);
+  };
+
+  const handleSelectDeliveryType = (option) => {
+    setDeliveryType(option);
+    setIsDropdownOpen(false);
   };
 
   const continueToPayment = async (event) => {
@@ -372,13 +377,14 @@ export default function CheckoutPage() {
                 )}
               </section>
 
-              <section className="form-block animate-fade-up">
+              {/* ✅ Delivery Method: dropdown-section ক্লাস যোগ, z-index elevated */}
+              <section className="form-block dropdown-section animate-fade-up">
                 <h2 className="section-heading">Delivery Method</h2>
                 
                 <div className="custom-select-wrapper" ref={dropdownRef}>
                   <div 
                     className={`custom-select-trigger ${isDropdownOpen ? 'open' : ''}`} 
-                    onClick={() => setIsDropdownOpen((v) => !v)}
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   >
                     <span>{deliveryType} Delivery</span>
                     <svg 
@@ -390,32 +396,21 @@ export default function CheckoutPage() {
                   </div>
                   
                   {isDropdownOpen && (
-                    <>
-                      {/* ✅ Backdrop: Clicking outside closes the dropdown reliably */}
-                      <div 
-                        className="dropdown-backdrop" 
-                        onClick={() => setIsDropdownOpen(false)}
-                        aria-hidden="true"
-                      />
-                      {/* ✅ Options with onMouseDown for bulletproof selection */}
-                      <div className="custom-options">
-                        {['Standard', 'Express'].map((option) => (
-                          <div
-                            key={option}
-                            className={`custom-option ${deliveryType === option ? 'selected' : ''}`}
-                            // ✅ FIX: onMouseDown instead of onClick + preventDefault
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setDeliveryType(option);
-                              setIsDropdownOpen(false);
-                            }}
-                          >
-                            {option} Delivery
-                          </div>
-                        ))}
-                      </div>
-                    </>
+                    <div className="custom-options animate-scale-in">
+                      {['Standard', 'Express'].map((option) => (
+                        <div
+                          key={option}
+                          className={`custom-option ${deliveryType === option ? 'selected' : ''}`}
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleSelectDeliveryType(option);
+                          }}
+                        >
+                          {option} Delivery
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
 
@@ -497,14 +492,40 @@ export default function CheckoutPage() {
       `}</style>
 
       <style jsx>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
-        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(24px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        /* ✅ উপরের দিকে খোলার জন্য scaleIn আপডেট */
+        @keyframes scaleIn {
+          from { opacity: 0; transform: scale(0.96) translateY(8px); }
+          to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          20% { transform: translateX(-6px); }
+          40% { transform: translateX(6px); }
+          60% { transform: translateX(-4px); }
+          80% { transform: translateX(4px); }
+        }
+        @keyframes shimmer {
+          0% { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
 
         .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
         .animate-fade-in { animation: fadeIn 0.4s ease both; }
+        .animate-scale-in { 
+          animation: scaleIn 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+          transform-origin: bottom center; /* ✅ নিচ থেকে উপরে grow */
+        }
         .animate-shake { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
         .checkout-page { min-height: 100vh; background: #ffffff; padding-top: 80px; }
@@ -517,12 +538,16 @@ export default function CheckoutPage() {
         .form-block { margin-bottom: 32px; }
 
         /* ============================================
-           CUSTOM DROPDOWN (Fixed)
+           ✅ CRITICAL FIX: Delivery Method section stacking
            ============================================ */
+        .dropdown-section {
+          position: relative;
+          z-index: 20;
+        }
+
         .custom-select-wrapper { 
           position: relative; 
           width: 100%; 
-          z-index: 20;
         }
         
         .custom-select-trigger { 
@@ -545,28 +570,19 @@ export default function CheckoutPage() {
         
         .chevron { transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
         .chevron.open { transform: rotate(180deg); }
-        
-        /* Backdrop to close dropdown when clicking outside */
-        .dropdown-backdrop {
-          position: fixed;
-          inset: 0;
-          z-index: 40;
-          background: transparent;
-        }
-        
-        /* Options - positioned above backdrop */
+
+        /* ✅ উপরে খুলবে */
         .custom-options { 
           position: absolute; 
-          top: calc(100% + 4px); 
+          bottom: calc(100% + 4px); 
           left: 0; 
           width: 100%; 
           background: #fff; 
           border: 1px solid #e5e5e5; 
           z-index: 50; 
-          box-shadow: 0 8px 20px rgba(0,0,0,0.08); 
+          box-shadow: 0 -8px 20px rgba(0,0,0,0.06);
           display: flex; 
           flex-direction: column; 
-          animation: fadeIn 0.2s ease both;
         }
         
         .custom-option { 
@@ -576,14 +592,15 @@ export default function CheckoutPage() {
           color: #000; 
           text-transform: uppercase; 
           letter-spacing: 1px; 
-          transition: background 0.2s;
+          transition: background 0.15s;
           user-select: none;
           -webkit-user-select: none;
           -webkit-tap-highlight-color: transparent;
+          background: #fff;
         }
         .custom-option:hover { background: #fafafa; }
-        .custom-option.selected { background: #f5f5f5; font-weight: 500; }
         .custom-option:active { background: #f0f0f0; }
+        .custom-option.selected { background: #f5f5f5; font-weight: 500; }
 
         .luxury-textarea { width: 100%; padding: 12px 0; border: none; border-bottom: 1px solid #000; border-radius: 0; font-size: 14px; color: #000; background: transparent; font-family: inherit; resize: vertical; min-height: 80px; outline: none; transition: border-color 0.2s; }
         .luxury-textarea::placeholder { color: #aaa; }
@@ -686,7 +703,7 @@ export default function CheckoutPage() {
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .animate-fade-up, .animate-fade-in, .animate-shake, .shimmer, .btn-spinner, .checkout-banner, .qty-value, .custom-options { animation: none !important; }
+          .animate-fade-up, .animate-fade-in, .animate-scale-in, .animate-shake, .shimmer, .btn-spinner, .checkout-banner, .qty-value { animation: none !important; }
           .item-img, .avatar, .btn-primary, .custom-select-trigger, .chevron, .qty-controls button { transition: none !important; }
         }
       `}</style>
