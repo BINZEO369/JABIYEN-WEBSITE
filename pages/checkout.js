@@ -66,11 +66,9 @@ export default function CheckoutPage() {
   const [shippingStatus, setShippingStatus] = useState('idle');
   const [shippingMessage, setShippingMessage] = useState('');
 
-  // Custom Dropdown State
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -265,6 +263,9 @@ export default function CheckoutPage() {
   };
 
   const initials = profile?.name ? profile.name.charAt(0).toUpperCase() : 'U';
+  const fullAddressLine = address 
+    ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
+    : '';
 
   return (
     <>
@@ -287,7 +288,6 @@ export default function CheckoutPage() {
 
         <div className="checkout-shell">
           
-          {/* Checkout Text (Centered below image) */}
           <h1 className="checkout-title">Checkout</h1>
 
           {mounted && cart.length === 0 ? (
@@ -299,7 +299,7 @@ export default function CheckoutPage() {
           ) : (
             <form className="checkout-form" onSubmit={continueToPayment}>
               
-              {/* 1. Product Details (Left aligned) */}
+              {/* 1. Product Details */}
               <section className="form-block">
                 <h2 className="section-heading">Your Bag</h2>
                 <div className="summary-list">
@@ -325,7 +325,7 @@ export default function CheckoutPage() {
                 </div>
               </section>
 
-              {/* 2. Account & Delivery */}
+              {/* 2. Account & Delivery (COMPACT VERSION) */}
               <section className="form-block profile-block">
                 <h2 className="section-heading">Account & Delivery</h2>
                 
@@ -333,36 +333,30 @@ export default function CheckoutPage() {
                   <p className="text-muted">Verifying secure session...</p>
                 ) : accountStatus === 'signed_out' ? (
                   <div className="minimal-box">
-                    <p>Please sign in through BINZEO Central Auth to load your delivery details.</p>
-                    <Link href="/auth/signin" className="btn-outline">Sign In Securely</Link>
+                    <p>Please sign in to load your delivery details.</p>
+                    <Link href="/auth/signin" className="btn-outline">Sign In</Link>
                   </div>
                 ) : profile ? (
-                  <div className="profile-summary">
-                    <div className="profile-header">
+                  <div className="compact-profile">
+                    {/* Row 1: Avatar + Name + Contact */}
+                    <div className="profile-top-row">
                       <div className="avatar">{initials}</div>
-                      <div className="profile-info">
-                        <span className="profile-name">{profile.name}</span>
-                        <span className="profile-email">{profile.email || 'No email provided'}</span>
-                      </div>
-                    </div>
-
-                    <div className="profile-details-bottom">
-                      <div className="info-row">
-                        <span className="label">Phone</span>
-                        <span className="value">{profile.phone || '—'}</span>
-                      </div>
-                      <div className="info-row">
-                        <span className="label">Address</span>
-                        <span className="value">
-                          {address 
-                            ? [address.line1, address.line2, address.city, address.state, address.postal_code, countryName(address.country_code)].filter(Boolean).join(', ') 
-                            : 'No address saved in Central Auth.'}
+                      <div className="profile-text">
+                        <strong className="profile-name">{profile.name}</strong>
+                        <span className="profile-meta">
+                          {[profile.email, profile.phone].filter(Boolean).join(' · ') || 'No contact info'}
                         </span>
                       </div>
+                    </div>
+                    
+                    {/* Row 2: Address line */}
+                    <div className="profile-address">
+                      <span className="address-label">Delivering to</span>
+                      <span className="address-value">{fullAddressLine || 'No address saved in Central Auth'}</span>
                       {!address && (
-                        <div style={{ marginTop: '16px' }}>
-                          <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="text-link">Manage Address in Central Auth →</a>
-                        </div>
+                        <a href={CENTRAL_AUTH_ACCOUNT_URL} target="_blank" rel="noreferrer" className="address-link">
+                          Add address in Central Auth →
+                        </a>
                       )}
                     </div>
                   </div>
@@ -375,7 +369,6 @@ export default function CheckoutPage() {
               <section className="form-block">
                 <h2 className="section-heading">Delivery Method</h2>
                 
-                {/* Custom Dropdown Implementation */}
                 <div className="custom-select-wrapper" ref={dropdownRef}>
                   <div 
                     className={`custom-select-trigger ${isDropdownOpen ? 'open' : ''}`} 
@@ -433,7 +426,7 @@ export default function CheckoutPage() {
                 />
               </section>
 
-              {/* 4. Order Total & Payment Button at Bottom */}
+              {/* 4. Order Total & Payment Button */}
               <div className="final-totals">
                 <div className="totals-row">
                   <span>Subtotal</span>
@@ -486,10 +479,9 @@ export default function CheckoutPage() {
         .checkout-page {
           min-height: 100vh;
           background: #ffffff;
-          padding-top: 80px; /* Space from the main site header */
+          padding-top: 80px;
         }
 
-        /* --- Full Width Banner --- */
         .banner-wrapper {
           width: 100%;
           height: 140px;
@@ -504,7 +496,6 @@ export default function CheckoutPage() {
           display: block;
         }
 
-        /* --- Main Content Shell (Centered with padding) --- */
         .checkout-shell {
           width: 100%;
           max-width: 600px; 
@@ -521,13 +512,12 @@ export default function CheckoutPage() {
           text-align: center;
         }
 
-        /* --- Typography & Forms --- */
         .section-heading {
           font-size: 11px;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 1.5px;
-          margin: 0 0 24px 0;
+          margin: 0 0 20px 0;
           color: #000;
         }
         
@@ -539,10 +529,10 @@ export default function CheckoutPage() {
         }
 
         .form-block {
-          margin-bottom: 40px;
+          margin-bottom: 32px;
         }
 
-        /* --- Custom Dropdown Styles --- */
+        /* --- Custom Dropdown --- */
         .custom-select-wrapper {
           position: relative;
           width: 100%;
@@ -607,7 +597,6 @@ export default function CheckoutPage() {
           font-weight: 500;
         }
 
-        /* --- Other Inputs --- */
         .luxury-textarea {
           width: 100%;
           padding: 12px 0;
@@ -627,7 +616,7 @@ export default function CheckoutPage() {
         }
 
         .shipping-info {
-          margin-top: 12px;
+          margin-top: 10px;
           font-size: 12px;
           color: #555;
           letter-spacing: 0.5px;
@@ -636,87 +625,99 @@ export default function CheckoutPage() {
         .text-muted { color: #888; font-size: 13px; }
         .text-red { color: #d93025; font-size: 13px; }
 
-        /* --- Profile Section --- */
+        /* --- COMPACT Account & Delivery Section --- */
         .profile-block {
           border-top: 1px solid #e5e5e5;
-          padding-top: 40px;
+          padding-top: 32px;
         }
 
-        .profile-summary {
+        .compact-profile {
           display: flex;
           flex-direction: column;
-          gap: 24px;
+          gap: 14px;
         }
 
-        .profile-header {
+        .profile-top-row {
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 12px;
         }
 
         .avatar {
-          width: 48px;
-          height: 48px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           background: #000;
           color: #fff;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 18px;
+          font-size: 15px;
           font-weight: 500;
+          flex-shrink: 0;
         }
 
-        .profile-info {
+        .profile-text {
           display: flex;
           flex-direction: column;
-          gap: 4px;
+          gap: 2px;
+          min-width: 0;
         }
 
         .profile-name {
-          font-size: 16px;
-          font-weight: 500;
+          font-size: 14px;
+          font-weight: 600;
           color: #000;
+          line-height: 1.3;
         }
 
-        .profile-email {
-          font-size: 13px;
+        .profile-meta {
+          font-size: 12px;
           color: #777;
+          line-height: 1.4;
+          overflow-wrap: anywhere;
         }
 
-        .profile-details-bottom {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-          padding-left: 64px;
-        }
-
-        .info-row {
+        .profile-address {
           display: flex;
           flex-direction: column;
           gap: 4px;
+          padding-top: 12px;
+          border-top: 1px solid #f0f0f0;
         }
 
-        .info-row .label {
+        .address-label {
           font-size: 10px;
-          color: #777;
+          color: #999;
           text-transform: uppercase;
           letter-spacing: 1px;
+          font-weight: 500;
         }
 
-        .info-row .value {
-          font-size: 14px;
-          color: #000;
+        .address-value {
+          font-size: 12px;
+          color: #333;
           line-height: 1.5;
+          overflow-wrap: anywhere;
+        }
+
+        .address-link {
+          font-size: 11px;
+          color: #000;
+          font-weight: 500;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          margin-top: 2px;
+          width: fit-content;
         }
 
         .minimal-box {
-          padding: 24px;
+          padding: 20px;
           background: #fafafa;
           text-align: center;
         }
         .minimal-box p {
-          margin: 0 0 16px;
+          margin: 0 0 12px;
           font-size: 13px;
           color: #555;
         }
@@ -801,7 +802,7 @@ export default function CheckoutPage() {
 
         /* --- Totals & Button --- */
         .final-totals {
-          margin: 40px 0;
+          margin: 32px 0;
           padding-top: 24px;
           border-top: 1px solid #e5e5e5;
           display: flex;
@@ -852,8 +853,8 @@ export default function CheckoutPage() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          height: 48px;
-          padding: 0 24px;
+          height: 44px;
+          padding: 0 20px;
           background: transparent;
           color: #000;
           border: 1px solid #000;
@@ -866,16 +867,6 @@ export default function CheckoutPage() {
           transition: all 0.2s;
         }
         .btn-outline:hover { background: #000; color: #fff; }
-
-        .text-link {
-          font-size: 11px;
-          color: #000;
-          font-weight: 500;
-          text-transform: uppercase;
-          letter-spacing: 1px;
-          text-decoration: underline;
-          text-underline-offset: 4px;
-        }
 
         .error-msg {
           color: #d93025;
@@ -896,10 +887,7 @@ export default function CheckoutPage() {
         @media (min-width: 768px) {
           .checkout-page { padding-top: 100px; }
           .checkout-title { font-size: 36px; }
-          
-          /* Desktop banner height */
           .banner-wrapper { height: 250px; }
-          
           .item-img-wrap { width: 60px; height: 75px; }
           .item-details h3 { font-size: 13px; }
           .item-price { font-size: 13px; }
