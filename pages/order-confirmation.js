@@ -2,115 +2,122 @@ import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useCartState } from '../components/layout/CartDrawer';
 import { useCurrency } from '../components/currency/CurrencyProvider';
 
-const CHECKOUT_DRAFT_KEY = 'jabiyen_checkout_draft_v1';
-const CHECKOUT_KEYS_KEY = 'jabiyen_pending_checkout_v1';
-const DRAFT_TTL_MS = 60 * 60 * 1000;
+const REQUEST_TIMEOUT_MS = 12000;
 
-function getCheckoutKeys() {
-  try {
-    const saved = JSON.parse(window.sessionStorage.getItem(CHECKOUT_KEYS_KEY) || 'null');
-    if (saved?.idempotency_key && saved?.access_token) return saved;
-  } catch {}
-  const bytes = new Uint8Array(32);
-  window.crypto.getRandomValues(bytes);
-  const accessToken = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
-  const idempotencyKey = window.crypto?.randomUUID?.()
-    || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (char) => {
-      const random = Math.random() * 16 | 0;
-      return (char === 'x' ? random : (random & 0x3 | 0x8)).toString(16);
-    });
-  const saved = { idempotency_key: idempotencyKey, access_token: accessToken };
-  window.sessionStorage.setItem(CHECKOUT_KEYS_KEY, JSON.stringify(saved));
-  return saved;
-}
-
-export default function PaymentPage() {
+export default function OrderConfirmationPage() {
   const router = useRouter();
-  const { clearCart } = useCartState();
   const { formatMoney, selectedCurrency } = useCurrency();
-  const [draft, setDraft] = useState(null);
-  const [draftStatus, setDraftStatus] = useState('loading');
-  const [submitting, setSubmitting] = useState(false);
+  const [order, setOrder] = useState(null);
+  const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
+  const [token, setToken] = useState('');
 
+  const orderNumber = router.query.order;
+
+  // Read token from URL hash (#token=xxx)
   useEffect(() => {
-    try {
-      const parsed = JSON.parse(window.sessionStorage.getItem(CHECKOUT_DRAFT_KEY) || 'null');
-      const age = Date.now() - Number(parsed?.created_at || 0);
-      if (parsed?.version === 1 && age >= 0 && age <= DRAFT_TTL_MS && Array.isArray(parsed.items) && parsed.items.length > 0 && parsed.customer?.address && ['Standard', 'Express'].includes(parsed.delivery_type) && parsed.shipping_quote) {
-        setDraft(parsed);
-        setDraftStatus('ready');
-      } else {
-        window.sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
-        setDraftStatus('missing');
-      }
-    } catch {
-      setDraftStatus('missing');
-    }
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash || '';
+    const match = hash.match(/token=([^&]+)/);
+    if (match) setToken(decodeURIComponent(match[1]));
   }, []);
 
-  const items = draft?.display_items || [];
-  const subtotal = useMemo(() => items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0), [items]);
-  const totalItems = useMemo(() => items.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [items]);
-  const deliveryFee = draft?.shipping_quote?.delivery_fee == null ? null : Number(draft.shipping_quote.delivery_fee);
-  const totalAmount = deliveryFee == null ? null : subtotal + deliveryFee;
+  // Fetch order details
+  useEffect(() => {
+    if (!router.isReady) return;
 
-  const placeOrder = async (event) => {
-    event.preventDefault();
-    setError('');
-    if (!draft?.items?.length || !draft.customer?.address || typeof draft.customer.address !== 'object') {
-      setError('Your saved delivery address is missing. Return to checkout and confirm the address again.');
+    if (!orderNumber) {
+      setStatus('missing');
       return;
     }
 
-    setSubmitting(true);
-    try {
-      const keys = getCheckoutKeys();
-      const response = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        cache: 'no-store',
-        credentials: 'same-origin',
-        body: JSON.stringify({
-          ...keys,
-          customer: draft.customer,
-          items: draft.items,
-          delivery_type: draft.delivery_type,
-          quoted_delivery_fee: deliveryFee,
-          website: draft.website || '',
-        }),
-      });
-      const result = await response.json().catch(() => null);
-      if (!response.ok || !result?.success || !result.order?.order_number) {
-        throw new Error(result?.error || 'We could not place your order. Please check your connection and try again.');
-      }
-
-      clearCart();
-      window.sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
-      window.sessionStorage.removeItem(CHECKOUT_KEYS_KEY);
-      await router.push(`/order-confirmation?order=${encodeURIComponent(result.order.order_number)}#token=${encodeURIComponent(result.access_token || keys.access_token)}`);
-    } catch (submitError) {
-      setError(submitError instanceof Error ? submitError.message : 'Order submission failed. Please try again.');
-    } finally {
-      setSubmitting(false);
+    if (!token) {
+      const t = setTimeout(() => {
+        if (typeof window !== 'undefined' && !window.location.hash.includes('token=')) {
+          setStatus('missing');
+        }
+      }, 200);
+      return () => clearTimeout(t);
     }
-  };
 
-  const customerAddress = draft?.customer?.address;
-  const fullAddressLine = customerAddress
-    ? [customerAddress.line1, customerAddress.line2, customerAddress.city, customerAddress.state, customerAddress.district, customerAddress.postal_code, customerAddress.country_code].filter(Boolean).join(', ')
-    : '';
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  const customerInitials = draft?.customer?.name ? draft.customer.name.charAt(0).toUpperCase() : 'U';
+    fetch(`/api/orders/${encodeURIComponent(orderNumber)}`, {
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      cache: 'no-store',
+      credentials: 'same-origin',
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        if (!response.ok || !result?.success || !result.order) {
+          throw new Error(result?.error || 'We could not load your order.');
+        }
+        setOrder(result.order);
+        setStatus('ready');
+      })
+      .catch((err) => {
+        if (err?.name === 'AbortError') {
+          setError('Request timed out. Please try again.');
+        } else {
+          setError(err?.message || 'We could not load your order.');
+        }
+        setStatus('error');
+      })
+      .finally(() => clearTimeout(timeout));
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, [router.isReady, orderNumber, token]);
+
+  const items = useMemo(() => {
+    if (!order) return [];
+    return order.items || order.display_items || order.order_items || [];
+  }, [order]);
+
+  const subtotal = useMemo(() => {
+    if (!order) return 0;
+    if (order.subtotal != null) return Number(order.subtotal);
+    return items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
+  }, [order, items]);
+
+  const totalItems = useMemo(() => items.reduce((sum, item) => sum + Number(item.quantity || 1), 0), [items]);
+
+  const deliveryFee = useMemo(() => {
+    if (!order) return null;
+    const fee = order.delivery_fee ?? order.quoted_delivery_fee ?? order.shipping_fee;
+    return fee == null ? null : Number(fee);
+  }, [order]);
+
+  const totalAmount = useMemo(() => {
+    if (!order) return null;
+    if (order.total != null) return Number(order.total);
+    if (deliveryFee == null) return null;
+    return subtotal + deliveryFee;
+  }, [order, subtotal, deliveryFee]);
+
+  const customer = order?.customer || {};
+  const customerAddress = customer?.address || {};
+  const fullAddressLine = useMemo(
+    () => [customerAddress.line1, customerAddress.line2, customerAddress.city, customerAddress.state, customerAddress.district, customerAddress.postal_code, customerAddress.country_code]
+      .filter(Boolean)
+      .join(', '),
+    [customerAddress]
+  );
+  const customerInitials = customer?.name ? customer.name.charAt(0).toUpperCase() : 'U';
 
   return (
     <>
       <Head>
-        <title>Payment | JABIYEN</title>
-        <meta name="description" content="Choose how to pay for your JABIYEN order." />
+        <title>Order Confirmed | JABIYEN</title>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="referrer" content="no-referrer" />
       </Head>
@@ -120,7 +127,7 @@ export default function PaymentPage() {
         <div className="banner-wrapper">
           <img 
             src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
-            alt="Secure Payment" 
+            alt="Order Confirmed" 
             className="checkout-banner"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
@@ -128,9 +135,9 @@ export default function PaymentPage() {
 
         <div className="checkout-shell">
           
-          <h1 className="checkout-title animate-fade-up">Payment</h1>
+          <h1 className="checkout-title animate-fade-up">Order Confirmed</h1>
 
-          {draftStatus === 'loading' && (
+          {status === 'loading' && (
             <section className="form-block animate-fade-up">
               <div className="skeleton-profile">
                 <div className="skeleton-avatar shimmer" />
@@ -142,143 +149,132 @@ export default function PaymentPage() {
             </section>
           )}
 
-          {draftStatus === 'missing' && (
+          {(status === 'missing' || status === 'error') && (
             <section className="form-block animate-fade-up">
               <div className="minimal-box">
-                <p>Your secure checkout details are unavailable or expired. Return to checkout to review your profile.</p>
-                <Link href="/checkout" className="btn-outline">Return to Checkout</Link>
+                <p>{status === 'error' ? error : 'We could not find your order details. Please check the link or contact support.'}</p>
+                <Link href="/" className="btn-outline">Return to Store</Link>
               </div>
             </section>
           )}
 
-          {draftStatus === 'ready' && (
-            <form className="checkout-form" onSubmit={placeOrder}>
+          {status === 'ready' && order && (
+            <div>
               
-              {/* 1. Product Details */}
+              {/* Success Badge */}
               <section className="form-block animate-fade-up">
-                <h2 className="section-heading">Your Bag <span className="item-count-label">({totalItems})</span></h2>
-                <div className="summary-list">
-                  {items.map((item, index) => {
-                    const imageSrc = item.img || item.image || '/logo.png';
-                    return (
-                      <div 
-                        className="summary-item animate-fade-up" 
-                        key={`${item.title}-${index}`}
-                        style={{ animationDelay: `${index * 0.06}s` }}
-                      >
-                        <div className="item-img-wrap">
-                          <img 
-                            src={imageSrc} 
-                            alt={item.title || 'JABIYEN item'}
-                            className="item-img"
-                            onError={(e) => { e.currentTarget.src = '/logo.png'; }}
-                          />
-                          <span className="item-qty-badge">{item.quantity || 1}</span>
-                        </div>
-                        
-                        <div className="item-details">
-                          <h3>{item.title || 'JABIYEN Item'}</h3>
-                          <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</p>
-                          <span className="item-price">
-                            {formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div className="success-badge">
+                  <span className="success-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </span>
+                  <div className="success-copy">
+                    <strong>Thank you for your order</strong>
+                    <span>Order #{order.order_number || orderNumber}</span>
+                  </div>
                 </div>
               </section>
 
-              {/* 2. Account & Delivery */}
-              <section className="form-block profile-block">
-                <h2 className="section-heading">Account & Delivery</h2>
-                
-                {draft.customer && (
+              {/* Product List */}
+              {items.length > 0 && (
+                <section className="form-block animate-fade-up">
+                  <h2 className="section-heading">Your Bag <span className="item-count-label">({totalItems})</span></h2>
+                  <div className="summary-list">
+                    {items.map((item, index) => {
+                      const imageSrc = item.img || item.image || '/logo.png';
+                      return (
+                        <div 
+                          className="summary-item animate-fade-up" 
+                          key={`${item.title || item.product_title}-${index}`}
+                          style={{ animationDelay: `${index * 0.06}s` }}
+                        >
+                          <div className="item-img-wrap">
+                            <img 
+                              src={imageSrc} 
+                              alt={item.title || item.product_title || 'JABIYEN item'}
+                              className="item-img"
+                              onError={(e) => { e.currentTarget.src = '/logo.png'; }}
+                            />
+                            <span className="item-qty-badge">{item.quantity || 1}</span>
+                          </div>
+                          <div className="item-details">
+                            <h3>{item.title || item.product_title || 'JABIYEN Item'}</h3>
+                            <p className="item-variant">{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</p>
+                            <span className="item-price">
+                              {formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {/* Account & Delivery */}
+              {customer?.name && (
+                <section className="form-block profile-block">
+                  <h2 className="section-heading">Account & Delivery</h2>
                   <div className="compact-profile animate-fade-up">
                     <div className="profile-top-row">
                       <div className="avatar">{customerInitials}</div>
                       <div className="profile-text">
-                        <strong className="profile-name">{draft.customer.name}</strong>
+                        <strong className="profile-name">{customer.name}</strong>
                         <span className="profile-meta">
-                          {[draft.customer.email, draft.customer.phone].filter(Boolean).join(' · ') || 'No contact info'}
+                          {[customer.email, customer.phone].filter(Boolean).join(' · ') || 'No contact info'}
                         </span>
                       </div>
                     </div>
-                    
                     <div className="profile-address">
                       <span className="address-label">Delivering to</span>
                       <span className="address-value">{fullAddressLine || 'No address saved'}</span>
                     </div>
                   </div>
-                )}
-              </section>
-
-              {/* 3. Payment Method */}
-              <section className="form-block animate-fade-up">
-                <h2 className="section-heading">Payment Method</h2>
-                
-                <div className="payment-method-option">
-                  <span className="selector-radio" aria-hidden="true">
-                    <span className="selector-radio-dot" />
-                  </span>
-                  <span className="method-label">COD</span>
-                </div>
-              </section>
-
-              {/* 4. Order Notes (if any) */}
-              {draft.customer?.delivery_notes && (
-                <section className="form-block animate-fade-up">
-                  <h2 className="section-heading">Order Notes</h2>
-                  <div className="order-note-display">
-                    {draft.customer.delivery_notes}
-                  </div>
                 </section>
               )}
 
-              {/* 5. Order Total & Place Order Button */}
+              {/* Order Notes */}
+              {customer?.delivery_notes && (
+                <section className="form-block animate-fade-up">
+                  <h2 className="section-heading">Order Notes</h2>
+                  <div className="order-note-display">{customer.delivery_notes}</div>
+                </section>
+              )}
+
+              {/* Totals */}
               <div className="final-totals animate-fade-up">
                 <div className="totals-row">
                   <span>Subtotal</span>
                   <span>{formatMoney(subtotal)}</span>
                 </div>
                 <div className="totals-row">
-                  <span>{draft.delivery_type} Delivery</span>
+                  <span>{(order.delivery_type || 'Standard')} Delivery</span>
                   <span>
                     {deliveryFee == null 
                       ? 'TBD' 
                       : deliveryFee === 0 ? 'Free' : formatMoney(deliveryFee)}
                   </span>
                 </div>
-                {draft.shipping_quote.estimated_days_min && draft.shipping_quote.estimated_days_max && (
+                {order.estimated_days_min && order.estimated_days_max && (
                   <div className="totals-row">
                     <span>Estimated Delivery</span>
-                    <span>{draft.shipping_quote.estimated_days_min}–{draft.shipping_quote.estimated_days_max} days</span>
+                    <span>{order.estimated_days_min}–{order.estimated_days_max} days</span>
                   </div>
                 )}
                 <div className="totals-row grand-total">
                   <span>Total</span>
                   <strong>
-                    {totalAmount == null 
-                      ? 'TBD' 
-                      : formatMoney(totalAmount)}
+                    {totalAmount == null ? 'TBD' : formatMoney(totalAmount)}
                   </strong>
                 </div>
               </div>
 
-              {error && <div className="error-msg animate-shake">{error}</div>}
-
-              <button 
-                type="submit" 
-                className="btn-primary full-width" 
-                disabled={submitting}
-              >
-                {submitting ? (
-                  <span className="btn-loading"><span className="btn-spinner" /> Placing Order...</span>
-                ) : (
-                  `Place Order ${totalAmount != null ? `· ${formatMoney(totalAmount)}` : ''}`
-                )}
-              </button>
-            </form>
+              {/* Continue Shopping */}
+              <Link href="/" className="btn-primary full-width">
+                Continue Shopping
+              </Link>
+            </div>
           )}
         </div>
       </div>
@@ -297,13 +293,9 @@ export default function PaymentPage() {
       <style jsx>{`
         @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
-        @keyframes spin { to { transform: rotate(360deg); } }
 
         .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
-        .animate-fade-in { animation: fadeIn 0.4s ease both; }
-        .animate-shake { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
         .checkout-page { min-height: 100vh; background: #ffffff; padding-top: 80px; }
         .banner-wrapper { width: 100%; height: 140px; overflow: hidden; background: #f5f5f5; }
@@ -313,6 +305,49 @@ export default function PaymentPage() {
         .section-heading { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; margin: 0 0 16px 0; color: #000; display: flex; align-items: center; gap: 8px; }
         .item-count-label { color: #999; font-weight: 400; letter-spacing: 0; text-transform: none; font-size: 11px; }
         .form-block { margin-bottom: 24px; }
+
+        /* Success Badge */
+        .success-badge {
+          display: flex;
+          align-items: center;
+          gap: 14px;
+          padding: 14px 16px;
+          border: 1px solid #000;
+          background: #fafafa;
+        }
+        .success-icon {
+          width: 40px;
+          height: 40px;
+          flex-shrink: 0;
+          background: #000;
+          color: #fff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+        }
+        .success-icon svg { width: 20px; height: 20px; }
+        .success-copy {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          min-width: 0;
+        }
+        .success-copy strong {
+          font-size: 12px;
+          font-weight: 600;
+          color: #000;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          line-height: 1.3;
+        }
+        .success-copy span {
+          font-size: 11px;
+          color: #777;
+          line-height: 1.4;
+          overflow-wrap: anywhere;
+        }
 
         /* Product List */
         .summary-list { display: flex; flex-direction: column; gap: 12px; }
@@ -344,12 +379,6 @@ export default function PaymentPage() {
         .skeleton-line { height: 12px; border-radius: 4px; }
         .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; }
 
-        /* Payment Method */
-        .payment-method-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #000; background: #fafafa; }
-        .selector-radio { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; }
-        .selector-radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #000; }
-        .method-label { font-size: 12px; font-weight: 600; color: #000; text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
-
         /* Order Note */
         .order-note-display { padding: 14px; background: #fafafa; border-left: 2px solid #000; font-size: 12px; color: #333; line-height: 1.6; white-space: pre-wrap; }
 
@@ -361,18 +390,13 @@ export default function PaymentPage() {
         .grand-total strong { font-size: 20px; font-weight: 500; display: inline-block; }
 
         /* Button */
-        .btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 56px; padding: 0 32px; background: #000; color: #fff; border: none; border-radius: 0; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: background 0.3s, transform 0.15s, opacity 0.3s; }
-        .btn-primary:hover:not(:disabled) { background: #333; transform: translateY(-1px); }
-        .btn-primary:active:not(:disabled) { transform: translateY(0); }
-        .btn-primary:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 56px; padding: 0 32px; background: #000; color: #fff; border: none; border-radius: 0; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; text-decoration: none; cursor: pointer; transition: background 0.3s, transform 0.15s; }
+        .btn-primary:hover { background: #333; transform: translateY(-1px); }
+        .btn-primary:active { transform: translateY(0); }
         .full-width { width: 100%; }
-        .btn-loading { display: inline-flex; align-items: center; gap: 10px; }
-        .btn-spinner { width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
 
         .btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; background: transparent; color: #000; border: 1px solid #000; border-radius: 0; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; transition: all 0.2s; }
         .btn-outline:hover { background: #000; color: #fff; }
-
-        .error-msg { color: #d93025; font-size: 12px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
 
         .minimal-box { padding: 24px; background: #fafafa; text-align: center; }
         .minimal-box p { margin: 0 0 16px; font-size: 13px; color: #555; line-height: 1.6; }
@@ -386,6 +410,13 @@ export default function PaymentPage() {
           .section-heading { font-size: 13px; margin-bottom: 20px; }
           .item-count-label { font-size: 13px; }
           .form-block { margin-bottom: 32px; }
+          
+          .success-badge { padding: 20px 24px; gap: 18px; }
+          .success-icon { width: 52px; height: 52px; }
+          .success-icon svg { width: 26px; height: 26px; }
+          .success-copy strong { font-size: 15px; }
+          .success-copy span { font-size: 13px; }
+          
           .summary-list { gap: 14px; }
           .summary-item { gap: 16px; padding: 10px; }
           .item-img-wrap { width: 64px; height: 80px; }
@@ -393,26 +424,26 @@ export default function PaymentPage() {
           .item-details h3 { font-size: 13px; }
           .item-variant { font-size: 12px; }
           .item-price { font-size: 13px; }
+          
           .skeleton-avatar { width: 56px; height: 56px; }
           .avatar { width: 56px; height: 56px; font-size: 22px; }
           .profile-name { font-size: 18px; }
           .profile-meta { font-size: 14px; }
           .address-label { font-size: 12px; }
           .address-value { font-size: 14px; }
-          .payment-method-option { padding: 14px 18px; gap: 14px; }
-          .selector-radio { width: 20px; height: 20px; }
-          .selector-radio-dot { width: 9px; height: 9px; }
-          .method-label { font-size: 14px; letter-spacing: 1.5px; }
+          
           .order-note-display { font-size: 14px; padding: 20px; }
+          
           .totals-row { font-size: 14px; margin-bottom: 8px; }
           .grand-total { font-size: 18px; margin-top: 16px; }
           .grand-total strong { font-size: 32px; }
+          
           .btn-primary { height: 72px; font-size: 14px; letter-spacing: 3px; }
           .final-totals { padding-top: 32px; margin: 40px 0; gap: 14px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .animate-fade-up, .animate-fade-in, .animate-shake, .shimmer, .btn-spinner, .checkout-banner { animation: none !important; }
+          .animate-fade-up, .shimmer, .checkout-banner { animation: none !important; }
           .btn-primary { transition: none !important; }
         }
       `}</style>
