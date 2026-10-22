@@ -9,10 +9,6 @@ const CHECKOUT_DRAFT_KEY = 'jabiyen_checkout_draft_v1';
 const CHECKOUT_KEYS_KEY = 'jabiyen_pending_checkout_v1';
 const DRAFT_TTL_MS = 60 * 60 * 1000;
 
-function money(value) {
-  return `৳${Number(value || 0).toLocaleString('en-BD', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-}
-
 function getCheckoutKeys() {
   try {
     const saved = JSON.parse(window.sessionStorage.getItem(CHECKOUT_KEYS_KEY) || 'null');
@@ -158,18 +154,17 @@ export default function PaymentPage() {
           {draftStatus === 'ready' && (
             <form className="checkout-form" onSubmit={placeOrder}>
               
-              {/* 1. Product Details - COMPACT */}
+              {/* 1. Product Details */}
               <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Your Bag <span className="item-count-label">({totalItems})</span></h2>
                 <div className="summary-list">
                   {items.map((item, index) => {
-                    // ✅ Image fallback chain
                     const imageSrc = item.img || item.image || '/logo.png';
                     return (
                       <div 
                         className="summary-item animate-fade-up" 
                         key={`${item.title}-${index}`}
-                        style={{ animationDelay: `${index * 0.06}s` }}
+                        style={{ animationDelay: `${index * 0.08}s` }}
                       >
                         <div className="item-img-wrap">
                           <img 
@@ -222,17 +217,15 @@ export default function PaymentPage() {
               <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Payment Method</h2>
                 
-                <div className="payment-method-selected">
-                  <span className="method-icon">৳</span>
-                  <div className="method-info">
-                    <strong>Cash on Delivery</strong>
-                    <span>No online payment is taken. Pay when your order arrives.</span>
-                  </div>
-                  <span className="method-check">✓</span>
+                <div className="payment-method-option">
+                  <span className="selector-radio" aria-hidden="true">
+                    <span className="selector-radio-dot" />
+                  </span>
+                  <span className="method-label">COD</span>
                 </div>
               </section>
 
-              {/* 4. Order Notes (if any) */}
+              {/* 4. Order Notes */}
               {draft.customer?.delivery_notes && (
                 <section className="form-block animate-fade-up">
                   <h2 className="section-heading">Order Notes</h2>
@@ -270,12 +263,6 @@ export default function PaymentPage() {
                       : formatMoney(totalAmount)}
                   </strong>
                 </div>
-                {totalAmount != null && (
-                  <div className="totals-row cod-row">
-                    <span>Cash Collected (BDT)</span>
-                    <span>{money(totalAmount)}</span>
-                  </div>
-                )}
               </div>
 
               {error && <div className="error-msg animate-shake">{error}</div>}
@@ -308,6 +295,9 @@ export default function PaymentPage() {
       `}</style>
 
       <style jsx>{`
+        /* ============================================
+           KEYFRAME ANIMATIONS (Identical to Checkout)
+           ============================================ */
         @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
@@ -318,6 +308,9 @@ export default function PaymentPage() {
         .animate-fade-in { animation: fadeIn 0.4s ease both; }
         .animate-shake { animation: shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
 
+        /* ============================================
+           BASE LAYOUT (Identical to Checkout)
+           ============================================ */
         .checkout-page { min-height: 100vh; background: #ffffff; padding-top: 80px; }
         .banner-wrapper { width: 100%; height: 140px; overflow: hidden; background: #f5f5f5; }
         .checkout-banner { width: 100%; height: 100%; object-fit: cover; display: block; animation: fadeIn 1s ease both; }
@@ -328,190 +321,66 @@ export default function PaymentPage() {
         .form-block { margin-bottom: 24px; }
 
         /* ============================================
-           COMPACT Product List
+           PRODUCT LIST (Identical to Checkout)
            ============================================ */
-        .summary-list { 
-          display: flex; 
-          flex-direction: column; 
-          gap: 12px; 
-        }
-        
-        .summary-item { 
-          display: flex; 
-          align-items: center; 
-          gap: 12px; 
-          padding: 8px;
-          border: 1px solid #f0f0f0;
-          background: #fafafa;
-        }
-        
-        .item-img-wrap { 
-          position: relative; 
-          width: 48px; 
-          height: 60px; 
-          flex-shrink: 0; 
-          background: #ffffff; 
-          overflow: visible;
-        }
-        
-        .item-img { 
-          width: 100%; 
-          height: 100%; 
-          object-fit: cover; 
-          display: block;
-          border: 1px solid #eaeaea;
-        }
-        
-        .item-qty-badge { 
-          position: absolute; 
-          top: -6px; 
-          right: -6px; 
-          background: #000; 
-          color: #fff; 
-          width: 20px; 
-          height: 20px; 
-          border-radius: 50%; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          font-size: 10px; 
-          font-weight: 600;
-          border: 2px solid #fff;
-          z-index: 2;
-        }
-        
-        .item-details { 
-          flex: 1; 
-          display: flex; 
-          flex-direction: column; 
-          gap: 3px;
-          min-width: 0;
-        }
-        
-        .item-details h3 { 
-          font-size: 11px; 
-          font-weight: 500; 
-          margin: 0; 
-          color: #000; 
-          text-transform: uppercase; 
-          letter-spacing: 0.5px;
-          line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        
-        .item-variant { 
-          font-size: 10px; 
-          color: #777; 
-          margin: 0;
-          line-height: 1.3;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-        
-        .item-price { 
-          font-size: 11px; 
-          font-weight: 600; 
-          color: #000; 
-          display: inline-block;
-          margin-top: 2px;
-        }
+        .summary-list { display: flex; flex-direction: column; gap: 12px; }
+        .summary-item { display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid #f0f0f0; background: #fafafa; }
+        .item-img-wrap { position: relative; width: 48px; height: 60px; flex-shrink: 0; background: #ffffff; overflow: visible; }
+        .item-img { width: 100%; height: 100%; object-fit: cover; display: block; border: 1px solid #eaeaea; }
+        .item-qty-badge { position: absolute; top: -6px; right: -6px; background: #000; color: #fff; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; border: 2px solid #fff; z-index: 2; }
+        .item-details { flex: 1; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+        .item-details h3 { font-size: 11px; font-weight: 500; margin: 0; color: #000; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-variant { font-size: 10px; color: #777; margin: 0; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-price { font-size: 11px; font-weight: 600; color: #000; display: inline-block; margin-top: 2px; }
 
-        /* --- Profile Section --- */
-        .profile-block { border-top: 1px solid #e5e5e5; padding-top: 24px; }
-        .compact-profile { display: flex; flex-direction: column; gap: 12px; }
+        /* ============================================
+           PROFILE SECTION (Identical to Checkout)
+           ============================================ */
+        .profile-block { border-top: 1px solid #e5e5e5; padding-top: 32px; }
+        .compact-profile { display: flex; flex-direction: column; gap: 14px; }
         .profile-top-row { display: flex; align-items: center; gap: 12px; }
         .avatar { width: 40px; height: 40px; border-radius: 50%; background: #000; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 500; flex-shrink: 0; }
         .profile-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .profile-name { font-size: 14px; font-weight: 600; color: #000; line-height: 1.3; }
         .profile-meta { font-size: 12px; color: #777; line-height: 1.4; overflow-wrap: anywhere; }
-        .profile-address { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1px solid #f0f0f0; }
+        .profile-address { display: flex; flex-direction: column; gap: 4px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
         .address-label { font-size: 10px; color: #999; text-transform: uppercase; letter-spacing: 1px; font-weight: 500; }
         .address-value { font-size: 12px; color: #333; line-height: 1.5; overflow-wrap: anywhere; }
 
-        /* --- Skeleton Loader --- */
+        /* ============================================
+           SKELETON (Identical to Checkout)
+           ============================================ */
         .skeleton-profile { display: flex; align-items: center; gap: 12px; }
         .skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; }
         .skeleton-lines { display: flex; flex-direction: column; gap: 8px; flex: 1; }
         .skeleton-line { height: 12px; border-radius: 4px; }
         .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; }
 
-        /* --- Payment Method --- */
-        .payment-method-selected {
-          display: flex;
-          align-items: center;
-          gap: 14px;
-          padding: 16px;
-          border: 1px solid #000;
-          background: #fafafa;
-        }
-        .method-icon {
-          width: 44px;
-          height: 44px;
-          flex-shrink: 0;
-          background: #000;
-          color: #fff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 20px;
-          font-weight: 500;
-          border-radius: 50%;
-        }
-        .method-info {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          min-width: 0;
-        }
-        .method-info strong {
-          font-size: 13px;
-          font-weight: 600;
-          color: #000;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-        .method-info span {
-          font-size: 11px;
-          color: #777;
-          line-height: 1.4;
-        }
-        .method-check {
-          color: #000;
-          font-size: 16px;
-          font-weight: 700;
-          flex-shrink: 0;
-        }
+        /* ============================================
+           PAYMENT METHOD (COD only)
+           ============================================ */
+        .payment-method-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #000; background: #fafafa; }
+        .selector-radio { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; }
+        .selector-radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #000; }
+        .method-label { font-size: 12px; font-weight: 600; color: #000; text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
 
-        /* --- Order Note --- */
-        .order-note-display {
-          padding: 14px;
-          background: #fafafa;
-          border-left: 2px solid #000;
-          font-size: 12px;
-          color: #333;
-          line-height: 1.6;
-          white-space: pre-wrap;
-        }
+        /* ============================================
+           ORDER NOTE (Read-only display)
+           ============================================ */
+        .order-note-display { padding: 14px; background: #fafafa; border-left: 2px solid #000; font-size: 12px; color: #333; line-height: 1.6; white-space: pre-wrap; }
 
-        /* --- Totals & Button --- */
+        /* ============================================
+           TOTALS (Identical to Checkout)
+           ============================================ */
         .final-totals { margin: 24px 0; padding-top: 20px; border-top: 1px solid #e5e5e5; display: flex; flex-direction: column; gap: 10px; }
         .totals-row { display: flex; justify-content: space-between; font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 1px; }
         .totals-row span:last-child { color: #000; }
         .grand-total { margin-top: 8px; font-size: 14px; font-weight: 500; color: #000; }
         .grand-total strong { font-size: 20px; font-weight: 500; display: inline-block; }
-        .cod-row { 
-          padding-top: 12px; 
-          margin-top: 4px; 
-          border-top: 1px solid #f0f0f0; 
-          color: #000 !important; 
-          font-weight: 600;
-        }
-        .cod-row span:last-child { color: #000; font-weight: 600; }
 
+        /* ============================================
+           BUTTONS (Identical to Checkout)
+           ============================================ */
         .btn-primary { display: inline-flex; align-items: center; justify-content: center; height: 56px; padding: 0 32px; background: #000; color: #fff; border: none; border-radius: 0; font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; transition: background 0.3s, transform 0.15s, opacity 0.3s; }
         .btn-primary:hover:not(:disabled) { background: #333; transform: translateY(-1px); }
         .btn-primary:active:not(:disabled) { transform: translateY(0); }
@@ -519,16 +388,16 @@ export default function PaymentPage() {
         .full-width { width: 100%; }
         .btn-loading { display: inline-flex; align-items: center; gap: 10px; }
         .btn-spinner { width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; }
-
         .btn-outline { display: inline-flex; align-items: center; justify-content: center; height: 44px; padding: 0 20px; background: transparent; color: #000; border: 1px solid #000; border-radius: 0; font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; transition: all 0.2s; }
         .btn-outline:hover { background: #000; color: #fff; }
 
         .error-msg { color: #d93025; font-size: 12px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px; }
-
         .minimal-box { padding: 24px; background: #fafafa; text-align: center; }
         .minimal-box p { margin: 0 0 16px; font-size: 13px; color: #555; line-height: 1.6; }
 
-        /* --- Desktop Responsive --- */
+        /* ============================================
+           DESKTOP (Identical to Checkout)
+           ============================================ */
         @media (min-width: 768px) {
           .checkout-page { padding-top: 120px; }
           .checkout-shell { max-width: 800px; padding: 0 40px 80px; }
@@ -541,7 +410,6 @@ export default function PaymentPage() {
           .summary-list { gap: 14px; }
           .summary-item { gap: 16px; padding: 10px; }
           .item-img-wrap { width: 64px; height: 80px; }
-          .item-img { border: 1px solid #eaeaea; }
           .item-qty-badge { width: 24px; height: 24px; font-size: 11px; top: -7px; right: -7px; }
           .item-details h3 { font-size: 13px; }
           .item-variant { font-size: 12px; }
@@ -554,11 +422,10 @@ export default function PaymentPage() {
           .address-label { font-size: 12px; }
           .address-value { font-size: 14px; }
           
-          .payment-method-selected { padding: 24px; gap: 20px; }
-          .method-icon { width: 56px; height: 56px; font-size: 24px; }
-          .method-info strong { font-size: 16px; }
-          .method-info span { font-size: 14px; }
-          .method-check { font-size: 20px; }
+          .payment-method-option { padding: 14px 18px; gap: 14px; }
+          .selector-radio { width: 20px; height: 20px; }
+          .selector-radio-dot { width: 9px; height: 9px; }
+          .method-label { font-size: 14px; letter-spacing: 1.5px; }
           
           .order-note-display { font-size: 14px; padding: 20px; }
           
