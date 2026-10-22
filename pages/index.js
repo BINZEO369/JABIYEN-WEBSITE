@@ -10,8 +10,10 @@ import FeaturedProducts from '../components/home/FeaturedProducts';
 import BestSellers from '../components/home/BestSellers';
 import OnSale from '../components/home/OnSale';
 import LimitedEdition from '../components/home/LimitedEdition';
+import { useCurrency } from '../components/currency/CurrencyProvider';
 
 export default function Home() {
+  const { formatMoney, convertToBdt, selectedCurrency } = useCurrency();
   const [currentData, setCurrentData] = useState({
     products: [], categories: [], news: [], hero: [], heroVideos: [], hero_secondary: []
   });
@@ -70,7 +72,7 @@ export default function Home() {
         <div className="card-body">
           <span className="card-category">{p.category}</span>
           <h3 className="card-title">{p.title}</h3>
-          <div><span className="card-price">৳ {p.price}</span>{p.old_price && <span className="card-old-price">৳{p.old_price}</span>}</div>
+          <div><span className="card-price">{formatMoney(p.price)}</span>{p.old_price && <span className="card-old-price">{formatMoney(p.old_price)}</span>}</div>
         </div>
       </a>
     );
@@ -78,8 +80,10 @@ export default function Home() {
 
   const filterByCategory = (cat) => { setCurrentFilters(prev => ({ ...prev, cat })); setProductsDisplayLimit(12); };
   const applyPriceFilter = () => {
-    const minPrice = parseFloat(document.getElementById('filter-min-price')?.value) || null;
-    const maxPrice = parseFloat(document.getElementById('filter-max-price')?.value) || null;
+    const minValue = parseFloat(document.getElementById('filter-min-price')?.value);
+    const maxValue = parseFloat(document.getElementById('filter-max-price')?.value);
+    const minPrice = Number.isFinite(minValue) && minValue > 0 ? convertToBdt(minValue) : null;
+    const maxPrice = Number.isFinite(maxValue) && maxValue > 0 ? convertToBdt(maxValue) : null;
     setCurrentFilters(prev => ({ ...prev, minPrice, maxPrice })); setProductsDisplayLimit(12);
   };
   const loadMoreProducts = () => setProductsDisplayLimit(prev => prev + productsLoadMoreIncrement);
@@ -154,8 +158,8 @@ export default function Home() {
                   ))}
                 </div>
                 <div id="mobile-filters" className="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
-                  <div><label className="text-[10px] font-semibold uppercase text-accent block mb-1">Min Price</label><input type="number" id="filter-min-price" placeholder="৳ Min" className="w-full p-2 rounded-xl bg-gray-50 border border-gray-100 text-xs" /></div>
-                  <div><label className="text-[10px] font-semibold uppercase text-accent block mb-1">Max Price</label><input type="number" id="filter-max-price" placeholder="৳ Max" className="w-full p-2 rounded-xl bg-gray-50 border border-gray-100 text-xs" /></div>
+                  <div><label className="text-[10px] font-semibold uppercase text-accent block mb-1">Min Price ({selectedCurrency.currency_code})</label><input type="number" id="filter-min-price" placeholder={`${selectedCurrency.currency_symbol} Min`} className="w-full p-2 rounded-xl bg-gray-50 border border-gray-100 text-xs" /></div>
+                  <div><label className="text-[10px] font-semibold uppercase text-accent block mb-1">Max Price ({selectedCurrency.currency_code})</label><input type="number" id="filter-max-price" placeholder={`${selectedCurrency.currency_symbol} Max`} className="w-full p-2 rounded-xl bg-gray-50 border border-gray-100 text-xs" /></div>
                   <button onClick={applyPriceFilter} className="w-full py-2 bg-primary text-white rounded-xl text-xs font-semibold">Apply</button>
                 </div>
               </div>

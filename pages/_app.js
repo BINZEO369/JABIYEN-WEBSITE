@@ -3,6 +3,7 @@ import dynamic from 'next/dynamic';
 import { ToastProvider } from '../components/layout/Toast';
 import Footer from '../components/layout/Footer';
 import Fonts from '../components/layout/Fonts';
+import { CurrencyProvider } from '../components/currency/CurrencyProvider';
 
 const Header = dynamic(() => import('../components/layout/Header'), {
   ssr: false,
@@ -115,13 +116,15 @@ export default function App({ Component, pageProps }) {
         @media (min-width: 1400px) { :root { --card-width: 300px; --card-gap: 20px; } }
       `}</style>
 
-      <ToastProvider>
-        <Header />
-        <main className="flex-grow">
-          <Component {...pageProps} />
-        </main>
-        <Footer />
-      </ToastProvider>
+      <CurrencyProvider>
+        <ToastProvider>
+          <Header />
+          <main className="flex-grow">
+            <Component {...pageProps} />
+          </main>
+          <Footer />
+        </ToastProvider>
+      </CurrencyProvider>
 
       <div id="cookieConsent" className="cookie-consent-overlay">
         <div className="cookie-banner">

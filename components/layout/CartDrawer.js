@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './Toast';
 import Link from 'next/link';
+import { useCurrency } from '../currency/CurrencyProvider';
 
 // Cart state (module-level singleton - SSR safe)
 let cartData = [];
@@ -142,6 +143,7 @@ export function useCartState() {
 
 export default function CartDrawer({ isOpen, onClose }) {
   const { cart, removeFromCart, updateQuantity } = useCartState();
+  const { formatMoney } = useCurrency();
   const { showToast } = useToast();
   const [expandedItems, setExpandedItems] = useState({});
 
@@ -273,11 +275,11 @@ export default function CartDrawer({ isOpen, onClose }) {
                       }}>
                         <div>
                           <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 900, fontSize: 14, color: '#fff' }}>
-                            ৳{itemTotal.toFixed(2)}
+                            {formatMoney(itemTotal)}
                           </span>
                           {item.old_price && (
                             <span style={{ fontSize: 9, textDecoration: 'line-through', color: 'rgba(255,255,255,0.25)', marginLeft: 6 }}>
-                              ৳{(item.old_price * (item.quantity || 1)).toFixed(2)}
+                              {formatMoney(item.old_price * (item.quantity || 1))}
                             </span>
                           )}
                         </div>
@@ -343,7 +345,7 @@ export default function CartDrawer({ isOpen, onClose }) {
           <div style={{ marginBottom: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 0' }}>
               <span style={{ color: 'rgba(255,255,255,0.35)', fontFamily: "'Inter', sans-serif" }}>Subtotal</span>
-              <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontFamily: "'Inter', sans-serif" }}>৳{sub.toFixed(2)}</span>
+              <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontFamily: "'Inter', sans-serif" }}>{formatMoney(sub)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '4px 0' }}>
               <span style={{ color: 'rgba(255,255,255,0.35)', fontFamily: "'Inter', sans-serif" }}>Items</span>
@@ -351,7 +353,7 @@ export default function CartDrawer({ isOpen, onClose }) {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 10, marginTop: 4 }}>
               <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Inter', sans-serif" }}>Total</span>
-              <span style={{ fontSize: 18, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em' }}>৳{sub.toFixed(2)}</span>
+              <span style={{ fontSize: 18, fontWeight: 900, color: '#fff', fontFamily: "'Inter', sans-serif", letterSpacing: '-0.01em' }}>{formatMoney(sub)}</span>
             </div>
           </div>
           <Link href="/checkout" onClick={onClose} style={{

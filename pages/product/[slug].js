@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Head from 'next/head';
 import { useCartState } from '../../components/layout/CartDrawer';
+import { useCurrency } from '../../components/currency/CurrencyProvider';
 
 // ================================================================
 // API Helper Functions
@@ -100,6 +101,7 @@ const SkeletonLoader = () => (
 // ================================================================
 const ProductCard = ({ product }) => {
   if (!product) return null;
+  const { formatMoney } = useCurrency();
   const slug = product.slug || generateSlug(product.title);
 
   return (
@@ -163,7 +165,7 @@ const ProductCard = ({ product }) => {
           >
             {product.title || ''}
           </h3>
-          <span style={{ fontSize: '16px', fontWeight: 900, fontFamily: 'var(--font-body)' }}>৳ {product.price || 0}</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, fontFamily: 'var(--font-body)' }}>{formatMoney(product.price || 0)}</span>
         </div>
       </div>
     </Link>
@@ -642,6 +644,7 @@ export default function ProductPage() {
   const router = useRouter();
   const { slug } = router.query;
   const { addToCart } = useCartState();
+  const { formatMoney } = useCurrency();
 
   // State
   const [currentProduct, setCurrentProduct] = useState(null);
@@ -1333,7 +1336,9 @@ export default function ProductPage() {
                       fontFamily: 'var(--font-body)',
                     }}
                   >
-                    ৳ {displayPrice}
+                    {typeof displayPrice === 'string' && displayPrice.includes(' - ')
+                      ? displayPrice.split(' - ').map((price) => formatMoney(price)).join(' – ')
+                      : formatMoney(displayPrice)}
                   </span>
                   {displayOldPrice && (
                     <span
@@ -1345,7 +1350,7 @@ export default function ProductPage() {
                         fontFamily: 'var(--font-body)',
                       }}
                     >
-                      ৳ {displayOldPrice}
+                      {formatMoney(displayOldPrice)}
                     </span>
                   )}
                 </div>
@@ -1906,7 +1911,7 @@ export default function ProductPage() {
         >
           <div style={{ flexGrow: 1 }}>
             <span style={{ fontSize: '20px', fontWeight: 900, fontFamily: 'var(--font-body)' }}>
-              ৳ {selectedVariant?.price || currentProduct?.price || 0}
+              {formatMoney(selectedVariant?.price || currentProduct?.price || 0)}
             </span>
           </div>
           <button

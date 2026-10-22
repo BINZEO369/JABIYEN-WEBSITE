@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCartState } from '../components/layout/CartDrawer';
+import { useCurrency } from '../components/currency/CurrencyProvider';
 
 const CHECKOUT_DRAFT_KEY = 'jabiyen_checkout_draft_v1';
 const CHECKOUT_KEYS_KEY = 'jabiyen_pending_checkout_v1';
@@ -33,6 +34,7 @@ function getCheckoutKeys() {
 export default function PaymentPage() {
   const router = useRouter();
   const { clearCart } = useCartState();
+  const { formatMoney, selectedCurrency } = useCurrency();
   const [draft, setDraft] = useState(null);
   const [draftStatus, setDraftStatus] = useState('loading');
   const [submitting, setSubmitting] = useState(false);
@@ -124,7 +126,7 @@ export default function PaymentPage() {
                     <label className="method-option">
                       <input type="radio" name="payment_method" value="cash_on_delivery" checked readOnly />
                       <span className="method-icon" aria-hidden="true">৳</span>
-                      <span className="method-copy"><strong>Cash on delivery</strong><small>{totalAmount == null ? 'The delivery charge and final BDT total will be advised later. No online payment is taken.' : `Pay the displayed ${money(totalAmount)} BDT total when your order arrives. No online payment is taken.`}</small></span>
+                      <span className="method-copy"><strong>Cash on delivery</strong><small>{totalAmount == null ? 'The delivery charge and final BDT total will be advised later. No online payment is taken.' : `Estimated total: ${formatMoney(totalAmount)} (${selectedCurrency.currency_code}). The actual COD amount is ${money(totalAmount)} BDT.`}</small></span>
                       <span className="available-tag">AVAILABLE</span>
                     </label>
                     {draft.customer.delivery_notes && <div className="note-preview"><span className="eyebrow">YOUR ORDER NOTE</span><p>{draft.customer.delivery_notes}</p></div>}
@@ -142,16 +144,17 @@ export default function PaymentPage() {
                       <div className="summary-item" key={`${item.title}-${index}`}>
                         <div className="quantity-badge">{item.quantity || 1}</div>
                         <div className="item-copy"><strong>{item.title || 'JABIYEN item'}</strong><span>{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</span></div>
-                        <strong className="item-price">{money(Number(item.price || 0) * Number(item.quantity || 1))}</strong>
+                        <strong className="item-price">{formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}</strong>
                       </div>
                     ))}
                   </div>
                   <div className="rule" />
-                  <div className="summary-row"><span>Items ({totalItems})</span><span>{money(subtotal)}</span></div>
-                  <div className="summary-row"><span>{draft.delivery_type} delivery</span><span>{deliveryFee == null ? 'আপনাকে পরে জানানো হবে' : deliveryFee === 0 ? 'Free' : money(deliveryFee)}</span></div>
+                  <div className="summary-row"><span>Items ({totalItems})</span><span>{formatMoney(subtotal)}</span></div>
+                  <div className="summary-row"><span>{draft.delivery_type} delivery</span><span>{deliveryFee == null ? 'আপনাকে পরে জানানো হবে' : deliveryFee === 0 ? 'Free' : formatMoney(deliveryFee)}</span></div>
                   {draft.shipping_quote.estimated_days_min && draft.shipping_quote.estimated_days_max && <div className="summary-row"><span>Estimated delivery</span><span>{draft.shipping_quote.estimated_days_min}–{draft.shipping_quote.estimated_days_max} days</span></div>}
                   <div className="rule" />
-                  <div className="summary-row total"><span>Total due at delivery</span><strong>{totalAmount == null ? 'আপনাকে পরে জানানো হবে' : money(totalAmount)}</strong></div>
+                  <div className="summary-row total"><span>Estimated total · {selectedCurrency.currency_code}</span><strong>{totalAmount == null ? 'আপনাকে পরে জানানো হবে' : formatMoney(totalAmount)}</strong></div>
+                  {totalAmount != null && <div className="summary-row"><span>Cash collected · BDT</span><span>{money(totalAmount)}</span></div>}
                   <div className="profile-summary"><span className="eyebrow">DELIVERING TO · BDT</span><strong>{draft.customer.name}</strong><span>{[draft.customer.address.line1, draft.customer.address.city, draft.customer.address.state, draft.customer.address.district, draft.customer.address.postal_code, draft.shipping_quote.country_name || draft.customer.address.country_code].filter(Boolean).join(', ')}</span></div>
                 </aside>
               </div>

@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useCartState } from '../components/layout/CartDrawer';
+import { useCurrency } from '../components/currency/CurrencyProvider';
 
 const AUTH_SESSION_KEY = 'jayenware_session';
 const CHECKOUT_DRAFT_KEY = 'jabiyen_checkout_draft_v1';
@@ -53,6 +54,7 @@ function countryName(countryCode) {
 export default function CheckoutPage() {
   const router = useRouter();
   const { cart: storedCart } = useCartState();
+  const { formatMoney, selectedCurrency } = useCurrency();
   const [cart, setCart] = useState([]);
   const [mounted, setMounted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -335,7 +337,7 @@ export default function CheckoutPage() {
                     {shippingStatus === 'loading' && 'Calculating the BDT delivery fee for your saved address…'}
                     {shippingStatus === 'ready' && shippingQuote && (shippingQuote.delivery_fee == null
                       ? 'এই ঠিকানার ডেলিভারি চার্জ আপনাকে পরে জানানো হবে · BDT'
-                      : `${money(shippingQuote.delivery_fee)} ${deliveryType.toLowerCase()} delivery · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days · BDT`)}
+                      : `${formatMoney(shippingQuote.delivery_fee)} ${deliveryType.toLowerCase()} delivery · ${shippingQuote.estimated_days_min}–${shippingQuote.estimated_days_max} days · ${selectedCurrency.currency_code}`)}
                     {shippingStatus === 'unavailable' && shippingMessage}
                   </p>
                 </section>
@@ -361,16 +363,16 @@ export default function CheckoutPage() {
                     <div className="summary-item" key={`${item.product_id}-${item.variant_id || index}-${item.id || index}`}>
                       <div className="summary-image-wrap"><img src={item.img || '/logo.png'} alt="" className="summary-image" onError={(event) => { event.currentTarget.src = '/logo.png'; }} /><span className="quantity-badge">{item.quantity || 1}</span></div>
                       <div className="summary-item-copy"><strong>{item.title || 'JABIYEN item'}</strong><span>{[item.color_name, item.size_name].filter(Boolean).join(' · ') || 'Selected item'}</span></div>
-                      <strong className="summary-item-price">{money(Number(item.price || 0) * Number(item.quantity || 1))}</strong>
+                      <strong className="summary-item-price">{formatMoney(Number(item.price || 0) * Number(item.quantity || 1))}</strong>
                     </div>
                   ))}
                 </div>
                 <div className="summary-rule" />
-                <div className="summary-row"><span>Items ({totalItems})</span><span>{money(subtotal)}</span></div>
-                <div className="summary-row"><span>{deliveryType} delivery</span><span className="to-confirm">{shippingStatus === 'ready' ? (shippingQuote.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : money(shippingQuote.delivery_fee)) : shippingStatus === 'loading' ? 'Calculating…' : shippingStatus === 'unavailable' ? 'Unavailable' : '—'}</span></div>
+                <div className="summary-row"><span>Items ({totalItems})</span><span>{formatMoney(subtotal)}</span></div>
+                <div className="summary-row"><span>{deliveryType} delivery</span><span className="to-confirm">{shippingStatus === 'ready' ? (shippingQuote.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : formatMoney(shippingQuote.delivery_fee)) : shippingStatus === 'loading' ? 'Calculating…' : shippingStatus === 'unavailable' ? 'Unavailable' : '—'}</span></div>
                 <div className="summary-rule" />
-                <div className="summary-row total-row"><span>Total due at delivery</span><strong>{shippingQuote?.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : money(subtotal + Number(shippingQuote.delivery_fee))}</strong></div>
-                <p className="summary-footnote">Delivery and order prices are in BDT. The Central API verifies the final fee before accepting your order.</p>
+                <div className="summary-row total-row"><span>Estimated total · {selectedCurrency.currency_code}</span><strong>{shippingQuote?.delivery_fee == null ? 'আপনাকে পরে জানানো হবে' : formatMoney(subtotal + Number(shippingQuote.delivery_fee))}</strong></div>
+                <p className="summary-footnote">Displayed in {selectedCurrency.currency_code} using the configured rate. Order totals and cash-on-delivery collection remain in BDT; the Central API verifies the final fee.</p>
                 <div className="summary-trust"><span>✓</span><span>Profile confirmed securely<br /><small>Read from Central Auth</small></span></div>
               </aside>
             </div>

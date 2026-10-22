@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useCurrency } from '../currency/CurrencyProvider';
 
 export default function Footer() {
+  const { countries: availableCountries, selectedCountryCode, selectCountry, setAvailableCurrencies } = useCurrency();
   const [footerData, setFooterData] = useState(null);
   const [openMenus, setOpenMenus] = useState({});
   const [loading, setLoading] = useState(true);
@@ -10,9 +12,14 @@ export default function Footer() {
   useEffect(() => {
     async function fetchFooter() {
       try {
-        const res = await fetch('/api/footer/complete');
+        const [res, currenciesRes] = await Promise.all([
+          fetch('/api/footer/complete'),
+          fetch('/api/footer/currencies').catch(() => null),
+        ]);
         if (!res.ok) throw new Error();
         const data = await res.json();
+        const currencyRows = currenciesRes?.ok ? await currenciesRes.json() : [];
+        setAvailableCurrencies(data.countries || [], currencyRows);
         setFooterData(data);
       } catch (e) {
         console.error('Footer fetch error:', e);
@@ -20,7 +27,7 @@ export default function Footer() {
       setLoading(false);
     }
     fetchFooter();
-  }, []);
+  }, [setAvailableCurrencies]);
 
   const toggleMenu = (id) => {
     setOpenMenus(prev => ({ ...prev, [id]: !prev[id] }));
@@ -39,7 +46,7 @@ export default function Footer() {
   const {
     content = [], socialLinks = [], menus = [], paymentMethods = [],
     shippingPartners = [], certifications = [], appLinks = [],
-    countries = [], trustBadges = [], settings = {}
+    trustBadges = [], settings = {}
   } = footerData;
 
   const bgColor = settings.background_color || '#0a0a0a';
@@ -129,15 +136,15 @@ export default function Footer() {
               )}
 
               {/* Country Selector */}
-              {countries?.length > 0 && (
+              {availableCountries?.length > 0 && (
                 <div style={{ maxWidth: 240 }}>
-                  <select style={{
+                  <select value={selectedCountryCode} onChange={(event) => selectCountry(event.target.value)} aria-label="Select country and currency" style={{
                     width: '100%', background: 'none', color: '#b0b0b0',
                     border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)',
                     padding: '7px 0', fontSize: '0.7rem', outline: 'none', cursor: 'pointer',
                     fontFamily: "'Inter', sans-serif"
                   }}>
-                    {countries.sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(c => (
+                    {[...availableCountries].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(c => (
                       <option key={c.id} value={c.country_code} style={{ background: '#1a1a1a', color: '#ccc' }}>
                         {c.country_name} / {c.currency_code}
                       </option>
