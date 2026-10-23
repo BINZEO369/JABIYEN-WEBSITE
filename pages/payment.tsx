@@ -46,6 +46,7 @@ export default function PaymentPage() {
   const [draftStatus, setDraftStatus] = useState('loading');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'cod' | 'stripe'>('cod');
 
   useEffect(() => {
     try {
@@ -128,10 +129,18 @@ export default function PaymentPage() {
         console.warn('[PAYMENT_SNAPSHOT_SAVE_ERROR]', snapshotErr);
       }
 
+      const orderNumber = String(result.order.order_number);
       clearCart();
       window.sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
       window.sessionStorage.removeItem(CHECKOUT_KEYS_KEY);
-      await router.push(`/order-confirmation?order=${encodeURIComponent(result.order.order_number)}`);
+
+      if (selectedPaymentMethod === 'stripe') {
+        // JABIYEN creates only the order; the central Auth/API flow creates the Stripe session.
+        window.location.assign(`https://auth-binzeo.vercel.app/payment?order_number=${encodeURIComponent(orderNumber)}`);
+        return;
+      }
+
+      await router.push(`/order-confirmation?order=${encodeURIComponent(orderNumber)}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Order submission failed. Please try again.');
     } finally {
@@ -256,12 +265,37 @@ export default function PaymentPage() {
               {/* 3. Payment Method */}
               <section className="form-block animate-fade-up">
                 <h2 className="section-heading">Payment Method</h2>
-                
-                <div className="payment-method-option">
-                  <span className="selector-radio" aria-hidden="true">
-                    <span className="selector-radio-dot" />
-                  </span>
-                  <span className="method-label">COD</span>
+
+                <div className="payment-method-list" role="radiogroup" aria-label="Choose a payment method">
+                  <label className={`payment-method-option ${selectedPaymentMethod === 'cod' ? 'selected' : ''}`}>
+                    <input
+                      className="payment-method-radio"
+                      type="radio"
+                      name="paymentMethod"
+                      value="cod"
+                      checked={selectedPaymentMethod === 'cod'}
+                      onChange={() => setSelectedPaymentMethod('cod')}
+                    />
+                    <span className="method-copy">
+                      <span className="method-label">Cash on delivery (COD)</span>
+                      <span className="method-description">Pay when your order is delivered.</span>
+                    </span>
+                  </label>
+
+                  <label className={`payment-method-option ${selectedPaymentMethod === 'stripe' ? 'selected' : ''}`}>
+                    <input
+                      className="payment-method-radio"
+                      type="radio"
+                      name="paymentMethod"
+                      value="stripe"
+                      checked={selectedPaymentMethod === 'stripe'}
+                      onChange={() => setSelectedPaymentMethod('stripe')}
+                    />
+                    <span className="method-copy">
+                      <span className="method-label">Online payment with Stripe</span>
+                      <span className="method-description">After placing your order, continue to BINZEO Central to pay securely on Stripe. JABIYEN never collects card details.</span>
+                    </span>
+                  </label>
                 </div>
               </section>
 
@@ -315,7 +349,9 @@ export default function PaymentPage() {
                 {submitting ? (
                   <span className="btn-loading"><span className="btn-spinner" /> Placing Order...</span>
                 ) : (
-                  `Place Order ${totalAmount != null ? `· ${formatMoney(totalAmount)}` : ''}`
+                  selectedPaymentMethod === 'stripe'
+                    ? `Place Order & Continue to BINZEO${totalAmount != null ? ` · ${formatMoney(totalAmount)}` : ''}`
+                    : `Place Order ${totalAmount != null ? `· ${formatMoney(totalAmount)}` : ''}`
                 )}
               </button>
             </form>
@@ -385,10 +421,13 @@ export default function PaymentPage() {
         .shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; }
 
         /* Payment Method */
-        .payment-method-option { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid #000; background: #fafafa; }
-        .selector-radio { width: 16px; height: 16px; flex-shrink: 0; border: 2px solid #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #fff; }
-        .selector-radio-dot { width: 7px; height: 7px; border-radius: 50%; background: #000; }
-        .method-label { font-size: 12px; font-weight: 600; color: #000; text-transform: uppercase; letter-spacing: 1px; line-height: 1; }
+        .payment-method-list { display: flex; flex-direction: column; gap: 10px; }
+        .payment-method-option { display: flex; align-items: flex-start; gap: 12px; padding: 14px; border: 1px solid #e5e5e5; background: #fff; cursor: pointer; transition: border-color 0.2s, background 0.2s; }
+        .payment-method-option.selected { border-color: #000; background: #fafafa; }
+        .payment-method-radio { width: 16px; height: 16px; flex-shrink: 0; margin: 1px 0 0; accent-color: #000; }
+        .method-copy { display: flex; flex-direction: column; gap: 6px; }
+        .method-label { font-size: 12px; font-weight: 600; color: #000; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4; }
+        .method-description { font-size: 11px; color: #666; line-height: 1.5; }
 
         /* Order Note */
         .order-note-display { padding: 14px; background: #fafafa; border-left: 2px solid #000; font-size: 12px; color: #333; line-height: 1.6; white-space: pre-wrap; }
