@@ -6,8 +6,9 @@ import Link from 'next/link';
 import { useCurrency } from '../currency/CurrencyProvider';
 
 // Cart state (module-level singleton - SSR safe)
-let cartData = [];
-let wishlistData = [];
+type CartItem = { id: number; product_id: number | string; title?: string; price: number; old_price?: number | null; img: string; color_image?: string; variant_id?: number | string | null; color_id?: number | string | null; color_name?: string | null; color_code?: string | null; size_id?: number | string | null; size_name?: string | null; sku?: string | null; category?: string | null; subcategory?: string | null; fabric_type?: string | null; gsm_type?: string | null; fit_type?: string | null; weight?: string | null; gender?: string | null; print_type?: string | null; main_barcode?: string | null; variant_barcode?: string | null; quantity: number; [key: string]: string | number | null | undefined };
+let cartData: CartItem[] = [];
+let wishlistData: (number | string)[] = [];
 
 if (typeof window !== 'undefined') {
   try {
@@ -39,15 +40,15 @@ export function saveWishlist() {
 }
 
 export function useCartState() {
-  const [cart, setCart] = useState(cartData);
+  const [cart, setCart] = useState<CartItem[]>(cartData);
   
   useEffect(() => {
-    const handler = (e) => setCart([...e.detail]);
+    const handler = (e: Event) => setCart([...(e as CustomEvent<CartItem[]>).detail]);
     window.addEventListener('cartUpdated', handler);
     return () => window.removeEventListener('cartUpdated', handler);
   }, []);
 
-  const addToCart = (productId, options = {}) => {
+  const addToCart = (productId: number | string, options: Partial<CartItem> = {}) => {
     const existingIndex = cartData.findIndex(item => {
       if (item.product_id !== productId) return false;
       if (options.variant_id && item.variant_id === options.variant_id) return true;
@@ -91,12 +92,12 @@ export function useCartState() {
     saveCart();
   };
 
-  const removeFromCart = (index) => {
+  const removeFromCart = (index: number) => {
     cartData.splice(index, 1);
     saveCart();
   };
 
-  const updateQuantity = (index, qty) => {
+  const updateQuantity = (index: number, qty: number) => {
     if (qty < 1) {
       removeFromCart(index);
       return;
@@ -110,7 +111,7 @@ export function useCartState() {
     saveCart();
   };
 
-  const toggleWishlist = (id) => {
+  const toggleWishlist = (id: number | string) => {
     if (wishlistData.includes(id)) {
       wishlistData = wishlistData.filter(x => x !== id);
     } else {
@@ -173,7 +174,7 @@ export default function CartDrawer({ isOpen, onClose }) {
 
       <div style={{
         position: 'fixed', top: 0, right: 0, width: '100%', maxWidth: 420,
-        height: '100vh', height: '100dvh',
+        height: '100dvh',
         background: 'rgba(0,0,0,0.82)',
         backdropFilter: 'blur(25px) saturate(200%)',
         WebkitBackdropFilter: 'blur(25px) saturate(200%)',
@@ -225,7 +226,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                       width: 64, height: 64, objectFit: 'cover',
                       borderRadius: 12, border: '1px solid rgba(255,255,255,0.06)',
                       flexShrink: 0, background: 'rgba(255,255,255,0.03)'
-                    }} onError={(e) => e.target.src = '/logo.png'} />
+                    }} onError={(e) => e.currentTarget.src = '/logo.png'} />
 
                     <div style={{ flexGrow: 1, minWidth: 0 }}>
                       <h4 style={{

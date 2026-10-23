@@ -135,7 +135,7 @@ const ProductCard = ({ product }) => {
               transition: 'transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)',
             }}
             loading="lazy"
-            onError={(e) => { e.target.src = '/logo.png'; }}
+            onError={(e) => { e.currentTarget.src = '/logo.png'; }}
           />
         </div>
         <div style={{ padding: '14px 16px' }}>
@@ -262,7 +262,7 @@ const VideoSection = ({ videos }) => {
         }}
       >
         <video
-          ref={(el) => (videoRefs.current[index] = el)}
+          ref={(el) => { videoRefs.current[index] = el; }}
           src={video.video_url}
           playsInline
           muted
@@ -502,7 +502,7 @@ const BannerSection = ({ banners }) => {
             objectFit: 'cover',
             transition: 'transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1)',
           }}
-          onError={(e) => { e.target.style.display = 'none'; }}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
         <div
           className="banner-overlay"
@@ -576,7 +576,7 @@ const BannerSection = ({ banners }) => {
 // ================================================================
 // Collapsible Section Component
 // ================================================================
-const CollapsibleSection = ({ icon, title, children, onToggle }) => {
+const CollapsibleSection = ({ icon, title, children, onToggle }: { icon: string; title: string; children: import('react').ReactNode; onToggle?: (open: boolean) => void }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggle = () => {
@@ -929,10 +929,10 @@ export default function ProductPage() {
         setActiveImage(images[0] || '/logo.png');
 
         const [colors, variants, videos, banners] = await Promise.all([
-          apiFetch(`/product-colors?slug=${encodeURIComponent(slug)}`),
-          apiFetch(`/product-variants?slug=${encodeURIComponent(slug)}`),
-          apiFetch(`/product-videos?slug=${encodeURIComponent(slug)}`),
-          apiFetch(`/product-banners?slug=${encodeURIComponent(slug)}`),
+          apiFetch(`/product-colors?slug=${encodeURIComponent(Array.isArray(slug) ? slug[0] : slug)}`),
+          apiFetch(`/product-variants?slug=${encodeURIComponent(Array.isArray(slug) ? slug[0] : slug)}`),
+          apiFetch(`/product-videos?slug=${encodeURIComponent(Array.isArray(slug) ? slug[0] : slug)}`),
+          apiFetch(`/product-banners?slug=${encodeURIComponent(Array.isArray(slug) ? slug[0] : slug)}`),
         ]);
 
         setProductColors(colors || []);
@@ -1042,7 +1042,7 @@ export default function ProductPage() {
           <link rel="apple-touch-icon" href="/logo.png" />
           <link rel="canonical" href="https://jabiyen-website.vercel.app/product/" />
           <link rel="preconnect" href="https://fonts.googleapis.com" />
-          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
           <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
           <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js" />
@@ -1117,7 +1117,7 @@ export default function ProductPage() {
         <link rel="apple-touch-icon" href="/logo.png" />
         <link rel="canonical" href={`https://jabiyen-website.vercel.app/product/${slug}`} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="true" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js" />
@@ -1176,7 +1176,7 @@ export default function ProductPage() {
                     WebkitUserSelect: 'none',
                   }}
                   onError={(e) => {
-                    e.target.src = '/logo.png';
+                    e.currentTarget.src = '/logo.png';
                   }}
                 />
               </div>
@@ -1227,7 +1227,7 @@ export default function ProductPage() {
                       position: 'relative',
                     }}
                     onError={(e) => {
-                      e.target.style.display = 'none';
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 ))}

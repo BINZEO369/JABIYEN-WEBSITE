@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
-export default function TrendingNow({ products = [] }) {
+export default function OnSale({ products = [] }) {
   const [items, setItems] = useState([]);
   const [colorCache, setColorCache] = useState({});
   const [loading, setLoading] = useState(true);
@@ -16,43 +16,36 @@ export default function TrendingNow({ products = [] }) {
         if (!res.ok) throw new Error();
         const data = await res.json();
         const all = Array.isArray(data) ? data : data?.data || data?.products || [];
-        const filtered = all.filter(p => 
-          p.is_hot === true || p.is_hot === 1 || p.is_hot === 'true' ||
-          p.is_trending === true || p.is_trending === 1 || p.is_trending === 'true'
-        );
-        filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        const filtered = all.filter(p => p.is_on_sale === true || p.is_on_sale === 1 || p.is_on_sale === 'true');
+        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         setItems(filtered.slice(0, maxProducts));
       } catch (e) {
-        const filtered = products.filter(p => 
-          p.is_hot === true || p.is_hot === 1 || p.is_trending === true || p.is_trending === 1
-        );
+        const filtered = products.filter(p => p.is_on_sale === true || p.is_on_sale === 1);
         setItems(filtered.slice(0, maxProducts));
       }
       setLoading(false);
     }
     if (products.length > 0) {
-      const filtered = products.filter(p => 
-        p.is_hot === true || p.is_hot === 1 || p.is_trending === true || p.is_trending === 1
-      );
+      const filtered = products.filter(p => p.is_on_sale === true || p.is_on_sale === 1);
       setItems(filtered.slice(0, maxProducts));
       setLoading(false);
     } else fetchItems();
   }, [products]);
 
-  if (loading) return <Skeleton title="Trending Now" />;
-  if (!items.length) return <Empty title="Trending Now" message="Hot picks coming soon — stay tuned" />;
+  if (loading) return <Skeleton title="On Sale" />;
+  if (!items.length) return <Empty title="On Sale" message="Great deals coming soon — stay tuned" />;
 
   return (
-    <section style={{ padding: '32px 0', maxWidth: 1400, margin: '0 auto', background: '#fff' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20, padding: '0 8px' }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f', letterSpacing: '-0.3px' }}>Trending Now</h2>
+    <section style={{ padding: '32px 0', maxWidth: 1400, margin: '0 auto', background: '#fafafa' }}>
+      <div style={{ textAlign: 'center', marginBottom: 20 }}>
+        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f', letterSpacing: '-0.3px' }}>On Sale</h2>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }} className="tn-grid">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }} className="os-grid">
         {items.map(p => <Card key={p.id} product={p} colorCache={colorCache} setColorCache={setColorCache} />)}
       </div>
       <style jsx>{`
-        @media (min-width: 768px) { .tn-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-        @media (min-width: 1024px) { .tn-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+        @media (min-width: 768px) { .os-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (min-width: 1024px) { .os-grid { grid-template-columns: repeat(4, 1fr) !important; } }
       `}</style>
     </section>
   );
@@ -60,7 +53,7 @@ export default function TrendingNow({ products = [] }) {
 
 function Skeleton({ title }) {
   return (
-    <section style={{ padding: '32px 0', background: '#fff' }}>
+    <section style={{ padding: '32px 0', background: '#fafafa' }}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>{title}</h2>
       </div>
@@ -79,15 +72,15 @@ function Skeleton({ title }) {
 
 function Empty({ title, message }) {
   return (
-    <section style={{ padding: '32px 0', background: '#fff' }}>
+    <section style={{ padding: '32px 0', background: '#fafafa' }}>
       <div style={{ textAlign: 'center', marginBottom: 20 }}>
         <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>{title}</h2>
       </div>
       <div style={{ textAlign: 'center', padding: '60px 20px', maxWidth: 400, margin: '0 auto' }}>
         <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.4 }}>
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+          <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z M7 7h.01" />
         </svg>
-        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#86868b' }}>No trending products right now</p>
+        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#86868b' }}>No sale items right now</p>
         <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#b0b0b5', marginTop: 6 }}>{message}</p>
       </div>
     </section>
@@ -125,20 +118,12 @@ function Card({ product, colorCache, setColorCache }) {
   const navigate = (i) => { if (i >= 0 && i < total) { setCurrentImage(i); setDragOffset(0); } };
   const onTS = (e) => { startX.current = e.touches[0].clientX; setIsDragging(true); };
   const onTM = (e) => { if (!isDragging) return; setDragOffset(e.touches[0].clientX - startX.current); };
-  const onTE = () => {
-    setIsDragging(false);
-    if (Math.abs(dragOffset) > 60) dragOffset < 0 && currentImage < total - 1 ? navigate(currentImage + 1) : dragOffset > 0 && currentImage > 0 ? navigate(currentImage - 1) : null;
-    setDragOffset(0);
-  };
-
-  const badgeText = product.is_hot || product.is_trending ? 'Trending' : product.is_on_sale ? 'Sale' : '';
+  const onTE = () => { setIsDragging(false); if (Math.abs(dragOffset) > 60) dragOffset < 0 && currentImage < total - 1 ? navigate(currentImage + 1) : dragOffset > 0 && currentImage > 0 ? navigate(currentImage - 1) : null; setDragOffset(0); };
 
   return (
     <div style={{ position: 'relative', background: '#fff', cursor: 'pointer', overflow: 'hidden', transition: 'transform 0.3s' }}
-      className="tn-card"
-      onTouchStart={total > 1 ? onTS : undefined}
-      onTouchMove={total > 1 ? onTM : undefined}
-      onTouchEnd={total > 1 ? onTE : undefined}
+      className="os-card"
+      onTouchStart={total > 1 ? onTS : undefined} onTouchMove={total > 1 ? onTM : undefined} onTouchEnd={total > 1 ? onTE : undefined}
     >
       <Link href={`/product/${slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
         <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f5f5f7', overflow: 'hidden', marginBottom: 6 }}>
@@ -151,15 +136,13 @@ function Card({ product, colorCache, setColorCache }) {
               zIndex: i === currentImage ? 2 : 1
             }} />
           ))}
-          {!isOut && badgeText && (
-            <span style={{ position: 'absolute', top: 4, left: 4, zIndex: 5, padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 8, textTransform: 'uppercase', background: '#fff', color: badgeText === 'Sale' ? '#d70015' : '#1d1d1f', letterSpacing: '0.5px', borderRadius: 1 }}>{badgeText}</span>
+          {!isOut && (
+            <span style={{ position: 'absolute', top: 4, left: 4, zIndex: 5, padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 8, textTransform: 'uppercase', background: '#d70015', color: '#fff', letterSpacing: '0.5px', borderRadius: 1 }}>Sale</span>
           )}
           {isOut && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}><span style={{ background: '#1d1d1f', color: '#fff', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 9, textTransform: 'uppercase', padding: '5px 14px' }}>Sold Out</span></div>}
           {total > 1 && (
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
-              {allImages.map((_, i) => (
-                <span key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(i); }} style={{ width: i === currentImage ? 8 : 6, height: i === currentImage ? 8 : 6, borderRadius: '50%', background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)', cursor: 'pointer', transition: 'all 0.35s ease' }} />
-              ))}
+              {allImages.map((_, i) => <span key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(i); }} style={{ width: i === currentImage ? 8 : 6, height: i === currentImage ? 8 : 6, borderRadius: '50%', background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)', cursor: 'pointer', transition: 'all 0.35s ease' }} />)}
             </div>
           )}
         </div>
@@ -173,8 +156,8 @@ function Card({ product, colorCache, setColorCache }) {
         </div>
       </Link>
       <style jsx>{`
-        .tn-card:active { transform: scale(0.98); }
-        @media (hover: hover) { .tn-card:hover { transform: translateY(-2px); z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.12); } }
+        .os-card:active { transform: scale(0.98); }
+        @media (hover: hover) { .os-card:hover { transform: translateY(-2px); z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.12); } }
       `}</style>
     </div>
   );

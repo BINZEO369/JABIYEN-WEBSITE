@@ -280,7 +280,7 @@ export default function AccountPage() {
                     src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-banner.jpg" 
                     alt="Connected Accounts" 
                     className="banner-img"
-                    onError={(e) => { e.target.style.display = 'none'; }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 </div>
 

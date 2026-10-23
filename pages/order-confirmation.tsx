@@ -243,7 +243,7 @@ export default function OrderConfirmationPage() {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-    fetch(`/api/orders/${encodeURIComponent(orderNumber)}`, {
+    fetch(`/api/orders/${encodeURIComponent(Array.isArray(orderNumber) ? orderNumber[0] : orderNumber)}`, {
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${authToken}`,
@@ -379,7 +379,7 @@ export default function OrderConfirmationPage() {
             src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-order-confirm.jpg"
             alt="Order Confirmed"
             className="checkout-banner"
-            onError={(e) => { e.target.style.display = 'none'; }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
 
