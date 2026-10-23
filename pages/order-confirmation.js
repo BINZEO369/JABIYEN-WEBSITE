@@ -6,6 +6,8 @@ import { useCurrency } from '../components/currency/CurrencyProvider';
 
 const REQUEST_TIMEOUT_MS = 12000;
 const SNAPSHOT_KEY = 'jabiyen_last_order_snapshot';
+const ORDER_ACCESS_KEY = 'jabiyen_order_access_v1';
+const SESSION_KEY = 'jayenware_session';
 
 // ============================================
 // HELPERS — Robust value extraction
@@ -170,6 +172,7 @@ export default function OrderConfirmationPage() {
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const [token, setToken] = useState('');
+  const [authToken, setAuthToken] = useState('');
   const [snapshot, setSnapshot] = useState(null);
 
   const orderNumber = router.query.order;
@@ -189,13 +192,37 @@ export default function OrderConfirmationPage() {
     }
   }, []);
 
-  // Read token from URL hash (#token=xxx)
+  // Read both credentials only from this browser's session/local storage.
+  // No order credential is ever placed in a shareable URL.
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const hash = window.location.hash || '';
-    const match = hash.match(/token=([^&]+)/);
-    if (match) setToken(decodeURIComponent(match[1]));
-  }, []);
+    try {
+      const session = JSON.parse(window.localStorage.getItem(SESSION_KEY) || 'null');
+      if (typeof session?.access_token === 'string') setAuthToken(session.access_token);
+      const orderAccess = JSON.parse(window.sessionStorage.getItem(ORDER_ACCESS_KEY) || 'null');
+      if (orderAccess?.order_number === orderNumber && typeof orderAccess.access_token === 'string') {
+        setToken(orderAccess.access_token);
+      } else if (authToken) {
+        // Backward compatibility for links generated before this fix. The
+        // legacy hash is accepted only alongside a valid login and is removed
+        // from the address bar immediately.
+        const match = (window.location.hash || '').match(/token=([^&]+)/);
+        if (match) {
+          const legacyToken = decodeURIComponent(match[1]);
+          setToken(legacyToken);
+          window.sessionStorage.setItem(ORDER_ACCESS_KEY, JSON.stringify({
+            order_number: orderNumber,
+            access_token: legacyToken,
+            created_at: Date.now(),
+          }));
+          window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+        }
+      }
+    } catch {
+      setAuthToken('');
+      setToken('');
+    }
+  }, [orderNumber, authToken]);
 
   // Fetch order from API
   useEffect(() => {
@@ -206,11 +233,9 @@ export default function OrderConfirmationPage() {
       return;
     }
 
-    if (!token) {
+    if (!authToken || !token) {
       const timer = setTimeout(() => {
-        if (typeof window !== 'undefined' && !window.location.hash.includes('token=')) {
-          setStatus('missing');
-        }
+        setStatus('missing');
       }, 300);
       return () => clearTimeout(timer);
     }
@@ -221,7 +246,8 @@ export default function OrderConfirmationPage() {
     fetch(`/api/orders/${encodeURIComponent(orderNumber)}`, {
       headers: {
         Accept: 'application/json',
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${authToken}`,
+        'X-Order-Access-Token': token,
       },
       cache: 'no-store',
       credentials: 'same-origin',
@@ -251,13 +277,7 @@ export default function OrderConfirmationPage() {
           setError(err?.message || 'We could not load your order.');
         }
 
-        // If snapshot exists, still show what we have
-        if (snapshot && Array.isArray(snapshot.items) && snapshot.items.length > 0) {
-          console.log('[ORDER_CONFIRMATION] Falling back to snapshot');
-          setStatus('ready');
-        } else {
-          setStatus('error');
-        }
+        setStatus('error');
       })
       .finally(() => clearTimeout(timeout));
 
@@ -265,7 +285,7 @@ export default function OrderConfirmationPage() {
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [router.isReady, orderNumber, token, snapshot]);
+  }, [router.isReady, orderNumber, token, authToken]);
 
   // Cart fallback (from snapshot)
   const cartFallback = useMemo(() => snapshot?.items || [], [snapshot]);

@@ -8,7 +8,17 @@ import { useCurrency } from '../components/currency/CurrencyProvider';
 const CHECKOUT_DRAFT_KEY = 'jabiyen_checkout_draft_v1';
 const CHECKOUT_KEYS_KEY = 'jabiyen_pending_checkout_v1';
 const ORDER_SNAPSHOT_KEY = 'jabiyen_last_order_snapshot';
+const ORDER_ACCESS_KEY = 'jabiyen_order_access_v1';
 const DRAFT_TTL_MS = 60 * 60 * 1000;
+
+function readCentralAccessToken() {
+  try {
+    const session = JSON.parse(window.localStorage.getItem('jayenware_session') || 'null');
+    return typeof session?.access_token === 'string' && session.access_token ? session.access_token : null;
+  } catch {
+    return null;
+  }
+}
 
 function getCheckoutKeys() {
   try {
@@ -70,9 +80,15 @@ export default function PaymentPage() {
     setSubmitting(true);
     try {
       const keys = getCheckoutKeys();
+      const centralAccessToken = readCentralAccessToken();
+      if (!centralAccessToken) throw new Error('Please sign in before placing your order.');
       const response = await fetch('/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: `Bearer ${centralAccessToken}`,
+        },
         cache: 'no-store',
         credentials: 'same-origin',
         body: JSON.stringify({
@@ -92,6 +108,11 @@ export default function PaymentPage() {
       // ✅ NEW: Save snapshot BEFORE clearing draft — order-confirmation page uses this as fallback
       try {
         const orderNumber = result.order.order_number;
+        window.sessionStorage.setItem(ORDER_ACCESS_KEY, JSON.stringify({
+          order_number: orderNumber,
+          access_token: result.access_token || keys.access_token,
+          created_at: Date.now(),
+        }));
         window.sessionStorage.setItem(ORDER_SNAPSHOT_KEY, JSON.stringify({
           order_number: orderNumber,
           created_at: Date.now(),
@@ -110,7 +131,7 @@ export default function PaymentPage() {
       clearCart();
       window.sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
       window.sessionStorage.removeItem(CHECKOUT_KEYS_KEY);
-      await router.push(`/order-confirmation?order=${encodeURIComponent(result.order.order_number)}#token=${encodeURIComponent(result.access_token || keys.access_token)}`);
+      await router.push(`/order-confirmation?order=${encodeURIComponent(result.order.order_number)}`);
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Order submission failed. Please try again.');
     } finally {
