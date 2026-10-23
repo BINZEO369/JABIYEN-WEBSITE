@@ -79,8 +79,8 @@ export default function CategoryShowcase() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            const index = parseInt(entry.target.dataset.index);
-            const gender = entry.target.dataset.gender;
+            const index = parseInt((entry.target as HTMLElement).dataset.index);
+            const gender = (entry.target as HTMLElement).dataset.gender;
             setVisibleImages(prev => new Set([...prev, `${gender}-${index}`]));
           }
         });

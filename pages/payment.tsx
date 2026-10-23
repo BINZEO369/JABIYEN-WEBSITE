@@ -162,7 +162,7 @@ export default function PaymentPage() {
             src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-payment.jpg" 
             alt="Secure Payment" 
             className="checkout-banner"
-            onError={(e) => { e.target.style.display = 'none'; }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
 

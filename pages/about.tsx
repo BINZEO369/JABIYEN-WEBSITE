@@ -102,7 +102,7 @@ export default function About() {
       });
     }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
 
-    document.querySelectorAll('[data-animate="true"]').forEach((card, i) => {
+    document.querySelectorAll<HTMLElement>('[data-animate="true"]').forEach((card, i) => {
       card.style.transitionDelay = `${i * 0.08}s`;
       observer.observe(card);
     });

@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+type FooterContent = { [key: string]: string | undefined; logo_url?: string; title?: string; description?: string; address?: string; phone?: string; email?: string; working_hours?: string; copyright_text?: string };
+type FooterSocial = { id?: number | string; platform_name: string; link_url: string; platform_icon?: string; sort_order?: number };
+type FooterLink = { id?: number | string; title?: string; url?: string; link_url?: string; parent_id?: number | string | null; sort_order?: number };
+type FooterData = { content?: FooterContent[]; socialLinks?: FooterSocial[]; menus?: { id?: number | string; title?: string; sort_order?: number; links?: FooterLink[] }[]; paymentMethods?: FooterContent[]; shippingPartners?: FooterContent[]; certifications?: FooterContent[]; appLinks?: FooterContent[]; trustBadges?: FooterContent[]; settings?: FooterContent };
 import { useCurrency } from '../currency/CurrencyProvider';
 
 export default function Footer() {
   const { countries: availableCountries, selectedCountryCode, selectCountry, setAvailableCurrencies } = useCurrency();
-  const [footerData, setFooterData] = useState(null);
+  const [footerData, setFooterData] = useState<FooterData | null>(null);
   const [openMenus, setOpenMenus] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -52,7 +56,7 @@ export default function Footer() {
   const bgColor = settings.background_color || '#0a0a0a';
   const textColor = settings.text_color || '#b0b0b0';
 
-  let mergedContent = {};
+  let mergedContent: FooterContent = {};
   if (Array.isArray(content)) {
     content.forEach(item => { mergedContent = { ...mergedContent, ...item }; });
   }

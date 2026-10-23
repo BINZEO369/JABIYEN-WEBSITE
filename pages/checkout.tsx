@@ -27,7 +27,7 @@ function profileName(profile, user) {
   return name || profile?.display_name || profile?.full_name || user?.user_metadata?.full_name || '';
 }
 
-function addressFields(address, profile = {}) {
+function addressFields(address, profile: { country_code?: string } = {}) {
   const streets = [address?.address_line_1, address?.address_line_2, address?.address_line_3]
     .filter((part) => typeof part === 'string' && part.trim())
     .map((part) => part.trim());
@@ -287,7 +287,7 @@ export default function CheckoutPage() {
             src="https://raw.githubusercontent.com/BINZEO369/auth.binzeo/main/public/images/connected-accounts-checkout.jpg" 
             alt="Secure Checkout" 
             className="checkout-banner"
-            onError={(e) => { e.target.style.display = 'none'; }}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
           />
         </div>
 

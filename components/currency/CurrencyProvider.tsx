@@ -1,11 +1,13 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-const CurrencyContext = createContext(null);
+type CurrencyRow = { country_code: string; currency_code: string; id?: number | string; sort_order?: number; currency_symbol?: string; exchange_rate?: number | string; country_name?: string; is_default?: boolean; is_active?: boolean; currency_name?: string };
+type CurrencyContextValue = { countries: CurrencyRow[]; setAvailableCurrencies: (countries: CurrencyRow[], rates: CurrencyRow[]) => void; selectedCountryCode: string; selectedCurrency: CurrencyRow; selectCountry: (code: string) => void; convertBdt: (amount: number | string) => number; convertToBdt: (amount: number | string) => number; formatMoney: (amount: number | string) => string };
+const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 const STORAGE_KEY = 'jabiyen_country_currency_v1';
-const BDT_FALLBACK = { currency_code: 'BDT', currency_symbol: '৳', exchange_rate: 1, country_code: 'BD', country_name: 'Bangladesh', is_default: true };
+const BDT_FALLBACK: CurrencyRow = { currency_code: 'BDT', currency_symbol: '৳', exchange_rate: 1, country_code: 'BD', country_name: 'Bangladesh', is_default: true };
 
-export function CurrencyProvider({ children }) {
-  const [countries, setCountries] = useState([]);
+export function CurrencyProvider({ children }: { children: ReactNode }) {
+  const [countries, setCountries] = useState<CurrencyRow[]>([]);
   const [selectedCountryCode, setSelectedCountryCode] = useState('BD');
 
   useEffect(() => {
@@ -15,7 +17,7 @@ export function CurrencyProvider({ children }) {
     } catch {}
   }, []);
 
-  const setAvailableCurrencies = useCallback((countryRows, rateRows) => {
+  const setAvailableCurrencies = useCallback((countryRows: CurrencyRow[], rateRows: CurrencyRow[]) => {
     const rates = new Map((Array.isArray(rateRows) ? rateRows : [])
       .filter((rate) => rate?.is_active !== false && Number(rate?.exchange_rate) > 0)
       .map((rate) => [String(rate.currency_code).toUpperCase(), rate]));
@@ -40,7 +42,7 @@ export function CurrencyProvider({ children }) {
     });
   }, []);
 
-  const selectCountry = useCallback((countryCode) => {
+  const selectCountry = useCallback((countryCode: string) => {
     const normalized = String(countryCode || '').trim().toUpperCase();
     if (!countries.some((row) => row.country_code === normalized)) return;
     setSelectedCountryCode(normalized);
@@ -52,21 +54,21 @@ export function CurrencyProvider({ children }) {
   [countries, selectedCountryCode]);
 
   // currency_rates.exchange_rate is the amount of foreign currency equal to 1 BDT.
-  const convertBdt = useCallback((amount) => {
+  const convertBdt = useCallback((amount: number | string) => {
     const value = Number(amount);
     const rate = Number(selectedCurrency.exchange_rate);
     if (!Number.isFinite(value)) return 0;
     return selectedCurrency.currency_code === 'BDT' ? value : value * (Number.isFinite(rate) && rate > 0 ? rate : 1);
   }, [selectedCurrency]);
 
-  const convertToBdt = useCallback((amount) => {
+  const convertToBdt = useCallback((amount: number | string) => {
     const value = Number(amount);
     const rate = Number(selectedCurrency.exchange_rate);
     if (!Number.isFinite(value)) return 0;
     return selectedCurrency.currency_code === 'BDT' ? value : value / (Number.isFinite(rate) && rate > 0 ? rate : 1);
   }, [selectedCurrency]);
 
-  const formatMoney = useCallback((amount) => {
+  const formatMoney = useCallback((amount: number | string) => {
     const value = convertBdt(amount);
     const code = selectedCurrency.currency_code || 'BDT';
     const locale = ({ BDT: 'en-BD', USD: 'en-US', GBP: 'en-GB', EUR: 'de-DE', INR: 'en-IN', SAR: 'en-SA' })[code] || 'en-US';

@@ -132,8 +132,8 @@ export default function AnnouncementBar() {
                 paddingBottom: 1,
                 transition: 'opacity 0.2s ease, border-color 0.2s ease'
               }}
-              onMouseEnter={(e) => { e.target.style.opacity = '1'; }}
-              onMouseLeave={(e) => { e.target.style.opacity = '0.8'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.8'; }}
               >
                 {announcement.link_title}
               </a>
@@ -157,8 +157,8 @@ export default function AnnouncementBar() {
           flexShrink: 0,
           borderRadius: '50%'
         }}
-        onMouseEnter={(e) => { e.target.style.opacity = '0.9'; e.target.style.transform = 'scale(1.08)'; e.target.style.background = 'rgba(255,255,255,0.08)'; }}
-        onMouseLeave={(e) => { e.target.style.opacity = '0.5'; e.target.style.transform = 'scale(1)'; e.target.style.background = 'none'; }}
+        onMouseEnter={(e) => { e.currentTarget.style.opacity = '0.9'; e.currentTarget.style.transform = 'scale(1.08)'; e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.opacity = '0.5'; e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.background = 'none'; }}
         aria-label="Close Announcement">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />

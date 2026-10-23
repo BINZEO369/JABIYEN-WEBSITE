@@ -1,13 +1,14 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+type ToastValue = { showToast: (text: string, type?: 'success' | 'error' | 'info') => void; hideToast: () => void };
+type ToastMessage = { text: string; type: 'success' | 'error' | 'info' };
+const ToastContext = createContext<ToastValue | null>(null);
 
-const ToastContext = createContext();
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toast, setToast] = useState<ToastMessage | null>(null);
 
-export function ToastProvider({ children }) {
-  const [toast, setToast] = useState(null);
-
-  const showToast = useCallback((text, type = 'success') => {
+  const showToast = useCallback((text: string, type: 'success' | 'error' | 'info' = 'success') => {
     setToast({ text, type });
     setTimeout(() => setToast(null), 3000);
   }, []);
@@ -43,7 +44,7 @@ export function ToastProvider({ children }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 10, flexShrink: 0
             }}>
-              {type === 'success' ? '✓' : '!'}
+              {toast.type === 'success' ? '✓' : '!'}
             </span>
             <p style={{
               fontSize: 10, fontWeight: 700, flexGrow: 1,

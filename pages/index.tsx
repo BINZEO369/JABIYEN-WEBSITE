@@ -80,8 +80,8 @@ export default function Home() {
 
   const filterByCategory = (cat) => { setCurrentFilters(prev => ({ ...prev, cat })); setProductsDisplayLimit(12); };
   const applyPriceFilter = () => {
-    const minValue = parseFloat(document.getElementById('filter-min-price')?.value);
-    const maxValue = parseFloat(document.getElementById('filter-max-price')?.value);
+    const minValue = parseFloat((document.getElementById('filter-min-price') as HTMLInputElement | null)?.value);
+    const maxValue = parseFloat((document.getElementById('filter-max-price') as HTMLInputElement | null)?.value);
     const minPrice = Number.isFinite(minValue) && minValue > 0 ? convertToBdt(minValue) : null;
     const maxPrice = Number.isFinite(maxValue) && maxValue > 0 ? convertToBdt(maxValue) : null;
     setCurrentFilters(prev => ({ ...prev, minPrice, maxPrice })); setProductsDisplayLimit(12);
@@ -91,12 +91,12 @@ export default function Home() {
     let sorted = [...getFilteredProducts()];
     if (type === 'price-low') sorted.sort((a, b) => a.price - b.price);
     else if (type === 'price-high') sorted.sort((a, b) => b.price - a.price);
-    else sorted.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    else sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     setCurrentData(prev => ({ ...prev, products: sorted })); setProductsDisplayLimit(12);
   };
   const slideCarousel = (carouselId, direction) => {
     const carousel = document.getElementById(carouselId); if (!carousel) return;
-    const cardWidth = carousel.querySelector('.carousel-card')?.offsetWidth || 260;
+    const cardWidth = carousel.querySelector<HTMLElement>('.carousel-card')?.offsetWidth || 260;
     const gap = parseInt(getComputedStyle(carousel).gap) || 16;
     carousel.scrollBy({ left: direction === 'next' ? (cardWidth + gap) * 2 : -(cardWidth + gap) * 2, behavior: 'smooth' });
   };

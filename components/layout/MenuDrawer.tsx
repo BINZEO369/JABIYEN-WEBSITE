@@ -192,7 +192,7 @@ export default function MenuDrawer({ isOpen, onClose }) {
       <div style={{
         position: 'fixed', top: 0, right: 0,
         width: '100%', maxWidth: 400,
-        height: '100vh', height: '100dvh',
+        height: '100dvh',
         background: 'rgba(255,255,255,0.45)',
         backdropFilter: 'blur(40px) saturate(250%)',
         WebkitBackdropFilter: 'blur(40px) saturate(250%)',

@@ -17,7 +17,7 @@ export default function FeaturedProducts({ products = [] }) {
         const data = await res.json();
         const all = Array.isArray(data) ? data : data?.data || data?.products || [];
         const filtered = all.filter(p => p.is_featured === true || p.is_featured === 1 || p.is_featured === 'true');
-        filtered.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
         setItems(filtered.slice(0, maxProducts));
       } catch (e) {
         const filtered = products.filter(p => p.is_featured === true || p.is_featured === 1);
