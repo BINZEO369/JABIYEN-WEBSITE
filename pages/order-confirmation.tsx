@@ -433,19 +433,6 @@ export default function OrderConfirmationPage() {
                 </div>
               </section>
 
-              <section className="form-block animate-fade-up">
-                <div className="minimal-box">
-                  <p>Pay online securely through BINZEO Central and Stripe.</p>
-                  <a
-                    href={`https://auth-binzeo.vercel.app/payment?order_number=${encodeURIComponent(String(displayOrderNumber))}`}
-                    className="btn-outline"
-                    rel="noreferrer"
-                  >
-                    Pay securely with Stripe
-                  </a>
-                </div>
-              </section>
-
               {/* Product List */}
               {items.length > 0 && (
                 <section className="form-block animate-fade-up">
