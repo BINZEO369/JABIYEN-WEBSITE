@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
-const centralApi = process.env.CENTRAL_API_BASE_URL?.trim().replace(/\/+$/, '');
-if (!centralApi) throw new Error('CENTRAL_API_BASE_URL is required; JABIYEN Website has no local API fallback.');
+// Production uses the Central API by default; Vercel environment variables can
+// still override this for preview/staging deployments.
+const centralApi = (process.env.CENTRAL_API_BASE_URL || 'https://api-binzeo.vercel.app').trim().replace(/\/+$/, '');
 
 const nextConfig = {
   reactStrictMode: true,
