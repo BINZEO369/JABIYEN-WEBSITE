@@ -18,7 +18,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     const mapped = (Array.isArray(countryRows) ? countryRows : []).filter((country) => country?.is_active !== false && country?.country_code && country?.currency_code).map((country) => {
       const rate = rates.get(String(country.currency_code).toUpperCase());
       return rate ? { ...country, currency_code: rate.currency_code, currency_name: rate.currency_name, currency_symbol: rate.currency_symbol, exchange_rate: rate.exchange_rate, is_default: rate.is_default } : null;
-    }).filter((row): row is CurrencyRow => Boolean(row));
+    }).filter(Boolean) as CurrencyRow[];
     setCountries(mapped);
     setSelectedCountryCode((current) => mapped.some((row) => row.country_code === current) ? current : mapped.find((row) => row.currency_code === 'USD')?.country_code || mapped.find((row) => row.is_default)?.country_code || 'US');
   }, []);
