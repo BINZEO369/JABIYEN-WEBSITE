@@ -13,7 +13,7 @@ const productImages = (product) => {
 };
 
 // ============================================
-// PRODUCT CARD — Luxury hierarchy
+// PRODUCT CARD — Clear price hierarchy
 // ============================================
 function ProductCard({ product, index = 0 }) {
   const [imageIndex, setImageIndex] = useState(0);
@@ -59,11 +59,11 @@ function ProductCard({ product, index = 0 }) {
           )}
         </div>
         <div className="product-copy">
-          <h3>{product.title || 'Untitled product'}</h3>
-          <div className="product-price">
-            <span className="product-price-current">{formatMoney(product.price || 0)}</span>
+          <h3 className="product-title">{product.title || 'Untitled product'}</h3>
+          <div className="product-price-row">
+            <span className="price-current">{formatMoney(product.price || 0)}</span>
             {hasSale && (
-              <span className="product-price-old">{formatMoney(product.old_price)}</span>
+              <span className="price-old">{formatMoney(product.old_price)}</span>
             )}
           </div>
         </div>
@@ -531,13 +531,11 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
         .sort-select:focus { border-bottom-color: #555; }
 
-        /* ============================================
-           Product Grid — Luxury spacing
-           ============================================ */
+        /* Product Grid */
         .products-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 24px 14px;
+          gap: 28px 14px;
         }
 
         .product-card {
@@ -619,7 +617,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
 
         /* ============================================
-           PRODUCT COPY — Gucci-style luxury hierarchy
+           PRODUCT COPY — Clear title + price hierarchy
            ============================================ */
         .product-copy {
           padding: 14px 2px 4px 2px;
@@ -628,57 +626,54 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           gap: 10px;
         }
 
-        .product-copy h3 {
+        /* Title — full width, one line, elegant */
+        .product-title {
           margin: 0;
           font-size: 11px;
           font-weight: 400;
           text-transform: uppercase;
-          letter-spacing: 1.2px;
+          letter-spacing: 1px;
           line-height: 1.4;
           color: #1a1a1a;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
-          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          display: block;
         }
 
-        .product-price {
+        /* Price row — current + old, same line, no wrap */
+        .product-price-row {
           display: flex;
           align-items: baseline;
-          gap: 10px;
+          gap: 8px;
+          flex-wrap: nowrap;
           white-space: nowrap;
-          flex-wrap: wrap;
+          min-width: 0;
         }
 
-        .product-price-current {
-          font-size: 13px;
-          font-weight: 500;
+        /* Current price — BIG, bold, black — unmistakably the main price */
+        .price-current {
+          font-size: 14px;
+          font-weight: 600;
           color: #000;
           line-height: 1;
-          letter-spacing: 0.2px;
+          letter-spacing: 0;
           font-variant-numeric: tabular-nums;
+          flex-shrink: 0;
         }
 
-        /* Old price — Gucci-style refined strikethrough */
-        .product-price-old {
-          font-size: 10px;
+        /* Old price — SMALL, muted, strikethrough through the middle */
+        .price-old {
+          font-size: 11px;
           font-weight: 400;
           color: #a0a0a0;
           line-height: 1;
-          letter-spacing: 0.3px;
+          letter-spacing: 0;
           font-variant-numeric: tabular-nums;
-          position: relative;
-          display: inline-block;
-        }
-        .product-price-old::after {
-          content: '';
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 50%;
-          height: 1px;
-          background: #a0a0a0;
-          transform: translateY(-50%);
+          text-decoration: line-through;
+          text-decoration-thickness: 1px;
+          text-decoration-color: #a0a0a0;
+          flex-shrink: 0;
         }
 
         /* States */
@@ -743,24 +738,24 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
           .products-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 32px 20px;
+            gap: 40px 22px;
           }
 
           .product-copy { 
             padding: 18px 2px 4px 2px; 
             gap: 12px; 
           }
-          .product-copy h3 { 
+          .product-title { 
+            font-size: 13px; 
+            letter-spacing: 1.2px;
+          }
+          .product-price-row { gap: 10px; }
+          .price-current { 
+            font-size: 16px; 
+            font-weight: 600;
+          }
+          .price-old { 
             font-size: 12px; 
-            letter-spacing: 1.4px;
-          }
-          .product-price { gap: 12px; }
-          .product-price-current { 
-            font-size: 15px; 
-            font-weight: 500;
-          }
-          .product-price-old { 
-            font-size: 11px; 
           }
           .badge { 
             top: 12px;
@@ -776,7 +771,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         @media (min-width: 1024px) {
           .products-grid {
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 36px 22px;
+            gap: 44px 24px;
           }
         }
 
