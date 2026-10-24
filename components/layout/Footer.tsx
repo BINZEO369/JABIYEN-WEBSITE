@@ -70,6 +70,12 @@ export default function Footer() {
   const workingHours = mergedContent.working_hours || '';
   const copyright = settings.copyright_text || mergedContent.copyright_text || '© JayenWare. All Rights Reserved.';
 
+  const localIconPath = (folder, name) => {
+    const slug = String(name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '');
+    const available = folder === 'social' ? ['facebook', 'instagram', 'youtube', 'x', 'tiktok', 'whatsapp', 'telegram', 'pinterest', 'snapchat'] : [];
+    return available.includes(slug) ? `/icons/${folder}/${slug}.svg` : '';
+  };
+
   // Social Icons
   const getSocialIcon = (platform) => {
     const icons = {
@@ -98,7 +104,7 @@ export default function Footer() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {/* Brand */}
               <div>
-                {logoUrl && <img src={logoUrl} alt={brandTitle} style={{ maxWidth: 140, marginBottom: 16, filter: 'brightness(0.95)' }} className="footer-logo" />}
+                {logoUrl && <img src={logoUrl} alt={brandTitle} style={{ maxWidth: 152, marginBottom: 16 }} className="footer-logo" />}
                 {brandTitle && <h4 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#fff', marginBottom: 8 }}>{brandTitle}</h4>}
                 {brandDesc && <p style={{ fontSize: '0.75rem', opacity: 0.7, maxWidth: 320, lineHeight: 1.6 }}>{brandDesc}</p>}
               </div>
@@ -112,12 +118,12 @@ export default function Footer() {
                       <a key={link.id || link.platform_name} href={link.link_url} target="_blank" rel="noopener noreferrer"
                         style={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          width: 32, height: 32, borderRadius: '50%',
+                          width: 36, height: 36, borderRadius: '50%',
                           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                          color: '#a0a0a0', transition: 'all 0.3s ease'
+                          color: '#fff', transition: 'all 0.3s ease'
                         }}
                         className="social-icon"
-                        dangerouslySetInnerHTML={{ __html: link.platform_icon ? `<img src="${link.platform_icon}" alt="${link.platform_name}" style="width:14px;height:14px"/>` : getSocialIcon(link.platform_name) }}
+                        dangerouslySetInnerHTML={{ __html: `<img src="${localIconPath('social', link.platform_name) || link.platform_icon || ''}" alt="${link.platform_name}" style="width:18px;height:18px;object-fit:contain"/>` }}
                       />
                     ))}
                   </div>
@@ -230,7 +236,7 @@ export default function Footer() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                     {trustBadges.map(badge => (
                       <div key={badge.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.65rem', color: '#999', opacity: 0.6 }}>
-                        {badge.badge_url && <img src={badge.badge_url} alt={badge.title} style={{ maxHeight: 18, filter: 'grayscale(100%) brightness(2)' }} />}
+                        {badge.badge_url && <img src={badge.badge_url} alt={badge.title} style={{ maxHeight: 22, objectFit: 'contain' }} />}
                         <strong>{badge.title}</strong>
                         {badge.subtitle && <span style={{ fontSize: '0.55rem', opacity: 0.5 }}>{badge.subtitle}</span>}
                       </div>
@@ -246,7 +252,7 @@ export default function Footer() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                     {certifications.map(cert => (
                       <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.65rem', color: '#999', opacity: 0.6 }}>
-                        {cert.badge_url && <img src={cert.badge_url} alt={cert.name} style={{ maxHeight: 18, filter: 'grayscale(100%) brightness(2)' }} />}
+                        {cert.badge_url && <img src={cert.badge_url} alt={cert.name} style={{ maxHeight: 22, objectFit: 'contain' }} />}
                         <span>{cert.name}</span>
                       </div>
                     ))}
@@ -261,7 +267,7 @@ export default function Footer() {
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
                     {shippingPartners.map(ship => (
                       <div key={ship.id} title={ship.name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.65rem', color: '#999', opacity: 0.6 }}>
-                        {ship.icon_url && <img src={ship.icon_url} alt={ship.name} style={{ maxHeight: 18, filter: 'grayscale(100%) brightness(2)' }} />}
+                        {ship.icon_url && <img src={ship.icon_url} alt={ship.name} style={{ maxHeight: 22, objectFit: 'contain' }} />}
                         <span>{ship.name}</span>
                       </div>
                     ))}
@@ -275,8 +281,8 @@ export default function Footer() {
                   <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 10 }}>Accepted Payments</h5>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                     {paymentMethods.map(pm => (
-                      <div key={pm.id} title={pm.name} style={{ opacity: 0.5 }}>
-                        {pm.icon_url ? <img src={pm.icon_url} alt={pm.name} style={{ height: 18, filter: 'grayscale(100%) brightness(2)' }} /> : <span style={{ fontSize: '0.7rem' }}>{pm.name}</span>}
+                      <div key={pm.id} title={pm.name} style={{ opacity: 1 }}>
+                        {pm.icon_url ? <img src={pm.icon_url} alt={pm.name} style={{ height: 22, objectFit: 'contain' }} /> : <span style={{ fontSize: '0.7rem' }}>{pm.name}</span>}
                       </div>
                     ))}
                   </div>
@@ -303,7 +309,7 @@ export default function Footer() {
           .footer-grid { grid-template-columns: 1fr 1fr !important; }
         }
         @media (max-width: 767px) {
-          .footer-logo { max-width: 110px !important; }
+          .footer-logo { max-width: 125px !important; }
         }
         .social-icon:hover { background: rgba(255,255,255,0.12) !important; transform: translateY(-2px); border-color: rgba(255,255,255,0.25) !important; color: #fff !important; }
       `}</style>
