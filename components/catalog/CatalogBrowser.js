@@ -13,7 +13,7 @@ const productImages = (product) => {
 };
 
 // ============================================
-// PRODUCT CARD — Title + current price + old price
+// PRODUCT CARD — Title + current + old price
 // ============================================
 function ProductCard({ product, index = 0 }) {
   const [imageIndex, setImageIndex] = useState(0);
@@ -61,9 +61,9 @@ function ProductCard({ product, index = 0 }) {
         <div className="product-copy">
           <h3>{product.title || 'Untitled product'}</h3>
           <div className="product-price">
-            <strong className="product-price-current">{formatMoney(product.price || 0)}</strong>
+            <span className="product-price-current">{formatMoney(product.price || 0)}</span>
             {hasSale && (
-              <del className="product-price-old">{formatMoney(product.old_price)}</del>
+              <span className="product-price-old">{formatMoney(product.old_price)}</span>
             )}
           </div>
         </div>
@@ -95,7 +95,7 @@ function MediaBanner({ entity }) {
 }
 
 // ============================================
-// LOADING SKELETON — No text flash
+// LOADING SKELETON
 // ============================================
 function LoadingSkeleton() {
   return (
@@ -178,13 +178,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         const products = await read(fetch(productsUrl));
 
         const parentSlugValue = isSubcategory
-          ? (
-              entity.category_slug ||
-              entity.categories?.slug ||
-              entity.category?.slug ||
-              categorySlug ||
-              ''
-            )
+          ? (entity.category_slug || entity.categories?.slug || entity.category?.slug || categorySlug || '')
           : slug;
 
         let parent = null;
@@ -375,22 +369,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
         .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-        /* ============================================
-           BASE LAYOUT — No gap from header
-           ============================================ */
-        .catalog-page { 
-          min-height: 100vh; 
-          background: #ffffff; 
-          /* ✅ Gap সম্পূর্ণ সরানো হয়েছে */
-          padding-top: 0; 
-        }
-        
-        .checkout-shell { 
-          width: 100%; 
-          max-width: 600px; 
-          margin: 0 auto; 
-          padding: 0 20px 60px; 
-        }
+        /* Base Layout */
+        .catalog-page { min-height: 100vh; background: #ffffff; padding-top: 0; }
+        .checkout-shell { width: 100%; max-width: 600px; margin: 0 auto; padding: 0 20px 60px; }
 
         .page-title {
           font-size: 28px;
@@ -438,12 +419,10 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         .title-skeleton { width: 200px; height: 32px; margin: 32px auto 24px; }
         .tabs-skeleton {
           display: flex;
-          gap: 12px;
+          gap: 8px;
           margin-bottom: 32px;
-          padding-bottom: 12px;
-          border-bottom: 1px solid #f0f0f0;
         }
-        .tab-skeleton { width: 80px; height: 20px; }
+        .tab-skeleton { width: 80px; height: 32px; }
         .product-skeleton { background: #fafafa; border: 1px solid #f0f0f0; }
         .product-media-skeleton { width: 100%; aspect-ratio: 4/5; }
         .product-copy-skeleton { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
@@ -454,13 +433,15 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           animation: shimmer 1.4s infinite linear;
         }
 
-        /* Subcategory tabs */
+        /* ============================================
+           SUBCATEGORY TABS — Premium bordered pills
+           ============================================ */
         .subcategories {
           display: flex;
-          gap: 0;
+          gap: 8px;
           overflow-x: auto;
           margin: 0 0 24px 0;
-          border-bottom: 1px solid #e5e5e5;
+          padding: 2px 0;
           scrollbar-width: none;
           -webkit-overflow-scrolling: touch;
         }
@@ -468,25 +449,32 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
         .tab-link {
           white-space: nowrap;
-          border: none;
-          background: transparent;
-          color: #888;
-          padding: 12px 14px;
+          border: 1px solid #e8e8e8;
+          background: #ffffff;
+          color: #6b6b6b;
+          padding: 9px 14px;
           text-decoration: none;
-          font-size: 11px;
+          font-size: 10px;
           font-weight: 500;
-          letter-spacing: 1px;
+          letter-spacing: 1.2px;
           text-transform: uppercase;
           cursor: pointer;
-          border-bottom: 2px solid transparent;
-          margin-bottom: -1px;
-          transition: color 0.2s, border-color 0.2s;
-          display: inline-block;
+          border-radius: 0;
+          transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          line-height: 1;
         }
-        .tab-link:hover { color: #000; }
-        .tab-link.active {
+        .tab-link:hover {
           color: #000;
-          border-bottom-color: #000;
+          border-color: #000;
+        }
+        .tab-link.active {
+          background: #000;
+          color: #ffffff;
+          border-color: #000;
           font-weight: 600;
         }
         .tab-link.active:not(a) { cursor: default; }
@@ -630,7 +618,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         .dots button.active { background: #fff; }
 
         /* ============================================
-           Product copy — current price + old price
+           Product copy — refined price hierarchy
            ============================================ */
         .product-copy {
           padding: 12px;
@@ -652,25 +640,29 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
         .product-price {
           display: flex;
-          align-items: center;
-          gap: 6px;
-          flex-wrap: wrap;
+          align-items: baseline;
+          gap: 8px;
+          white-space: nowrap;
         }
 
         .product-price-current {
-          font-size: 12px;
+          font-size: 13px;
           font-weight: 600;
           color: #000;
-          line-height: 1.2;
+          line-height: 1;
+          letter-spacing: -0.2px;
         }
 
-        /* ✅ পুরোনো দাম — ছোট, strikethrough, ধূসর */
+        /* ✅ পুরোনো দাম — ছোট, হালকা, সুন্দর separation */
         .product-price-old {
           font-size: 10px;
           font-weight: 400;
-          color: #999;
+          color: #b8b8b8;
           text-decoration: line-through;
-          line-height: 1.2;
+          text-decoration-thickness: 1px;
+          text-decoration-color: #c8c8c8;
+          line-height: 1;
+          letter-spacing: 0;
         }
 
         /* States */
@@ -707,7 +699,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
         /* Desktop */
         @media (min-width: 768px) {
-          /* ✅ Desktop-এও gap সরানো হয়েছে */
           .catalog-page { padding-top: 0; }
           
           .checkout-shell { max-width: 800px; padding: 0 40px 80px; }
@@ -721,8 +712,15 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
           .title-skeleton { width: 300px; height: 48px; margin: 40px auto 32px; }
 
-          .subcategories { margin-bottom: 32px; }
-          .tab-link { padding: 14px 18px; font-size: 12px; }
+          .subcategories { 
+            gap: 10px;
+            margin-bottom: 32px; 
+          }
+          .tab-link { 
+            padding: 10px 18px; 
+            font-size: 11px; 
+            letter-spacing: 1.3px;
+          }
 
           .section-head { margin-bottom: 28px; }
           .sort-select { font-size: 12px; padding: 8px 24px 8px 0; }
@@ -734,7 +732,8 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
           .product-copy { padding: 14px; gap: 8px; }
           .product-copy h3 { font-size: 13px; }
-          .product-price-current { font-size: 13px; }
+          .product-price { gap: 10px; }
+          .product-price-current { font-size: 15px; }
           .product-price-old { font-size: 11px; }
           .badge { padding: 6px 10px; font-size: 10px; }
 
