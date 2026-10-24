@@ -13,14 +13,13 @@ const productImages = (product) => {
 };
 
 // ============================================
-// PRODUCT CARD — Clear price hierarchy
+// PRODUCT CARD — Title + current price only
 // ============================================
 function ProductCard({ product, index = 0 }) {
   const [imageIndex, setImageIndex] = useState(0);
   const { formatMoney } = useCurrency();
   const images = productImages(product);
   const soldOut = product.is_out_of_stock === true || Number(product.stock) === 0;
-  const hasSale = product.old_price && Number(product.old_price) > Number(product.price || 0);
   const slug = productSlug(product);
 
   return (
@@ -60,12 +59,7 @@ function ProductCard({ product, index = 0 }) {
         </div>
         <div className="product-copy">
           <h3 className="product-title">{product.title || 'Untitled product'}</h3>
-          <div className="product-price-row">
-            <span className="price-current">{formatMoney(product.price || 0)}</span>
-            {hasSale && (
-              <span className="price-old">{formatMoney(product.old_price)}</span>
-            )}
-          </div>
+          <span className="price-current">{formatMoney(product.price || 0)}</span>
         </div>
       </Link>
     </article>
@@ -617,7 +611,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
 
         /* ============================================
-           PRODUCT COPY — Clear title + price hierarchy
+           PRODUCT COPY — Title + current price only
            ============================================ */
         .product-copy {
           padding: 14px 2px 4px 2px;
@@ -626,7 +620,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           gap: 10px;
         }
 
-        /* Title — full width, one line, elegant */
+        /* Title */
         .product-title {
           margin: 0;
           font-size: 11px;
@@ -641,17 +635,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           display: block;
         }
 
-        /* Price row — current + old, same line, no wrap */
-        .product-price-row {
-          display: flex;
-          align-items: baseline;
-          gap: 8px;
-          flex-wrap: nowrap;
-          white-space: nowrap;
-          min-width: 0;
-        }
-
-        /* Current price — BIG, bold, black — unmistakably the main price */
+        /* Current price */
         .price-current {
           font-size: 14px;
           font-weight: 600;
@@ -659,21 +643,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           line-height: 1;
           letter-spacing: 0;
           font-variant-numeric: tabular-nums;
-          flex-shrink: 0;
-        }
-
-        /* Old price — SMALL, muted, strikethrough through the middle */
-        .price-old {
-          font-size: 11px;
-          font-weight: 400;
-          color: #a0a0a0;
-          line-height: 1;
-          letter-spacing: 0;
-          font-variant-numeric: tabular-nums;
-          text-decoration: line-through;
-          text-decoration-thickness: 1px;
-          text-decoration-color: #a0a0a0;
-          flex-shrink: 0;
+          display: block;
         }
 
         /* States */
@@ -749,13 +719,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
             font-size: 13px; 
             letter-spacing: 1.2px;
           }
-          .product-price-row { gap: 10px; }
           .price-current { 
             font-size: 16px; 
             font-weight: 600;
-          }
-          .price-old { 
-            font-size: 12px; 
           }
           .badge { 
             top: 12px;
