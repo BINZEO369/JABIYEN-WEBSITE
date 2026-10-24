@@ -13,13 +13,14 @@ const productImages = (product) => {
 };
 
 // ============================================
-// PRODUCT CARD — Only title + price
+// PRODUCT CARD — Title + current price + old price
 // ============================================
 function ProductCard({ product, index = 0 }) {
   const [imageIndex, setImageIndex] = useState(0);
   const { formatMoney } = useCurrency();
   const images = productImages(product);
   const soldOut = product.is_out_of_stock === true || Number(product.stock) === 0;
+  const hasSale = product.old_price && Number(product.old_price) > Number(product.price || 0);
   const slug = productSlug(product);
 
   return (
@@ -59,7 +60,12 @@ function ProductCard({ product, index = 0 }) {
         </div>
         <div className="product-copy">
           <h3>{product.title || 'Untitled product'}</h3>
-          <strong className="product-price">{formatMoney(product.price || 0)}</strong>
+          <div className="product-price">
+            <strong className="product-price-current">{formatMoney(product.price || 0)}</strong>
+            {hasSale && (
+              <del className="product-price-old">{formatMoney(product.old_price)}</del>
+            )}
+          </div>
         </div>
       </Link>
     </article>
@@ -171,7 +177,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         const entity = await read(fetch(entityUrl));
         const products = await read(fetch(productsUrl));
 
-        // ============ Resolve parent category slug (defensive) ============
         const parentSlugValue = isSubcategory
           ? (
               entity.category_slug ||
@@ -182,7 +187,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
             )
           : slug;
 
-        // ============ Fetch parent category ============
         let parent = null;
         if (isSubcategory && parentSlugValue) {
           try {
@@ -194,7 +198,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           parent = entity;
         }
 
-        // ============ Fetch subcategories (siblings for sub, children for cat) ============
         let subcategories = [];
         if (parentSlugValue) {
           try {
@@ -205,7 +208,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           }
         }
 
-        // ============ Fallback: if subcategory mode with no siblings, show current ============
         if (isSubcategory && subcategories.length === 0 && entity?.id) {
           subcategories = [entity];
         }
@@ -254,7 +256,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
   const currentSubSlug = isSubcategory ? slugify(entity?.slug || slug) : '';
   const title = `${entity?.name || 'Collection'} | JABIYEN`;
 
-  // ============ Loading state — pure skeleton, no text ============
   if (state.loading) {
     return (
       <>
@@ -266,7 +267,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
     );
   }
 
-  // ============ Error state ============
   if (state.error || !state.entity) {
     return (
       <>
@@ -278,7 +278,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
     );
   }
 
-  // ============ Ready state ============
   return (
     <>
       <Head>
@@ -370,16 +369,28 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
       `}</style>
 
       <style jsx>{`
-        /* Animations */
         @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
         .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
-        /* Base Layout */
-        .catalog-page { min-height: 100vh; background: #ffffff; padding-top: 80px; }
-        .checkout-shell { width: 100%; max-width: 600px; margin: 0 auto; padding: 0 20px 60px; }
+        /* ============================================
+           BASE LAYOUT — No gap from header
+           ============================================ */
+        .catalog-page { 
+          min-height: 100vh; 
+          background: #ffffff; 
+          /* ✅ Gap সম্পূর্ণ সরানো হয়েছে */
+          padding-top: 0; 
+        }
+        
+        .checkout-shell { 
+          width: 100%; 
+          max-width: 600px; 
+          margin: 0 auto; 
+          padding: 0 20px 60px; 
+        }
 
         .page-title {
           font-size: 28px;
@@ -618,7 +629,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
         .dots button.active { background: #fff; }
 
-        /* Simplified product copy — only title + price */
+        /* ============================================
+           Product copy — current price + old price
+           ============================================ */
         .product-copy {
           padding: 12px;
           display: flex;
@@ -636,10 +649,28 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           overflow: hidden;
           text-overflow: ellipsis;
         }
+
         .product-price {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
+        }
+
+        .product-price-current {
           font-size: 12px;
           font-weight: 600;
           color: #000;
+          line-height: 1.2;
+        }
+
+        /* ✅ পুরোনো দাম — ছোট, strikethrough, ধূসর */
+        .product-price-old {
+          font-size: 10px;
+          font-weight: 400;
+          color: #999;
+          text-decoration: line-through;
+          line-height: 1.2;
         }
 
         /* States */
@@ -676,7 +707,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
         /* Desktop */
         @media (min-width: 768px) {
-          .catalog-page { padding-top: 120px; }
+          /* ✅ Desktop-এও gap সরানো হয়েছে */
+          .catalog-page { padding-top: 0; }
+          
           .checkout-shell { max-width: 800px; padding: 0 40px 80px; }
           .page-title { font-size: 42px; margin: 40px 0 32px 0; }
           .section-heading { font-size: 13px; }
@@ -701,7 +734,8 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
           .product-copy { padding: 14px; gap: 8px; }
           .product-copy h3 { font-size: 13px; }
-          .product-price { font-size: 13px; }
+          .product-price-current { font-size: 13px; }
+          .product-price-old { font-size: 11px; }
           .badge { padding: 6px 10px; font-size: 10px; }
 
           .minimal-box { padding: 32px; }
