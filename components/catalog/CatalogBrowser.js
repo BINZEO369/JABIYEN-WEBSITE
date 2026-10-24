@@ -13,7 +13,7 @@ const productImages = (product) => {
 };
 
 // ============================================
-// PRODUCT CARD — Title + current + old price
+// PRODUCT CARD — Luxury hierarchy
 // ============================================
 function ProductCard({ product, index = 0 }) {
   const [imageIndex, setImageIndex] = useState(0);
@@ -73,7 +73,7 @@ function ProductCard({ product, index = 0 }) {
 }
 
 // ============================================
-// BANNER — Full width, no text
+// BANNER
 // ============================================
 function MediaBanner({ entity }) {
   const video = cleanMedia(entity?.video_url);
@@ -425,7 +425,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         .tab-skeleton { width: 80px; height: 32px; }
         .product-skeleton { background: #fafafa; border: 1px solid #f0f0f0; }
         .product-media-skeleton { width: 100%; aspect-ratio: 4/5; }
-        .product-copy-skeleton { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .product-copy-skeleton { padding: 16px 0; display: flex; flex-direction: column; gap: 10px; }
         .line-skeleton { height: 12px; }
         .shimmer {
           background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
@@ -433,9 +433,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           animation: shimmer 1.4s infinite linear;
         }
 
-        /* ============================================
-           SUBCATEGORY TABS — Premium bordered pills
-           ============================================ */
+        /* Subcategory tabs */
         .subcategories {
           display: flex;
           gap: 8px;
@@ -533,22 +531,19 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
         .sort-select:focus { border-bottom-color: #555; }
 
-        /* Product Grid */
+        /* ============================================
+           Product Grid — Luxury spacing
+           ============================================ */
         .products-grid {
           display: grid;
           grid-template-columns: repeat(2, minmax(0, 1fr));
-          gap: 16px;
+          gap: 24px 14px;
         }
 
         .product-card {
-          background: #fafafa;
-          border: 1px solid #f0f0f0;
+          background: #ffffff;
+          border: none;
           overflow: hidden;
-          transition: transform 0.25s ease, border-color 0.25s ease;
-        }
-        .product-card:hover {
-          transform: translateY(-2px);
-          border-color: #d0d0d0;
         }
 
         .product-link {
@@ -560,7 +555,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         .product-media {
           position: relative;
           aspect-ratio: 4/5;
-          background: #ffffff;
+          background: #f7f7f7;
           overflow: hidden;
         }
         .product-media img {
@@ -568,10 +563,10 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           height: 100%;
           object-fit: cover;
           display: block;
-          transition: transform 0.5s ease;
+          transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .product-card:hover .product-media img {
-          transform: scale(1.035);
+          transform: scale(1.04);
         }
 
         .media-empty {
@@ -579,27 +574,29 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           display: grid;
           place-items: center;
           color: #ccc;
-          font-size: 11px;
-          font-weight: 600;
-          letter-spacing: 2px;
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 3px;
+          background: #f7f7f7;
         }
 
         .badge {
           position: absolute;
-          top: 8px;
-          left: 8px;
-          background: #000;
-          color: #fff;
-          padding: 5px 8px;
-          font-size: 9px;
+          top: 10px;
+          left: 10px;
+          background: #ffffff;
+          color: #000;
+          padding: 5px 9px;
+          font-size: 8px;
           font-weight: 600;
           text-transform: uppercase;
-          letter-spacing: 1px;
+          letter-spacing: 1.2px;
+          border: 1px solid #000;
         }
 
         .dots {
           position: absolute;
-          bottom: 10px;
+          bottom: 12px;
           left: 0;
           right: 0;
           display: flex;
@@ -607,62 +604,81 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           gap: 5px;
         }
         .dots button {
-          width: 6px;
-          height: 6px;
+          width: 5px;
+          height: 5px;
           padding: 0;
           border: 0;
           border-radius: 50%;
-          background: rgba(255,255,255,.5);
+          background: rgba(0,0,0,.25);
           cursor: pointer;
         }
-        .dots button.active { background: #fff; }
+        .dots button.active { 
+          background: #000;
+          width: 14px;
+          border-radius: 3px;
+        }
 
         /* ============================================
-           Product copy — refined price hierarchy
+           PRODUCT COPY — Gucci-style luxury hierarchy
            ============================================ */
         .product-copy {
-          padding: 12px;
+          padding: 14px 2px 4px 2px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 10px;
         }
+
         .product-copy h3 {
           margin: 0;
-          font-size: 12px;
-          font-weight: 500;
+          font-size: 11px;
+          font-weight: 400;
           text-transform: uppercase;
-          letter-spacing: 0.5px;
-          line-height: 1.3;
+          letter-spacing: 1.2px;
+          line-height: 1.4;
+          color: #1a1a1a;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
 
         .product-price {
           display: flex;
           align-items: baseline;
-          gap: 8px;
+          gap: 10px;
           white-space: nowrap;
+          flex-wrap: wrap;
         }
 
         .product-price-current {
           font-size: 13px;
-          font-weight: 600;
+          font-weight: 500;
           color: #000;
           line-height: 1;
-          letter-spacing: -0.2px;
+          letter-spacing: 0.2px;
+          font-variant-numeric: tabular-nums;
         }
 
-        /* ✅ পুরোনো দাম — ছোট, হালকা, সুন্দর separation */
+        /* Old price — Gucci-style refined strikethrough */
         .product-price-old {
           font-size: 10px;
           font-weight: 400;
-          color: #b8b8b8;
-          text-decoration: line-through;
-          text-decoration-thickness: 1px;
-          text-decoration-color: #c8c8c8;
+          color: #a0a0a0;
           line-height: 1;
-          letter-spacing: 0;
+          letter-spacing: 0.3px;
+          font-variant-numeric: tabular-nums;
+          position: relative;
+          display: inline-block;
+        }
+        .product-price-old::after {
+          content: '';
+          position: absolute;
+          left: 0;
+          right: 0;
+          top: 50%;
+          height: 1px;
+          background: #a0a0a0;
+          transform: translateY(-50%);
         }
 
         /* States */
@@ -727,15 +743,31 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
           .products-grid {
             grid-template-columns: repeat(3, minmax(0, 1fr));
-            gap: 20px;
+            gap: 32px 20px;
           }
 
-          .product-copy { padding: 14px; gap: 8px; }
-          .product-copy h3 { font-size: 13px; }
-          .product-price { gap: 10px; }
-          .product-price-current { font-size: 15px; }
-          .product-price-old { font-size: 11px; }
-          .badge { padding: 6px 10px; font-size: 10px; }
+          .product-copy { 
+            padding: 18px 2px 4px 2px; 
+            gap: 12px; 
+          }
+          .product-copy h3 { 
+            font-size: 12px; 
+            letter-spacing: 1.4px;
+          }
+          .product-price { gap: 12px; }
+          .product-price-current { 
+            font-size: 15px; 
+            font-weight: 500;
+          }
+          .product-price-old { 
+            font-size: 11px; 
+          }
+          .badge { 
+            top: 12px;
+            left: 12px;
+            padding: 6px 10px; 
+            font-size: 9px; 
+          }
 
           .minimal-box { padding: 32px; }
           .minimal-box p { font-size: 14px; }
@@ -744,7 +776,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         @media (min-width: 1024px) {
           .products-grid {
             grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 20px;
+            gap: 36px 22px;
           }
         }
 
