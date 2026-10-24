@@ -75,7 +75,7 @@ export default function CatalogBrowser({ mode = 'category', slug }) {
       try {
         const entityUrl = isSubcategory ? `/api/subcategories/${encodeURIComponent(slug)}` : `/api/categories/${encodeURIComponent(slug)}`;
         const productsUrl = isSubcategory ? `/api/subcategories/${encodeURIComponent(slug)}/products` : `/api/categories/${encodeURIComponent(slug)}/products`;
-        const read = async (response) => { const payload = await response.json().catch(() => null); if (!response.ok) throw new Error(payload?.error || `Request failed (${response.status})`); return payload; };
+        const read = async (responsePromise) => { const response = await responsePromise; const payload = await response.json().catch(() => null); if (!response.ok) throw new Error(payload?.error || `Request failed (${response.status})`); return payload; };
         const entity = await read(fetch(entityUrl));
         const products = await read(fetch(productsUrl));
         const related = isSubcategory
