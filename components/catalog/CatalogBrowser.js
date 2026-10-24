@@ -63,7 +63,7 @@ function MediaHero({ entity, eyebrow }) {
 function LoadingState() { return <div className="catalog-state"><div className="catalog-spinner" /><p>Loading collection…</p></div>; }
 function ErrorState({ message }) { return <div className="catalog-state error"><h1>Collection unavailable</h1><p>{message || 'This collection could not be loaded right now.'}</p><Link href="/">Return to home</Link></div>; }
 
-export default function CatalogBrowser({ mode = 'category', slug }) {
+export default function CatalogBrowser({ mode = 'category', slug, categorySlug = '' }) {
   const { selectedCurrency } = useCurrency();
   const [state, setState] = useState({ loading: true, entity: null, parent: null, subcategories: [], products: [], error: '' });
   const [sort, setSort] = useState('newest');
@@ -101,10 +101,10 @@ export default function CatalogBrowser({ mode = 'category', slug }) {
   if (state.loading) return <><Head><title>Loading collection | JABIYEN</title></Head><LoadingState /></>;
   if (state.error || !state.entity) return <><Head><title>Collection unavailable | JABIYEN</title></Head><ErrorState message={state.error} /></>;
   const entity = state.entity;
-  const parentSlug = isSubcategory ? slugify(entity.category_slug || state.parent?.slug || '') : slugify(entity.slug || slug);
+  const parentSlug = isSubcategory ? slugify(categorySlug || entity.category_slug || state.parent?.slug || '') : slugify(entity.slug || slug);
   const title = `${entity.name || 'Collection'} | JABIYEN`;
   return <>
-    <Head><title>{title}</title><meta name="description" content={entity.meta_description || `Explore ${entity.name || 'JABIYEN collection'} products.`} /><link rel="canonical" href={`https://jabiyen-website.vercel.app/${isSubcategory ? `subcategory/${slug}` : `category/${slug}`}`} /></Head>
+    <Head><title>{title}</title><meta name="description" content={entity.meta_description || `Explore ${entity.name || 'JABIYEN collection'} products.`} /><link rel="canonical" href={`https://jabiyen-website.vercel.app/${isSubcategory ? `category/${parentSlug}/${slug}` : `category/${slug}`}`} /></Head>
     <main className="catalog-page">
       <div className="catalog-breadcrumb"><Link href="/">Home</Link><span>/</span>{isSubcategory && <><Link href={`/category/${parentSlug}`}>{state.parent?.name || 'Category'}</Link><span>/</span></>}<strong>{entity.name}</strong></div>
       <MediaHero entity={entity} eyebrow={isSubcategory ? 'Subcategory collection' : 'Category collection'} />
