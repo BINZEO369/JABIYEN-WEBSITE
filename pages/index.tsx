@@ -13,7 +13,7 @@ import LimitedEdition from '../components/home/LimitedEdition';
 import { useCurrency } from '../components/currency/CurrencyProvider';
 
 export default function Home() {
-  const { formatMoney, convertToBdt, selectedCurrency } = useCurrency();
+  const { formatMoney, convertToUsd, selectedCurrency } = useCurrency();
   const [currentData, setCurrentData] = useState({
     products: [], categories: [], news: [], hero: [], heroVideos: [], hero_secondary: []
   });
@@ -82,8 +82,8 @@ export default function Home() {
   const applyPriceFilter = () => {
     const minValue = parseFloat((document.getElementById('filter-min-price') as HTMLInputElement | null)?.value);
     const maxValue = parseFloat((document.getElementById('filter-max-price') as HTMLInputElement | null)?.value);
-    const minPrice = Number.isFinite(minValue) && minValue > 0 ? convertToBdt(minValue) : null;
-    const maxPrice = Number.isFinite(maxValue) && maxValue > 0 ? convertToBdt(maxValue) : null;
+    const minPrice = Number.isFinite(minValue) && minValue > 0 ? convertToUsd(minValue) : null;
+    const maxPrice = Number.isFinite(maxValue) && maxValue > 0 ? convertToUsd(maxValue) : null;
     setCurrentFilters(prev => ({ ...prev, minPrice, maxPrice })); setProductsDisplayLimit(12);
   };
   const loadMoreProducts = () => setProductsDisplayLimit(prev => prev + productsLoadMoreIncrement);
@@ -122,7 +122,7 @@ export default function Home() {
           "@context":"https://schema.org","@type":"Website","name":"Jayenware","alternateName":"JAYENWARE SHOP",
           "url":"https://jabiyen-website.vercel.app","logo":"https://jabiyen-website.vercel.app/logo.png",
           "description":"Premium lifestyle products and quality cotton T-shirts store by BINZEO.",
-          "priceRange":"৳450 - ৳5000","image":"https://jabiyen-website.vercel.app/logo.png",
+          "priceRange":"$10 - $100","image":"https://jabiyen-website.vercel.app/logo.png",
           "address":{"@type":"PostalAddress","addressLocality":"Dhaka","addressRegion":"Dhaka Division","addressCountry":"BD"},
           "contactPoint":{"@type":"ContactPoint","contactType":"customer service","url":"https://m.me/861762253694814"},
           "sameAs":["https://www.facebook.com/jayenware","https://www.instagram.com/jayenware","https://www.twitter.com/jayenware"],
