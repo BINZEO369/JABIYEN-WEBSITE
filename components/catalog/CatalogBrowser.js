@@ -73,37 +73,25 @@ function ProductCard({ product, index = 0 }) {
 }
 
 // ============================================
-// HERO — Matches checkout banner style
+// BANNER — Full-width, no text overlay (like checkout)
 // ============================================
-function MediaHero({ entity, eyebrow }) {
+function MediaBanner({ entity }) {
   const video = cleanMedia(entity?.video_url);
   const image = cleanMedia(entity?.image_url);
+  
   return (
-    <section className="hero animate-fade-up">
-      <div className="hero-media">
-        {video ? (
-          <video src={video} poster={image || undefined} autoPlay muted loop playsInline />
-        ) : image ? (
-          <img src={image} alt={entity?.name || eyebrow} />
-        ) : (
-          <div className="hero-fallback">
-            <span>JABIYEN</span>
-            <small>{entity?.name || eyebrow}</small>
-          </div>
-        )}
-        <div className="hero-shade" />
-      </div>
-      <div className="hero-content">
-        <span className="eyebrow">{eyebrow}</span>
-        <h1>{entity?.name || 'Collection'}</h1>
-        <p>{entity?.meta_description || entity?.keywords || `Explore the ${entity?.name || 'JABIYEN'} collection, selected for everyday expression and modern wardrobe essentials.`}</p>
-        {(entity?.image_cta_title || entity?.video_cta_title) && (
-          <a className="hero-cta" href={entity.image_cta_link || entity.video_cta_link || '#'}>
-            {entity.image_cta_title || entity.video_cta_title}
-          </a>
-        )}
-      </div>
-    </section>
+    <div className="banner-wrapper">
+      {video ? (
+        <video src={video} poster={image || undefined} autoPlay muted loop playsInline />
+      ) : image ? (
+        <img src={image} alt={entity?.name || 'Collection'} />
+      ) : (
+        <div className="banner-fallback">
+          <span>JABIYEN</span>
+          {entity?.name && <small>{entity.name}</small>}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -220,25 +208,12 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
       <div className="catalog-page">
         
-        {/* Full-width edge-to-edge banner (hero) */}
-        <MediaHero entity={entity} eyebrow={isSubcategory ? 'Subcategory Collection' : 'Category Collection'} />
+        {/* Full-width banner — no text, no gap from header */}
+        <MediaBanner entity={entity} />
 
         <div className="checkout-shell">
           
-          {/* Breadcrumb — minimal */}
-          <nav className="breadcrumb animate-fade-up" aria-label="Breadcrumb">
-            <Link href="/">Home</Link>
-            <span>/</span>
-            {isSubcategory && (
-              <>
-                <Link href={`/category/${parentSlug}`}>{state.parent?.name || 'Category'}</Link>
-                <span>/</span>
-              </>
-            )}
-            <strong>{entity.name}</strong>
-          </nav>
-
-          {/* Page Title */}
+          {/* Only category name remains */}
           <h1 className="page-title animate-fade-up">{entity.name || 'Collection'}</h1>
 
           {/* Subcategory tabs (only for category mode) */}
@@ -264,10 +239,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           {/* Products Section */}
           <section className="products-section">
             
-            {/* Section head — search + sort */}
             <div className="section-head animate-fade-up">
               <h2 className="section-heading">
-                {isSubcategory ? `${entity.name} Pieces` : `${entity.name} Collection`}
+                {isSubcategory ? `Pieces` : `Products`}
                 <span className="item-count-label">({visibleProducts.length})</span>
               </h2>
               
@@ -287,7 +261,6 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
               </div>
             </div>
 
-            {/* Products Grid */}
             {visibleProducts.length ? (
               <div className="products-grid">
                 {visibleProducts.map((product, index) => (
@@ -321,12 +294,13 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
            ANIMATIONS
            ============================================ */
         @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
         .animate-fade-up { animation: fadeUp 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
         /* ============================================
-           BASE LAYOUT
+           BASE LAYOUT — Matches checkout
            ============================================ */
         .catalog-page { min-height: 100vh; background: #ffffff; padding-top: 80px; }
 
@@ -368,117 +342,44 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
 
         /* ============================================
-           BREADCRUMB
+           BANNER — Full-width, no text overlay, 140px/320px
            ============================================ */
-        .breadcrumb { 
-          display: flex; 
-          align-items: center; 
-          gap: 8px; 
-          font-size: 11px; 
-          color: #888; 
-          margin-bottom: 8px;
-          padding-top: 20px;
-        }
-        .breadcrumb a { 
-          color: #000; 
-          text-decoration: none; 
-          font-weight: 500;
-        }
-        .breadcrumb a:hover { opacity: 0.6; }
-        .breadcrumb strong { 
-          font-weight: 600; 
-          color: #000;
-        }
-
-        /* ============================================
-           HERO — Full width edge-to-edge banner
-           ============================================ */
-        .hero { 
+        .banner-wrapper { 
           width: 100%; 
-          min-height: 320px; 
-          position: relative; 
+          height: 140px; 
           overflow: hidden; 
           background: #f5f5f5;
+          position: relative;
         }
-        .hero-media, 
-        .hero-media img, 
-        .hero-media video { 
-          position: absolute; 
-          inset: 0; 
+        .banner-wrapper img,
+        .banner-wrapper video { 
           width: 100%; 
           height: 100%; 
           object-fit: cover; 
+          display: block;
+          animation: fadeIn 1s ease both;
         }
-        .hero-shade { 
-          position: absolute; 
-          inset: 0; 
-          background: linear-gradient(90deg, rgba(0,0,0,.65), rgba(0,0,0,.1) 75%); 
+        .banner-fallback {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          background: linear-gradient(135deg, #1a1a1a, #333);
+          color: #fff;
+          animation: fadeIn 1s ease both;
         }
-        .hero-fallback { 
-          height: 100%; 
-          display: flex; 
-          align-items: center; 
-          justify-content: center; 
-          flex-direction: column; 
-          color: #fff; 
-          background: linear-gradient(135deg, #1a1a1a, #333); 
+        .banner-fallback span {
+          font-size: 20px;
+          font-weight: 300;
+          letter-spacing: 8px;
         }
-        .hero-fallback span { 
-          font: 700 clamp(40px, 8vw, 90px) inherit; 
-          letter-spacing: 0.18em; 
-        }
-        .hero-fallback small { 
-          font-size: 11px; 
-          letter-spacing: 2px; 
-          text-transform: uppercase; 
-          margin-top: 8px;
+        .banner-fallback small {
+          font-size: 10px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
           opacity: 0.7;
-        }
-        .hero-content { 
-          position: relative; 
-          z-index: 1; 
-          max-width: 600px; 
-          padding: clamp(60px, 10vw, 100px) clamp(24px, 6vw, 60px); 
-          color: #fff; 
-        }
-        .eyebrow { 
-          font-size: 11px; 
-          font-weight: 600; 
-          letter-spacing: 1.5px; 
-          text-transform: uppercase; 
-          color: rgba(255, 255, 255, 0.7); 
-        }
-        .hero-content h1 { 
-          font-size: clamp(32px, 5vw, 56px); 
-          font-weight: 300; 
-          letter-spacing: 1px; 
-          line-height: 1.05; 
-          margin: 14px 0 16px; 
-          text-transform: uppercase;
-        }
-        .hero-content p { 
-          max-width: 440px; 
-          margin: 0; 
-          color: rgba(255, 255, 255, 0.82); 
-          font-size: 13px; 
-          line-height: 1.7; 
-        }
-        .hero-cta { 
-          display: inline-flex; 
-          margin-top: 24px; 
-          padding: 14px 28px; 
-          border: 1px solid rgba(255, 255, 255, 0.9); 
-          color: #fff; 
-          text-decoration: none; 
-          font-size: 11px; 
-          font-weight: 500; 
-          letter-spacing: 2px; 
-          text-transform: uppercase;
-          transition: all 0.2s;
-        }
-        .hero-cta:hover { 
-          background: #fff; 
-          color: #000; 
         }
 
         /* ============================================
@@ -756,11 +657,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           .section-heading { font-size: 13px; margin-bottom: 20px; }
           .item-count-label { font-size: 13px; }
           
-          .hero { min-height: 400px; }
-          .hero-content h1 { font-size: 56px; }
-          .hero-content p { font-size: 15px; }
-          
-          .breadcrumb { font-size: 12px; padding-top: 28px; }
+          .banner-wrapper { height: 320px; }
+          .banner-fallback span { font-size: 32px; letter-spacing: 12px; }
+          .banner-fallback small { font-size: 12px; }
           
           .subcategories { margin-bottom: 40px; }
           .subcategories button, 
@@ -807,10 +706,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .animate-fade-up, .shimmer { animation: none !important; }
+          .animate-fade-up, .shimmer, .banner-wrapper img, .banner-wrapper video, .banner-fallback { animation: none !important; }
           .product-media img, 
           .product-card, 
-          .hero-cta, 
           .btn-outline,
           .subcategories button,
           .subcategories a,
