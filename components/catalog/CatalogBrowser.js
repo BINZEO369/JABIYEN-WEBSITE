@@ -88,7 +88,6 @@ function MediaBanner({ entity }) {
       ) : (
         <div className="banner-fallback">
           <span>JABIYEN</span>
-          {entity?.name && <small>{entity.name}</small>}
         </div>
       )}
     </div>
@@ -121,55 +120,118 @@ function ErrorState({ message }) {
 }
 
 export default function CatalogBrowser({ mode = 'category', slug, categorySlug = '' }) {
-  const { selectedCurrency } = useCurrency();
-  const [state, setState] = useState({ loading: true, entity: null, parent: null, subcategories: [], products: [], error: '' });
+  const [state, setState] = useState({ 
+    loading: true, 
+    entity: null, 
+    parent: null, 
+    subcategories: [], 
+    products: [], 
+    error: '' 
+  });
   const [sort, setSort] = useState('newest');
-  const [query, setQuery] = useState('');
-  const [activeSubcategory, setActiveSubcategory] = useState('all');
   const isSubcategory = mode === 'subcategory';
 
   useEffect(() => {
     let cancelled = false;
+
     async function load() {
       setState((current) => ({ ...current, loading: true, error: '' }));
+
       try {
-        const entityUrl = isSubcategory ? `/api/subcategories/${encodeURIComponent(slug)}` : `/api/categories/${encodeURIComponent(slug)}`;
-        const productsUrl = isSubcategory ? `/api/subcategories/${encodeURIComponent(slug)}/products` : `/api/categories/${encodeURIComponent(slug)}/products`;
+        const entityUrl = isSubcategory 
+          ? `/api/subcategories/${encodeURIComponent(slug)}` 
+          : `/api/categories/${encodeURIComponent(slug)}`;
+        const productsUrl = isSubcategory 
+          ? `/api/subcategories/${encodeURIComponent(slug)}/products` 
+          : `/api/categories/${encodeURIComponent(slug)}/products`;
+
         const read = async (responsePromise) => { 
           const response = await responsePromise; 
           const payload = await response.json().catch(() => null); 
           if (!response.ok) throw new Error(payload?.error || `Request failed (${response.status})`); 
           return payload; 
         };
+
         const entity = await read(fetch(entityUrl));
         const products = await read(fetch(productsUrl));
-        const related = isSubcategory
-          ? await read(fetch(`/api/categories/${encodeURIComponent(entity.category_slug || entity.categories?.slug || '')}`))
-          : await read(fetch(`/api/subcategories?category_slug=${encodeURIComponent(slug)}`));
+
+        let parent = null;
+        let subcategories = [];
+
+        if (isSubcategory) {
+          // Fetch parent category + sibling subcategories
+          const parentSlugValue = entity.category_slug || entity.categories?.slug || entity.category?.slug || '';
+
+          if (parentSlugValue) {
+            try {
+              parent = await read(fetch(`/api/categories/${encodeURIComponent(parentSlugValue)}`));
+            } catch (err) {
+              console.warn('[CatalogBrowser] Failed to load parent category:', err);
+            }
+
+            try {
+              const siblings = await read(fetch(`/api/subcategories?category_slug=${encodeURIComponent(parentSlugValue)}`));
+              subcategories = Array.isArray(siblings) ? siblings : [];
+            } catch (err) {
+              console.warn('[CatalogBrowser] Failed to load sibling subcategories:', err);
+            }
+          }
+        } else {
+          // Category mode — fetch its subcategories
+          parent = entity;
+          try {
+            const subs = await read(fetch(`/api/subcategories?category_slug=${encodeURIComponent(slug)}`));
+            subcategories = Array.isArray(subs) ? subs : [];
+          } catch (err) {
+            console.warn('[CatalogBrowser] Failed to load subcategories:', err);
+          }
+        }
+
         if (cancelled) return;
-        setState({ loading: false, entity, parent: isSubcategory ? related : entity, subcategories: isSubcategory ? [] : (Array.isArray(related) ? related : []), products: Array.isArray(products) ? products : [], error: '' });
-      } catch (error) { 
-        if (!cancelled) setState({ loading: false, entity: null, parent: null, subcategories: [], products: [], error: error.message || 'Unable to load this collection.' }); 
+
+        setState({
+          loading: false,
+          entity,
+          parent,
+          subcategories,
+          products: Array.isArray(products) ? products : [],
+          error: '',
+        });
+      } catch (error) {
+        if (!cancelled) {
+          setState({
+            loading: false,
+            entity: null,
+            parent: null,
+            subcategories: [],
+            products: [],
+            error: error.message || 'Unable to load this collection.',
+          });
+        }
       }
     }
+
     if (slug) load();
+
     return () => { cancelled = true; };
   }, [isSubcategory, slug]);
 
   const visibleProducts = useMemo(() => {
-    let products = state.products.filter((product) => !query || `${product.title} ${product.short_description || ''} ${product.tags || ''}`.toLowerCase().includes(query.toLowerCase()));
-    if (activeSubcategory !== 'all') products = products.filter((product) => slugify(product.subcategory_slug || product.subcategory || '') === activeSubcategory);
-    return [...products].sort((a, b) => 
+    return [...state.products].sort((a, b) => 
       sort === 'price-low' ? Number(a.price || 0) - Number(b.price || 0) 
       : sort === 'price-high' ? Number(b.price || 0) - Number(a.price || 0) 
       : new Date(b.created_at || 0) - new Date(a.created_at || 0)
     );
-  }, [activeSubcategory, query, sort, state.products]);
+  }, [sort, state.products]);
 
   const entity = state.entity;
-  const parentSlug = isSubcategory ? slugify(categorySlug || entity?.category_slug || state.parent?.slug || '') : slugify(entity?.slug || slug);
+  const parentSlug = isSubcategory 
+    ? slugify(categorySlug || entity?.category_slug || state.parent?.slug || '') 
+    : slugify(entity?.slug || slug);
+  const currentSubSlug = isSubcategory ? slugify(entity?.slug || slug) : '';
   const title = `${entity?.name || 'Collection'} | JABIYEN`;
 
+  // ============ Loading state ============
   if (state.loading) {
     return (
       <>
@@ -184,6 +246,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
     );
   }
 
+  // ============ Error state ============
   if (state.error || !state.entity) {
     return (
       <>
@@ -198,12 +261,13 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
     );
   }
 
+  // ============ Ready state ============
   return (
     <>
       <Head>
         <title>{title}</title>
         <meta name="description" content={entity.meta_description || `Explore ${entity.name || 'JABIYEN collection'} products.`} />
-        <link rel="canonical" href={`https://jabiyen-website.vercel.app/${isSubcategory ? `category/${parentSlug}/${slug}` : `category/${slug}`}`} />
+        <link rel="canonical" href={`https://jabiyen-website.vercel.app/${isSubcategory ? `category/${parentSlug}/${currentSubSlug}` : `category/${slug}`}`} />
       </Head>
 
       <div className="catalog-page">
@@ -213,26 +277,42 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
         <div className="checkout-shell">
           
-          {/* Only category name remains */}
+          {/* Only category/subcategory name */}
           <h1 className="page-title animate-fade-up">{entity.name || 'Collection'}</h1>
 
-          {/* Subcategory tabs (only for category mode) */}
-          {!isSubcategory && state.subcategories.length > 0 && (
+          {/* Subcategory tabs — shown on BOTH category and subcategory pages */}
+          {state.subcategories.length > 0 && (
             <nav className="subcategories animate-fade-up" aria-label="Subcategories">
-              <button 
-                className={activeSubcategory === 'all' ? 'active' : ''} 
-                onClick={() => setActiveSubcategory('all')}
-              >
-                All Products
-              </button>
-              {state.subcategories.map((subcategory) => (
+              {/* All Products tab */}
+              {isSubcategory ? (
                 <Link 
-                  key={subcategory.id} 
-                  href={`/category/${parentSlug}/${slugify(subcategory.slug || subcategory.name)}`} 
+                  href={`/category/${parentSlug}`} 
+                  className="tab-link"
                 >
-                  {subcategory.name}
+                  All Products
                 </Link>
-              ))}
+              ) : (
+                <span className="tab-link active" aria-current="page">
+                  All Products
+                </span>
+              )}
+
+              {/* Sibling subcategory tabs */}
+              {state.subcategories.map((subcategory) => {
+                const subSlug = slugify(subcategory.slug || subcategory.name);
+                const isActive = isSubcategory && subSlug === currentSubSlug;
+
+                return (
+                  <Link 
+                    key={subcategory.id} 
+                    href={`/category/${parentSlug}/${subSlug}`}
+                    className={`tab-link ${isActive ? 'active' : ''}`}
+                    aria-current={isActive ? 'page' : undefined}
+                  >
+                    {subcategory.name}
+                  </Link>
+                );
+              })}
             </nav>
           )}
 
@@ -246,14 +326,11 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
               </h2>
               
               <div className="controls">
-                <input 
-                  type="search" 
-                  value={query} 
-                  onChange={(event) => setQuery(event.target.value)} 
-                  placeholder="Search this collection" 
-                  aria-label="Search this collection" 
-                />
-                <select value={sort} onChange={(event) => setSort(event.target.value)} aria-label="Sort products">
+                <select 
+                  value={sort} 
+                  onChange={(event) => setSort(event.target.value)} 
+                  aria-label="Sort products"
+                >
                   <option value="newest">Newest</option>
                   <option value="price-low">Price: low to high</option>
                   <option value="price-high">Price: high to low</option>
@@ -314,7 +391,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         .page-title { 
           font-size: 28px; 
           font-weight: 300; 
-          margin: 32px 0 40px 0; 
+          margin: 32px 0 32px 0; 
           letter-spacing: 2px; 
           text-transform: uppercase; 
           text-align: center;
@@ -326,7 +403,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           font-weight: 600; 
           text-transform: uppercase; 
           letter-spacing: 1.5px; 
-          margin: 0 0 16px 0; 
+          margin: 0; 
           color: #000; 
           display: flex; 
           align-items: center; 
@@ -342,7 +419,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         }
 
         /* ============================================
-           BANNER — Full-width, no text overlay, 140px/320px
+           BANNER — Full-width, no text overlay
            ============================================ */
         .banner-wrapper { 
           width: 100%; 
@@ -362,10 +439,8 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         .banner-fallback {
           height: 100%;
           display: flex;
-          flex-direction: column;
           align-items: center;
           justify-content: center;
-          gap: 6px;
           background: linear-gradient(135deg, #1a1a1a, #333);
           color: #fff;
           animation: fadeIn 1s ease both;
@@ -375,33 +450,28 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           font-weight: 300;
           letter-spacing: 8px;
         }
-        .banner-fallback small {
-          font-size: 10px;
-          letter-spacing: 2px;
-          text-transform: uppercase;
-          opacity: 0.7;
-        }
 
         /* ============================================
-           SUBCATEGORY TABS
+           SUBCATEGORY TABS — Nicely arranged, working on both pages
            ============================================ */
         .subcategories { 
           display: flex; 
           gap: 0; 
           overflow-x: auto; 
-          margin: 0 0 32px 0; 
+          margin: 0 0 28px 0; 
           border-bottom: 1px solid #e5e5e5;
           scrollbar-width: none;
+          -webkit-overflow-scrolling: touch;
+          padding-bottom: 1px;
         }
         .subcategories::-webkit-scrollbar { display: none; }
         
-        .subcategories button, 
-        .subcategories a { 
+        .tab-link { 
           white-space: nowrap; 
           border: none; 
           background: transparent; 
-          color: #777; 
-          padding: 12px 16px; 
+          color: #888; 
+          padding: 12px 14px; 
           text-decoration: none; 
           font-size: 11px; 
           font-weight: 500; 
@@ -410,15 +480,19 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           cursor: pointer;
           border-bottom: 2px solid transparent;
           margin-bottom: -1px;
-          transition: all 0.2s;
+          transition: color 0.2s, border-color 0.2s;
+          display: inline-block;
         }
-        .subcategories button:hover, 
-        .subcategories a:hover { 
+        .tab-link:hover { 
           color: #000; 
         }
-        .subcategories button.active { 
+        .tab-link.active { 
           color: #000; 
           border-bottom-color: #000;
+          font-weight: 600;
+        }
+        .tab-link.active:not(a) {
+          cursor: default;
         }
 
         /* ============================================
@@ -430,7 +504,8 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
 
         .section-head { 
           display: flex; 
-          flex-direction: column; 
+          align-items: center; 
+          justify-content: space-between; 
           gap: 16px; 
           margin-bottom: 24px; 
         }
@@ -440,32 +515,26 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           gap: 12px; 
           flex-wrap: wrap;
         }
-        .controls input, 
         .controls select { 
           border: none; 
           border-bottom: 1px solid #000; 
           background: transparent; 
-          padding: 12px 0; 
-          font-size: 13px; 
+          padding: 8px 0; 
+          font-size: 11px; 
           color: #000; 
           outline: none;
           font-family: inherit;
           border-radius: 0;
           appearance: none;
+          cursor: pointer;
+          font-weight: 500;
+          letter-spacing: 1px;
+          text-transform: uppercase;
           transition: border-color 0.2s;
+          min-width: 110px;
         }
-        .controls input::placeholder { color: #aaa; }
-        .controls input:focus, 
         .controls select:focus { 
           border-bottom-color: #555; 
-        }
-        .controls input { 
-          flex: 1; 
-          min-width: 200px;
-        }
-        .controls select { 
-          min-width: 140px;
-          cursor: pointer;
         }
 
         /* ============================================
@@ -533,9 +602,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           text-transform: uppercase; 
           letter-spacing: 1px;
         }
-        .badge.sold { 
-          background: #000; 
-        }
+        .badge.sold { background: #000; }
 
         .dots { 
           position: absolute; 
@@ -555,13 +622,9 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           background: rgba(255,255,255,.5); 
           cursor: pointer;
         }
-        .dots button.active { 
-          background: #fff; 
-        }
+        .dots button.active { background: #fff; }
 
-        .product-copy { 
-          padding: 12px;
-        }
+        .product-copy { padding: 12px; }
         .product-category { 
           display: block; 
           color: #999; 
@@ -588,14 +651,8 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           gap: 8px; 
           font-size: 12px;
         }
-        .product-price strong { 
-          font-weight: 600; 
-          color: #000;
-        }
-        .product-price del { 
-          color: #aaa; 
-          font-size: 11px; 
-        }
+        .product-price strong { font-weight: 600; color: #000; }
+        .product-price del { color: #aaa; font-size: 11px; }
 
         /* ============================================
            SKELETON LOADER
@@ -642,10 +699,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           text-decoration: none; 
           transition: all 0.2s; 
         }
-        .btn-outline:hover { 
-          background: #000; 
-          color: #fff; 
-        }
+        .btn-outline:hover { background: #000; color: #fff; }
 
         /* ============================================
            DESKTOP
@@ -653,33 +707,22 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
         @media (min-width: 768px) {
           .catalog-page { padding-top: 120px; }
           .checkout-shell { max-width: 800px; padding: 0 40px 80px; }
-          .page-title { font-size: 42px; margin: 40px 0 48px 0; }
-          .section-heading { font-size: 13px; margin-bottom: 20px; }
+          .page-title { font-size: 42px; margin: 40px 0 40px 0; }
+          .section-heading { font-size: 13px; }
           .item-count-label { font-size: 13px; }
           
           .banner-wrapper { height: 320px; }
           .banner-fallback span { font-size: 32px; letter-spacing: 12px; }
-          .banner-fallback small { font-size: 12px; }
           
-          .subcategories { margin-bottom: 40px; }
-          .subcategories button, 
-          .subcategories a { 
-            padding: 14px 20px; 
+          .subcategories { margin-bottom: 36px; }
+          .tab-link { 
+            padding: 14px 18px; 
             font-size: 12px; 
           }
           
-          .section-head { 
-            flex-direction: row; 
-            align-items: flex-end; 
-            justify-content: space-between;
-            margin-bottom: 32px;
-          }
-          .section-heading { margin-bottom: 0; }
+          .section-head { margin-bottom: 32px; }
           
-          .controls { gap: 16px; }
-          .controls input, 
-          .controls select { font-size: 14px; }
-          .controls input { min-width: 240px; }
+          .controls select { font-size: 12px; padding: 10px 0; }
           
           .products-grid { 
             grid-template-columns: repeat(3, minmax(0, 1fr)); 
@@ -710,9 +753,7 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           .product-media img, 
           .product-card, 
           .btn-outline,
-          .subcategories button,
-          .subcategories a,
-          .controls input,
+          .tab-link,
           .controls select {
             transition: none !important;
           }
