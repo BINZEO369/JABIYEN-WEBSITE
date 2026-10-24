@@ -8,7 +8,7 @@ type FooterData = { content?: FooterContent[]; socialLinks?: FooterSocial[]; men
 import { useCurrency } from '../currency/CurrencyProvider';
 
 export default function Footer() {
-  const { countries: availableCountries, selectedCountryCode, selectCountry, setAvailableCurrencies } = useCurrency();
+  const { countries: availableCountries, selectedCountryCode, selectedCurrency, selectCountry, setAvailableCurrencies } = useCurrency();
   const [footerData, setFooterData] = useState<FooterData | null>(null);
   const [openMenus, setOpenMenus] = useState({});
   const [loading, setLoading] = useState(true);
@@ -141,11 +141,15 @@ export default function Footer() {
 
               {/* Country Selector */}
               {availableCountries?.length > 0 && (
-                <div style={{ maxWidth: 240 }}>
+                <div style={{ maxWidth: 260, padding: '12px 13px', border: '1px solid rgba(255,255,255,0.11)', borderRadius: 5, background: 'rgba(255,255,255,0.025)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 7 }}>
+                    <span style={{ color: '#888', fontSize: '0.58rem', fontWeight: 700, letterSpacing: '0.14em' }}>SHIP TO / CURRENCY</span>
+                    <span style={{ color: '#eee', fontSize: '0.62rem', fontWeight: 700 }}>{selectedCurrency.currency_code}</span>
+                  </div>
                   <select value={selectedCountryCode} onChange={(event) => selectCountry(event.target.value)} aria-label="Select country and currency" style={{
-                    width: '100%', background: 'none', color: '#b0b0b0',
-                    border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)',
-                    padding: '7px 0', fontSize: '0.7rem', outline: 'none', cursor: 'pointer',
+                    width: '100%', background: '#111', color: '#f3f3f3',
+                    border: '1px solid rgba(255,255,255,0.14)', borderRadius: 3,
+                    padding: '9px 10px', fontSize: '0.68rem', outline: 'none', cursor: 'pointer',
                     fontFamily: "'Inter', sans-serif"
                   }}>
                     {[...availableCountries].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(c => (
@@ -154,6 +158,7 @@ export default function Footer() {
                       </option>
                     ))}
                   </select>
+                  <div style={{ marginTop: 7, color: '#777', fontSize: '0.58rem' }}>Prices displayed in {selectedCurrency.currency_code}</div>
                 </div>
               )}
             </div>
