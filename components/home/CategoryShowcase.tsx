@@ -178,6 +178,8 @@ export default function CategoryShowcase() {
     return fallbacks[type] || fallbacks.body;
   };
 
+  const getCategoryHref = (value) => `/category/${String(value || '').replace(/^category\//, '').split('/')[0] || 'collection'}`;
+
   if (!isLoaded) return null;
   if (!hasData) return null;
 
@@ -283,7 +285,7 @@ export default function CategoryShowcase() {
               return (
                 <Link
                   key={`prev-${item.id || index}`}
-                  href={`/${catSlug}`}
+                  href={getCategoryHref(catSlug)}
                   style={{
                     position: 'relative', display: 'flex', flexDirection: 'column',
                     textDecoration: 'none', background: '#fff', cursor: 'pointer',
@@ -353,7 +355,7 @@ export default function CategoryShowcase() {
             return (
               <Link
                 key={item.id || index}
-                href={`/${catSlug}`}
+                href={getCategoryHref(catSlug)}
                 style={{
                   position: 'relative', display: 'flex', flexDirection: 'column',
                   textDecoration: 'none', background: '#fff', cursor: 'pointer',
