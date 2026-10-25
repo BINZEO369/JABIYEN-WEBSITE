@@ -94,6 +94,7 @@ export default function PaymentPage() {
         credentials: 'same-origin',
         body: JSON.stringify({
           ...keys,
+          payment_method: selectedPaymentMethod,
           customer: draft.customer,
           items: draft.items,
           delivery_type: draft.delivery_type,
