@@ -123,15 +123,29 @@ const ProductCard = ({ product }) => {
         onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-4px)')}
         onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
       >
-        <div style={{ aspectRatio: '3/4', overflow: 'hidden' }}>
+        <div
+          className="complete-look-image-wrap"
+          style={{
+            position: 'relative',
+            width: '100%',
+            aspectRatio: '3/4',
+            height: 'auto',
+            minHeight: 0,
+            maxHeight: '420px',
+            overflow: 'hidden',
+          }}
+        >
           <img
             src={product.img || '/logo.png'}
             alt={product.title || ''}
             className="product-image"
             style={{
+              position: 'absolute',
+              inset: 0,
               width: '100%',
               height: '100%',
               objectFit: 'cover',
+              display: 'block',
               transition: 'transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)',
             }}
             loading="lazy"
