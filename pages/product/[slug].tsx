@@ -132,6 +132,7 @@ const ProductCard = ({ product }) => {
             height: 'auto',
             minHeight: 0,
             maxHeight: '420px',
+            background: '#f5f5f7',
             overflow: 'hidden',
           }}
         >
@@ -144,7 +145,7 @@ const ProductCard = ({ product }) => {
               inset: 0,
               width: '100%',
               height: '100%',
-              objectFit: 'cover',
+              objectFit: 'contain',
               display: 'block',
               transition: 'transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)',
             }}
