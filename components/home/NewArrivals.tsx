@@ -249,27 +249,6 @@ function NewArrivalCard({ product, getImageUrl, getSlug, getAllImages, fetchColo
           ))}
 
           {/* Badge */}
-          {!isOut && (product.is_new_arrival === true || product.is_new_arrival === 1) && (
-            <span style={{
-              position: 'absolute', top: 4, left: 4, zIndex: 5,
-              padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600,
-              fontSize: 8, textTransform: 'uppercase', background: '#fff', color: '#1d1d1f',
-              letterSpacing: '0.5px', borderRadius: 1, boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
-            }}>
-              New
-            </span>
-          )}
-
-          {!isOut && (product.is_on_sale === true || product.is_on_sale === 1) && (
-            <span style={{
-              position: 'absolute', top: 4, left: 4, zIndex: 5,
-              padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600,
-              fontSize: 8, textTransform: 'uppercase', background: '#fff', color: '#d70015',
-              letterSpacing: '0.5px', borderRadius: 1, boxShadow: '0 1px 3px rgba(0,0,0,0.08)'
-            }}>
-              Sale
-            </span>
-          )}
 
           {/* Sold Out */}
           {isOut && (
@@ -314,7 +293,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug, getAllImages, fetchColo
         <div style={{ padding: '4px 6px 6px' }}>
           <h3 style={{
             fontFamily: "'Inter', sans-serif", fontWeight: 600,
-            fontSize: 13, color: '#1d1d1f', lineHeight: 1.35,
+            fontSize: 12, color: '#1d1d1f', lineHeight: 1.35,
             display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
             overflow: 'hidden', margin: 0, textAlign: 'center'
           }}>

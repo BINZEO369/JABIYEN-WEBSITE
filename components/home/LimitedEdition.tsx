@@ -136,9 +136,6 @@ function Card({ product, colorCache, setColorCache }) {
               zIndex: i === currentImage ? 2 : 1
             }} />
           ))}
-          {!isOut && (
-            <span style={{ position: 'absolute', top: 4, left: 4, zIndex: 5, padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 8, textTransform: 'uppercase', background: '#2d2d2f', color: '#ffffff', letterSpacing: '0.5px', borderRadius: 1, boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }}>Limited</span>
-          )}
           {isOut && <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}><span style={{ background: '#ffffff', color: '#1d1d1f', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 9, textTransform: 'uppercase', padding: '5px 14px' }}>Sold Out</span></div>}
           {total > 1 && (
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
@@ -149,7 +146,7 @@ function Card({ product, colorCache, setColorCache }) {
           )}
         </div>
         <div style={{ padding: '4px 6px 6px' }}>
-          <h3 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13, color: '#ffffff', lineHeight: 1.35, textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{product.title}</h3>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 12, color: '#ffffff', lineHeight: 1.35, textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{product.title}</h3>
           {colors.length > 0 && (
             <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 6, flexWrap: 'wrap' }}>
               {colors.map((c, i) => <span key={i} title={c.color_name} style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: c.color_code || '#ccc', border: '1px solid rgba(255,255,255,0.2)', cursor: 'pointer' }} />)}

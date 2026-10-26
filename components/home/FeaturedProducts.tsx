@@ -151,12 +151,6 @@ function ProductCard({ product, colorCache, setColorCache }) {
                 zIndex: i === currentImage ? 2 : 1
               }} />
           ))}
-          {!isOut && (product.is_featured === true || product.is_featured === 1) && (
-            <span style={{ position: 'absolute', top: 4, left: 4, zIndex: 5, padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 8, textTransform: 'uppercase', background: '#fff', color: '#1d1d1f', letterSpacing: '0.5px', borderRadius: 1 }}>Featured</span>
-          )}
-          {!isOut && (product.is_on_sale === true || product.is_on_sale === 1) && (
-            <span style={{ position: 'absolute', top: 4, left: 4, zIndex: 5, padding: '2px 7px', fontFamily: "'Sora', sans-serif", fontWeight: 600, fontSize: 8, textTransform: 'uppercase', background: '#fff', color: '#d70015', letterSpacing: '0.5px', borderRadius: 1 }}>Sale</span>
-          )}
           {isOut && (
             <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
               <span style={{ background: '#1d1d1f', color: '#fff', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 9, textTransform: 'uppercase', padding: '5px 14px' }}>Sold Out</span>
@@ -172,7 +166,7 @@ function ProductCard({ product, colorCache, setColorCache }) {
           )}
         </div>
         <div style={{ padding: '4px 6px 6px' }}>
-          <h3 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 13, color: '#1d1d1f', lineHeight: 1.35, textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{product.title}</h3>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 12, color: '#1d1d1f', lineHeight: 1.35, textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{product.title}</h3>
           {colors.length > 0 && (
             <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 6, flexWrap: 'wrap' }}>
               {colors.map((c, i) => (

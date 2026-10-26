@@ -66,8 +66,6 @@ export default function Home() {
         <div className="card-img" style={{ aspectRatio: '3/4' }}>
           <img src={p.img} alt={p.title} loading="lazy" />
           {isOut && <div className="card-soldout-overlay"><span>Sold Out</span></div>}
-          {p.is_new_arrival && !isOut && <span className="card-badge">New</span>}
-          {p.is_on_sale && !isOut && <span className="card-badge badge-sale">Sale</span>}
         </div>
         <div className="card-body">
           <span className="card-category">{p.category}</span>

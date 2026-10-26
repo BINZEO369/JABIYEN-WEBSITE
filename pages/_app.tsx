@@ -91,12 +91,10 @@ export default function App({ Component, pageProps }) {
         .carousel-card .card-img { aspect-ratio: 3/4; background: #fafafa; overflow: hidden; margin-bottom: 12px; }
         .carousel-card .card-img img { width: 100%; height: 100%; object-fit: cover; }
         .carousel-card .card-body { padding: 0 4px; display: flex; flex-direction: column; gap: 4px; }
-        .carousel-card .card-title { font-size: 14px; font-weight: 500; color: var(--primary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .carousel-card .card-title { font-size: 12px; font-weight: 500; color: var(--primary); line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .carousel-card .card-price { font-size: 14px; font-weight: 600; color: var(--primary); }
         .carousel-card .card-old-price { font-size: 13px; color: #b0b0b5; text-decoration: line-through; margin-left: 6px; }
         .carousel-card .card-category { font-size: 11px; font-weight: 500; text-transform: uppercase; color: var(--accent); }
-        .carousel-card .card-badge { position: absolute; top: 8px; left: 8px; z-index: 2; padding: 2px 8px; font-size: 10px; font-weight: 600; text-transform: uppercase; background: #fff; color: var(--primary); }
-        .badge-sale { color: #d70015 !important; }
         .carousel-card .card-soldout-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.6); display: flex; align-items: center; justify-content: center; z-index: 5; }
         .carousel-card .card-soldout-overlay span { background: var(--primary); color: #fff; font-size: 10px; font-weight: 600; text-transform: uppercase; padding: 6px 16px; }
         .carousel-nav { position: absolute; top: 35%; transform: translateY(-50%); z-index: 20; width: 44px; height: 44px; border-radius: 50%; background: #fff; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
