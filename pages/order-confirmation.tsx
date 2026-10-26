@@ -2,12 +2,16 @@ import { useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useCurrency } from '../components/currency/CurrencyProvider';
 
 const REQUEST_TIMEOUT_MS = 12000;
-const SNAPSHOT_KEY = 'jabiyen_last_order_snapshot';
 const ORDER_ACCESS_KEY = 'jabiyen_order_access_v1';
 const SESSION_KEY = 'jayenware_session';
+const USD_FORMATTER = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+
+function formatUsd(value) {
+  const amount = Number(value);
+  return Number.isFinite(amount) && amount >= 0 ? USD_FORMATTER.format(amount) : '—';
+}
 
 // ============================================
 // HELPERS — Robust value extraction
@@ -43,7 +47,7 @@ function normalizeItem(rawItem, index, cartFallback = []) {
   const productId = rawItem.product_id ?? rawItem.productId ?? rawItem.id ?? (rawItem.product && rawItem.product.id);
   const variantId = rawItem.variant_id ?? rawItem.variantId ?? (rawItem.variant && rawItem.variant.id);
 
-  // Match against snapshot cart fallback
+  // Optional fallback is intentionally empty on the confirmation page; all order data comes from the server.
   const matched = cartFallback.find((c) => {
     const cId = c.product_id ?? c.productId ?? c.id;
     const cVid = c.variant_id ?? c.variantId;
@@ -95,8 +99,8 @@ function normalizeItem(rawItem, index, cartFallback = []) {
   };
 }
 
-function extractCustomer(order, snapshot) {
-  if (!order && !snapshot) return {};
+function extractCustomer(order) {
+  if (!order) return {};
 
   const c =
     order?.customer ||
@@ -105,27 +109,21 @@ function extractCustomer(order, snapshot) {
     order?.shipping ||
     order?.buyer ||
     {};
-  const snapC = snapshot?.customer || {};
-
   const name =
     pickFirst(c, ['name', 'full_name', 'customer_name', 'fullName']) ||
-    pickFirst(order, ['customer_name', 'customerName']) ||
-    pickFirst(snapC, ['name', 'full_name']);
+    pickFirst(order, ['customer_name', 'customerName']);
 
   const email =
     pickFirst(c, ['email', 'customer_email']) ||
-    pickFirst(order, ['customer_email', 'email']) ||
-    pickFirst(snapC, ['email']);
+    pickFirst(order, ['customer_email', 'email']);
 
   const phone =
     pickFirst(c, ['phone', 'mobile', 'phone_number', 'customer_phone']) ||
-    pickFirst(order, ['customer_phone', 'phone']) ||
-    pickFirst(snapC, ['phone', 'mobile']);
+    pickFirst(order, ['customer_phone', 'phone']);
 
   const delivery_notes =
     pickFirst(c, ['delivery_notes', 'notes', 'order_notes']) ||
-    pickFirst(order, ['delivery_notes', 'notes']) ||
-    pickFirst(snapC, ['delivery_notes']);
+    pickFirst(order, ['delivery_notes', 'notes']);
 
   const rawAddress =
     c.address ||
@@ -135,7 +133,6 @@ function extractCustomer(order, snapshot) {
     order?.delivery_address ||
     order?.address ||
     order?.customer_address ||
-    snapC?.address ||
     null;
 
   return {
@@ -167,30 +164,14 @@ function normalizeAddress(raw) {
 
 export default function OrderConfirmationPage() {
   const router = useRouter();
-  const { formatMoney } = useCurrency();
   const [order, setOrder] = useState(null);
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState('');
   const [token, setToken] = useState('');
   const [authToken, setAuthToken] = useState('');
-  const [snapshot, setSnapshot] = useState(null);
+  const [handoffStarted, setHandoffStarted] = useState(false);
 
   const orderNumber = router.query.order;
-
-  // Load snapshot from sessionStorage (fallback data)
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    try {
-      const raw = sessionStorage.getItem(SNAPSHOT_KEY);
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        setSnapshot(parsed);
-        console.log('[ORDER_CONFIRMATION] Snapshot loaded:', parsed);
-      }
-    } catch (err) {
-      console.warn('[ORDER_CONFIRMATION] Snapshot read error:', err);
-    }
-  }, []);
 
   // Read both credentials only from this browser's session/local storage.
   // No order credential is ever placed in a shareable URL.
@@ -224,9 +205,61 @@ export default function OrderConfirmationPage() {
     }
   }, [orderNumber, authToken]);
 
+  // The one-time capability stays in the URL fragment, which is never sent to
+  // the server as a Referer. Remove it from browser history before redemption.
+  useEffect(() => {
+    if (!router.isReady || typeof window === 'undefined') return;
+    const fragment = new URLSearchParams(window.location.hash.slice(1));
+    const handoffToken = fragment.get('payment_handoff');
+    if (!handoffToken) return;
+
+    window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+    setHandoffStarted(true);
+    setStatus('loading');
+    setError('');
+    const requestedOrderNumber = Array.isArray(orderNumber) ? orderNumber[0] : orderNumber;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    fetch('/api/payment-handoff', {
+      method: 'POST',
+      headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token: handoffToken }),
+      cache: 'no-store',
+      credentials: 'same-origin',
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        const result = await response.json().catch(() => null);
+        const redeemedOrder = result?.order;
+        if (!response.ok || !result?.success || !redeemedOrder
+            || redeemedOrder.order_number !== requestedOrderNumber
+            || redeemedOrder.status !== 'confirmed'
+            || redeemedOrder.payment?.method !== 'stripe'
+            || redeemedOrder.payment?.status !== 'collected') {
+          throw new Error('SECURE_HANDOFF_NOT_VERIFIED');
+        }
+        setOrder(redeemedOrder);
+        setStatus('ready');
+      })
+      .catch((err) => {
+        setError(err?.name === 'AbortError'
+          ? 'The secure order link timed out. Return to BINZEO and request a new confirmation link.'
+          : 'This secure order link has expired, was already used, or could not be verified. Return to BINZEO and request a new link.');
+        setStatus('error');
+      })
+      .finally(() => clearTimeout(timeout));
+
+    return () => {
+      controller.abort();
+      clearTimeout(timeout);
+    };
+  }, [router.isReady, orderNumber]);
+
   // Fetch order from API
   useEffect(() => {
     if (!router.isReady) return;
+    if (handoffStarted) return;
 
     if (!orderNumber) {
       setStatus('missing');
@@ -255,9 +288,6 @@ export default function OrderConfirmationPage() {
     })
       .then(async (response) => {
         const result = await response.json().catch(() => null);
-        // 🔍 Debug log — open browser console to inspect API shape
-        console.log('[ORDER_CONFIRMATION] Raw API response:', result);
-
         if (!response.ok || !result?.success || !result.order) {
           throw new Error(
             (result?.error && (result.error.message || result.error)) ||
@@ -265,12 +295,15 @@ export default function OrderConfirmationPage() {
           );
         }
 
+        if (result.order.payment?.method === 'stripe'
+            && (result.order.status !== 'confirmed' || result.order.payment?.status !== 'collected')) {
+          throw new Error('Payment confirmation is still pending. Return to BINZEO to check the signed payment status.');
+        }
+
         setOrder(result.order);
         setStatus('ready');
       })
       .catch((err) => {
-        console.error('[ORDER_CONFIRMATION] Fetch error:', err);
-
         if (err?.name === 'AbortError') {
           setError('Request timed out. Please try again.');
         } else {
@@ -285,14 +318,10 @@ export default function OrderConfirmationPage() {
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [router.isReady, orderNumber, token, authToken]);
-
-  // Cart fallback (from snapshot)
-  const cartFallback = useMemo(() => snapshot?.items || [], [snapshot]);
+  }, [router.isReady, orderNumber, token, authToken, handoffStarted]);
 
   // Normalize items
   const items = useMemo(() => {
-    // 1) Try order from API
     if (order) {
       const rawItems =
         order.items ||
@@ -303,34 +332,25 @@ export default function OrderConfirmationPage() {
         [];
       if (Array.isArray(rawItems) && rawItems.length > 0) {
         return rawItems
-          .map((item, idx) => normalizeItem(item, idx, cartFallback))
+          .map((item, idx) => normalizeItem(item, idx, []))
           .filter(Boolean);
       }
     }
-
-    // 2) Fallback to snapshot items
-    if (cartFallback.length > 0) {
-      return cartFallback
-        .map((item, idx) => normalizeItem(item, idx, []))
-        .filter(Boolean);
-    }
-
     return [];
-  }, [order, cartFallback]);
+  }, [order]);
 
   // Normalize customer
   const customer = useMemo(() => {
-    return extractCustomer(order, snapshot);
-  }, [order, snapshot]);
+    return extractCustomer(order);
+  }, [order]);
 
   const fullAddressLine = useMemo(() => normalizeAddress(customer.address), [customer.address]);
 
   // Totals
   const subtotal = useMemo(() => {
     if (order?.subtotal != null) return Number(order.subtotal);
-    if (snapshot?.subtotal != null) return Number(snapshot.subtotal);
     return items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1), 0);
-  }, [order, snapshot, items]);
+  }, [order, items]);
 
   const totalItems = useMemo(
     () => items.reduce((sum, item) => sum + Number(item.quantity || 1), 0),
@@ -341,34 +361,32 @@ export default function OrderConfirmationPage() {
     const rawFee =
       order?.delivery_fee ??
       order?.quoted_delivery_fee ??
-      order?.shipping_fee ??
-      snapshot?.delivery_fee ??
-      snapshot?.shipping_quote?.delivery_fee;
+      order?.shipping_fee;
     return rawFee == null ? null : Number(rawFee);
-  }, [order, snapshot]);
+  }, [order]);
 
   const totalAmount = useMemo(() => {
+    if (order?.total_amount != null) return Number(order.total_amount);
     if (order?.total != null) return Number(order.total);
-    if (snapshot?.total != null) return Number(snapshot.total);
     if (deliveryFee == null) return null;
     return subtotal + deliveryFee;
-  }, [order, snapshot, subtotal, deliveryFee]);
+  }, [order, subtotal, deliveryFee]);
 
   const customerInitials = customer?.name ? customer.name.charAt(0).toUpperCase() : 'U';
   const displayOrderNumber =
-    order?.order_number || snapshot?.order_number || orderNumber || '—';
+    order?.order_number || orderNumber || '—';
   const displayDeliveryType =
-    order?.delivery_type || snapshot?.delivery_type || 'Standard';
+    order?.delivery_type || 'Standard';
 
   const estimatedDaysMin =
-    order?.estimated_days_min ?? snapshot?.shipping_quote?.estimated_days_min;
+    order?.estimated_days_min;
   const estimatedDaysMax =
-    order?.estimated_days_max ?? snapshot?.shipping_quote?.estimated_days_max;
+    order?.estimated_days_max;
 
   return (
     <>
       <Head>
-        <title>Order Confirmed | JABIYEN</title>
+        <title>{status === 'ready' ? 'Order Confirmed | JABIYEN' : 'Order Status | JABIYEN'}</title>
         <meta name="robots" content="noindex, nofollow" />
         <meta name="referrer" content="no-referrer" />
       </Head>
@@ -384,7 +402,7 @@ export default function OrderConfirmationPage() {
         </div>
 
         <div className="checkout-shell">
-          <h1 className="checkout-title animate-fade-up">Order Confirmed</h1>
+          <h1 className="checkout-title animate-fade-up">{status === 'ready' ? 'Order Confirmed' : 'Order Status'}</h1>
 
           {status === 'loading' && (
             <section className="form-block animate-fade-up">
@@ -427,8 +445,9 @@ export default function OrderConfirmationPage() {
                     </svg>
                   </span>
                   <div className="success-copy">
-                    <strong>Thank you for your order</strong>
+                    <strong>{order?.payment?.method === 'stripe' ? 'Payment confirmed' : 'Thank you for your order'}</strong>
                     <span>Order #{displayOrderNumber}</span>
+                    <span>{order?.payment?.method === 'stripe' ? 'Stripe · Paid' : 'Cash on Delivery'}</span>
                   </div>
                 </div>
               </section>
@@ -459,7 +478,7 @@ export default function OrderConfirmationPage() {
                           <h3>{item.title}</h3>
                           <p className="item-variant">{item.variant}</p>
                           <span className="item-price">
-                            {formatMoney(item.price * item.quantity)}
+                            {formatUsd(item.price * item.quantity)}
                           </span>
                         </div>
                       </div>
@@ -504,7 +523,7 @@ export default function OrderConfirmationPage() {
               <div className="final-totals animate-fade-up">
                 <div className="totals-row">
                   <span>Subtotal</span>
-                  <span>{formatMoney(subtotal)}</span>
+                  <span>{formatUsd(subtotal)}</span>
                 </div>
                 <div className="totals-row">
                   <span>{displayDeliveryType} Delivery</span>
@@ -513,7 +532,7 @@ export default function OrderConfirmationPage() {
                       ? 'TBD'
                       : deliveryFee === 0
                       ? 'Free'
-                      : formatMoney(deliveryFee)}
+                      : formatUsd(deliveryFee)}
                   </span>
                 </div>
                 {estimatedDaysMin && estimatedDaysMax && (
@@ -524,7 +543,7 @@ export default function OrderConfirmationPage() {
                 )}
                 <div className="totals-row grand-total">
                   <span>Total</span>
-                  <strong>{totalAmount == null ? 'TBD' : formatMoney(totalAmount)}</strong>
+                  <strong>{totalAmount == null ? 'TBD' : formatUsd(totalAmount)}</strong>
                 </div>
               </div>
 
