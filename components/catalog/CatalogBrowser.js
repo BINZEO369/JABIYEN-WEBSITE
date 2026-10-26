@@ -72,11 +72,23 @@ function ProductCard({ product, index = 0 }) {
 function MediaBanner({ entity }) {
   const video = cleanMedia(entity?.video_url);
   const image = cleanMedia(entity?.image_url);
-  
+  const videoRef = useRef(null);
+  const [muted, setMuted] = useState(true);
+  const toggleSound = () => {
+    const nextMuted = !muted;
+    if (videoRef.current) {
+      videoRef.current.muted = nextMuted;
+      if (!nextMuted) videoRef.current.play().catch(() => {});
+    }
+    setMuted(nextMuted);
+  };
   return (
     <div className="banner-wrapper">
       {video ? (
-        <video src={video} poster={image || undefined} autoPlay muted loop playsInline />
+        <>
+          <video ref={videoRef} src={video} poster={image || undefined} autoPlay muted={muted} loop playsInline />
+          <button type="button" className="banner-sound-toggle" onClick={toggleSound} aria-label={muted ? 'Turn video sound on' : 'Turn video sound off'}>{muted ? 'Sound off' : 'Sound on'}</button>
+        </>
       ) : image ? (
         <img src={image} alt={entity?.name || 'Collection'} />
       ) : (
@@ -393,6 +405,22 @@ export default function CatalogBrowser({ mode = 'category', slug, categorySlug =
           display: block;
           animation: fadeIn 1s ease both;
         }
+        .banner-sound-toggle {
+          position: absolute;
+          right: 14px;
+          bottom: 14px;
+          z-index: 2;
+          border: 1px solid rgba(255,255,255,.65);
+          border-radius: 999px;
+          background: rgba(0,0,0,.42);
+          backdrop-filter: blur(10px);
+          color: #fff;
+          padding: 9px 13px;
+          font: 600 10px Inter, sans-serif;
+          letter-spacing: .04em;
+          cursor: pointer;
+        }
+        .banner-sound-toggle:hover { background: rgba(0,0,0,.7); }
         .banner-fallback {
           height: 100%;
           display: flex;
