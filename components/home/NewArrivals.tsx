@@ -177,6 +177,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug, getAllImages, fetchColo
   const [loaded, setLoaded] = useState(false);
   const cardRef = useRef(null);
   const startX = useRef(0);
+  const didSwipe = useRef(false);
 
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = getSlug(product);
@@ -199,12 +200,14 @@ function NewArrivalCard({ product, getImageUrl, getSlug, getAllImages, fetchColo
 
   const handleTouchStart = (e) => {
     startX.current = e.touches[0].clientX;
+    didSwipe.current = false;
     setIsDragging(true);
   };
 
   const handleTouchMove = (e) => {
     if (!isDragging) return;
     const diff = e.touches[0].clientX - startX.current;
+    if (Math.abs(diff) > 8) { e.preventDefault(); didSwipe.current = true; }
     setDragOffset(diff);
   };
 
@@ -229,7 +232,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug, getAllImages, fetchColo
       onTouchMove={totalImages > 1 ? handleTouchMove : undefined}
       onTouchEnd={totalImages > 1 ? handleTouchEnd : undefined}
     >
-      <Link href={`/product/${encodeURIComponent(slug)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Link href={`/product/${encodeURIComponent(slug)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={(e) => { if (didSwipe.current) { e.preventDefault(); e.stopPropagation(); didSwipe.current = false; } }}>
         {/* Image */}
         <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f5f5f7', overflow: 'hidden', marginBottom: 6 }}>
           {allImages.map((img, i) => (
@@ -241,7 +244,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug, getAllImages, fetchColo
                 position: 'absolute', top: 0,
                 left: isDragging ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)` : `${(i - currentImage) * 100}%`,
                 width: '100%', height: '100%', objectFit: 'cover',
-                transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)',
+                transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)', willChange: 'left',
                 opacity: 1, display: 'block', color: 'transparent', zIndex: i === currentImage ? 2 : 1
               }}
               loading="lazy"

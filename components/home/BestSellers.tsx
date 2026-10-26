@@ -116,6 +116,7 @@ function ProductCard({ product, getImageUrl, getSlug, fetchColors, colorCache })
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const startX = useRef(0);
+  const didSwipe = useRef(false);
   const cardRef = useRef(null);
 
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
@@ -136,8 +137,13 @@ function ProductCard({ product, getImageUrl, getSlug, fetchColors, colorCache })
 
   const navigate = (i) => { if (i >= 0 && i < totalImages) { setCurrentImage(i); setDragOffset(0); } };
 
-  const onTouchStart = (e) => { startX.current = e.touches[0].clientX; setIsDragging(true); };
-  const onTouchMove = (e) => { if (!isDragging) return; setDragOffset(e.touches[0].clientX - startX.current); };
+  const onTouchStart = (e) => { startX.current = e.touches[0].clientX; didSwipe.current = false; setIsDragging(true); };
+  const onTouchMove = (e) => {
+    if (!isDragging) return;
+    const diff = e.touches[0].clientX - startX.current;
+    if (Math.abs(diff) > 8) { e.preventDefault(); didSwipe.current = true; }
+    setDragOffset(diff);
+  };
   const onTouchEnd = () => {
     setIsDragging(false);
     if (Math.abs(dragOffset) > 60) {
@@ -153,15 +159,15 @@ function ProductCard({ product, getImageUrl, getSlug, fetchColors, colorCache })
       onTouchMove={totalImages > 1 ? onTouchMove : undefined}
       onTouchEnd={totalImages > 1 ? onTouchEnd : undefined}
     >
-      <Link href={`/product/${encodeURIComponent(slug)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}>
-        <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f5f5f7', overflow: 'hidden', marginBottom: 6 }}>
+      <Link href={`/product/${encodeURIComponent(slug)}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={(e) => { if (didSwipe.current) { e.preventDefault(); e.stopPropagation(); didSwipe.current = false; } }}>
+        <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f5f5f7', overflow: 'hidden', marginBottom: 6, touchAction: 'pan-y', userSelect: 'none' }}>
           {allImages.map((img, i) => (
             <img key={i} src={img} alt={product.title || ''}
               style={{
                 position: 'absolute', top: 0,
                 left: isDragging ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)` : `${(i - currentImage) * 100}%`,
                 width: '100%', height: '100%', objectFit: 'cover',
-                transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)',
+                transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)', willChange: 'left',
                 zIndex: i === currentImage ? 2 : 1
               }}
             />
