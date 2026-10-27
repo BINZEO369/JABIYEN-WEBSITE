@@ -579,7 +579,14 @@ const BannerSection = ({ banners }) => {
 // ================================================================
 // Collapsible Section Component
 // ================================================================
-const CollapsibleSection = ({ icon, title, children, onToggle }) => {
+type CollapsibleSectionProps = {
+  icon: string;
+  title: string;
+  children: React.ReactNode;
+  onToggle?: (open: boolean) => void;
+};
+
+const CollapsibleSection = ({ icon, title, children, onToggle }: CollapsibleSectionProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const toggle = () => {
