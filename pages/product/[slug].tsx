@@ -6,9 +6,6 @@ import Head from 'next/head';
 import { useCartState } from '../../components/layout/CartDrawer';
 import { useCurrency } from '../../components/currency/CurrencyProvider';
 
-// ================================================================
-// API Helper Functions
-// ================================================================
 const API_BASE = '/api';
 
 async function apiFetch(endpoint) {
@@ -33,9 +30,6 @@ function generateSlug(title) {
     .replace(/^-+|-+$/g, '');
 }
 
-// ================================================================
-// Toast Component
-// ================================================================
 const Toast = ({ message, type, onClose }) => {
   useEffect(() => {
     const timer = setTimeout(onClose, 3000);
@@ -67,20 +61,11 @@ const Toast = ({ message, type, onClose }) => {
   );
 };
 
-// ================================================================
-// Skeleton Loading Component
-// ================================================================
 const SkeletonLoader = () => (
   <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0, background: '#ffffff' }}>
     <div
       className="skeleton"
-      style={{
-        width: '100%',
-        height: '60vh',
-        minHeight: '400px',
-        maxHeight: '600px',
-        borderRadius: 0,
-      }}
+      style={{ width: '100%', height: '60vh', minHeight: '400px', maxHeight: '600px', borderRadius: 0 }}
     />
     <div style={{ padding: '20px' }}>
       <div className="skeleton" style={{ height: '12px', width: '80px', marginBottom: '8px' }} />
@@ -91,83 +76,29 @@ const SkeletonLoader = () => (
   </div>
 );
 
-// ================================================================
-// Product Card Component — Clean, pure white, small text
-// ================================================================
 const ProductCard = ({ product }) => {
   if (!product) return null;
   const { formatMoney } = useCurrency();
   const slug = product.slug || generateSlug(product.title);
 
   return (
-    <Link
-      href={`/product/${slug}`}
-      className="complete-look-card"
-      style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-    >
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: '4px',
-          overflow: 'hidden',
-          border: '1px solid #f0f0f0',
-          transition: 'border-color 0.25s ease',
-        }}
-      >
-        <div
-          className="complete-look-image-wrap"
-          style={{
-            position: 'relative',
-            width: '100%',
-            aspectRatio: '4/5',
-            background: '#ffffff',
-            overflow: 'hidden',
-          }}
-        >
+    <Link href={`/product/${slug}`} className="complete-look-card" style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+      <div style={{ background: '#ffffff', borderRadius: '4px', overflow: 'hidden', border: '1px solid #f0f0f0', transition: 'border-color 0.25s ease' }}>
+        <div className="complete-look-image-wrap" style={{ position: 'relative', width: '100%', aspectRatio: '4/5', background: '#ffffff', overflow: 'hidden' }}>
           <img
             src={product.img || '/logo.png'}
             alt={product.title || ''}
             className="product-image"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              display: 'block',
-              transition: 'transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)',
-            }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)' }}
             loading="lazy"
             onError={(e) => { e.currentTarget.src = '/logo.png'; }}
           />
         </div>
         <div style={{ padding: '10px 10px 12px' }}>
-          <h3
-            style={{
-              fontSize: '11px',
-              fontWeight: 400,
-              color: '#1a1a1a',
-              marginBottom: '4px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              fontFamily: 'var(--font-subtitle)',
-              letterSpacing: '0.06em',
-              textTransform: 'uppercase',
-              lineHeight: 1.3,
-            }}
-          >
+          <h3 style={{ fontSize: '11px', fontWeight: 400, color: '#1a1a1a', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontFamily: 'var(--font-subtitle)', letterSpacing: '0.06em', textTransform: 'uppercase', lineHeight: 1.3 }}>
             {product.title || ''}
           </h3>
-          <span
-            style={{
-              fontSize: '12px',
-              fontWeight: 600,
-              fontFamily: 'var(--font-body)',
-              color: '#000',
-              letterSpacing: '0.02em',
-            }}
-          >
+          <span style={{ fontSize: '12px', fontWeight: 600, fontFamily: 'var(--font-body)', color: '#000', letterSpacing: '0.02em' }}>
             {formatMoney(product.price || 0)}
           </span>
         </div>
@@ -176,9 +107,6 @@ const ProductCard = ({ product }) => {
   );
 };
 
-// ================================================================
-// Video Section Component
-// ================================================================
 const VideoSection = ({ videos }) => {
   const videoRefs = useRef([]);
   const [playingIndex, setPlayingIndex] = useState(null);
@@ -186,9 +114,7 @@ const VideoSection = ({ videos }) => {
 
   useEffect(() => {
     const initialMuted = {};
-    videos.forEach((_, index) => {
-      initialMuted[index] = true;
-    });
+    videos.forEach((_, index) => { initialMuted[index] = true; });
     setMutedStates(initialMuted);
   }, [videos]);
 
@@ -196,9 +122,7 @@ const VideoSection = ({ videos }) => {
     const video = videoRefs.current[index];
     if (!video) return;
     video.muted = true;
-    video.play().then(() => {
-      setPlayingIndex(index);
-    }).catch(() => {});
+    video.play().then(() => { setPlayingIndex(index); }).catch(() => {});
   }, []);
 
   const toggleSound = useCallback((index) => {
@@ -211,13 +135,8 @@ const VideoSection = ({ videos }) => {
   const togglePlay = useCallback((index) => {
     const video = videoRefs.current[index];
     if (!video) return;
-
     if (video.paused) {
-      videoRefs.current.forEach((v, i) => {
-        if (i !== index && v && !v.paused) {
-          v.pause();
-        }
-      });
+      videoRefs.current.forEach((v, i) => { if (i !== index && v && !v.paused) v.pause(); });
       video.play();
       setPlayingIndex(index);
     } else {
@@ -238,10 +157,7 @@ const VideoSection = ({ videos }) => {
             const url = new URL(video.click_link);
             return url.hostname.replace('www.', '');
           } catch {
-            return video.click_link
-              .replace(/^https?:\/\//, '')
-              .replace(/^www\./, '')
-              .split('/')[0];
+            return video.click_link.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
           }
         })()
       : '';
@@ -250,28 +166,12 @@ const VideoSection = ({ videos }) => {
       <div
         key={index}
         className={`video-section ${!isPlaying ? 'paused' : ''}`}
-        style={{
-          position: 'relative',
-          width: '100%',
-          margin: '20px 0',
-          borderRadius: 0,
-          overflow: 'hidden',
-          background: '#000',
-          aspectRatio: '16/9',
-          cursor: 'pointer',
-          minHeight: '360px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        style={{ position: 'relative', width: '100%', margin: '20px 0', borderRadius: 0, overflow: 'hidden', background: '#000', aspectRatio: '16/9', cursor: 'pointer', minHeight: '360px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
         <video
           ref={(el) => { videoRefs.current[index] = el; }}
           src={video.video_url}
-          playsInline
-          muted
-          loop
-          preload="auto"
+          playsInline muted loop preload="auto"
           style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
           onLoadedData={() => initVideo(index)}
           onPlay={() => setPlayingIndex(index)}
@@ -279,75 +179,21 @@ const VideoSection = ({ videos }) => {
           onEnded={() => setPlayingIndex(null)}
         />
 
-        <div
-          className="video-text-center"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            textAlign: 'center',
-            zIndex: 4,
-            pointerEvents: 'none',
-            width: '90%',
-            maxWidth: '600px',
-          }}
-        >
+        <div className="video-text-center" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', zIndex: 4, pointerEvents: 'none', width: '90%', maxWidth: '600px' }}>
           {video.title && (
-            <h3
-              className="video-title-main"
-              style={{
-                color: 'white',
-                fontSize: '22px',
-                fontWeight: 600,
-                lineHeight: 1.2,
-                margin: 0,
-                textShadow: '0 2px 12px rgba(0,0,0,0.4)',
-                fontFamily: 'var(--font-heading)',
-                letterSpacing: '0.02em',
-              }}
-            >
+            <h3 className="video-title-main" style={{ color: 'white', fontSize: '22px', fontWeight: 600, lineHeight: 1.2, margin: 0, textShadow: '0 2px 12px rgba(0,0,0,0.4)', fontFamily: 'var(--font-heading)', letterSpacing: '0.02em' }}>
               {video.title}
             </h3>
           )}
           {video.subtitle && (
-            <p
-              className="video-subtitle-main"
-              style={{
-                color: 'rgba(255,255,255,0.9)',
-                fontSize: '12px',
-                fontWeight: 400,
-                marginTop: '8px',
-                textShadow: '0 1px 6px rgba(0,0,0,0.4)',
-                fontFamily: 'var(--font-body)',
-                letterSpacing: '0.03em',
-              }}
-            >
+            <p className="video-subtitle-main" style={{ color: 'rgba(255,255,255,0.9)', fontSize: '12px', fontWeight: 400, marginTop: '8px', textShadow: '0 1px 6px rgba(0,0,0,0.4)', fontFamily: 'var(--font-body)', letterSpacing: '0.03em' }}>
               {video.subtitle}
             </p>
           )}
           {hasLink && (
             <a
-              href={video.click_link}
-              target="_blank"
-              rel="noopener"
-              className="video-link-clean"
-              style={{
-                display: 'inline-block',
-                marginTop: '16px',
-                color: 'white',
-                fontSize: '11px',
-                fontWeight: 500,
-                textDecoration: 'none',
-                borderBottom: '1px solid rgba(255,255,255,0.6)',
-                paddingBottom: '2px',
-                transition: 'all 0.3s',
-                pointerEvents: 'auto',
-                textShadow: '0 1px 6px rgba(0,0,0,0.3)',
-                fontFamily: 'var(--font-body)',
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
+              href={video.click_link} target="_blank" rel="noopener" className="video-link-clean"
+              style={{ display: 'inline-block', marginTop: '16px', color: 'white', fontSize: '11px', fontWeight: 500, textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.6)', paddingBottom: '2px', transition: 'all 0.3s', pointerEvents: 'auto', textShadow: '0 1px 6px rgba(0,0,0,0.3)', fontFamily: 'var(--font-body)', letterSpacing: '0.08em', textTransform: 'uppercase' }}
               onClick={(e) => e.stopPropagation()}
             >
               {linkText} →
@@ -355,95 +201,23 @@ const VideoSection = ({ videos }) => {
           )}
         </div>
 
-        <div
-          className="video-play-indicator"
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '60px',
-            height: '60px',
-            borderRadius: '50%',
-            background: 'rgba(0,0,0,0.3)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            border: '1px solid rgba(255,255,255,0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            pointerEvents: 'none',
-            opacity: isPlaying ? 0 : 1,
-            transition: 'opacity 0.3s',
-          }}
-        >
+        <div className="video-play-indicator" style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: '60px', height: '60px', borderRadius: '50%', background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', border: '1px solid rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none', opacity: isPlaying ? 0 : 1, transition: 'opacity 0.3s' }}>
           <i className="fa-solid fa-play" style={{ fontSize: '20px', color: 'white', marginLeft: '2px' }} />
         </div>
 
-        <div
-          className="video-sound-control"
-          style={{
-            position: 'absolute',
-            bottom: '20px',
-            right: '20px',
-            zIndex: 6,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-          }}
-        >
+        <div className="video-sound-control" style={{ position: 'absolute', bottom: '20px', right: '20px', zIndex: 6, display: 'flex', alignItems: 'center', gap: '10px' }}>
           <button
             className={`sound-btn ${isMuted ? 'muted' : ''}`}
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleSound(index);
-            }}
+            onClick={(e) => { e.stopPropagation(); toggleSound(index); }}
             title="Toggle Sound"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: isMuted ? 'rgba(239,68,68,0.25)' : 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: isMuted
-                ? '1px solid rgba(239,68,68,0.3)'
-                : '1px solid rgba(255,255,255,0.2)',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '14px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            }}
+            style={{ width: '40px', height: '40px', borderRadius: '50%', background: isMuted ? 'rgba(239,68,68,0.25)' : 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: isMuted ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
           >
             <i className={`fa-solid ${isMuted ? 'fa-volume-xmark' : 'fa-volume-high'}`} />
           </button>
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePlay(index);
-            }}
+            onClick={(e) => { e.stopPropagation(); togglePlay(index); }}
             title="Play/Pause"
-            style={{
-              width: '36px',
-              height: '36px',
-              borderRadius: '50%',
-              background: 'rgba(0,0,0,0.4)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255,255,255,0.2)',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '12px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-            }}
+            style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)', border: '1px solid rgba(255,255,255,0.2)', color: 'white', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
           >
             <i className={`fa-solid ${isPlaying ? 'fa-pause' : 'fa-play'}`} />
           </button>
@@ -453,9 +227,6 @@ const VideoSection = ({ videos }) => {
   });
 };
 
-// ================================================================
-// Banner Card Component
-// ================================================================
 const BannerSection = ({ banners }) => {
   if (!banners || banners.length === 0) return null;
 
@@ -467,10 +238,7 @@ const BannerSection = ({ banners }) => {
             const url = new URL(banner.click_link);
             return url.hostname.replace('www.', '');
           } catch {
-            return banner.click_link
-              .replace(/^https?:\/\//, '')
-              .replace(/^www\./, '')
-              .split('/')[0];
+            return banner.click_link.replace(/^https?:\/\//, '').replace(/^www\./, '').split('/')[0];
           }
         })()
       : '';
@@ -480,93 +248,25 @@ const BannerSection = ({ banners }) => {
         key={index}
         className="product-banner-card"
         onClick={() => hasLink && window.open(banner.click_link, '_blank')}
-        style={{
-          position: 'relative',
-          borderRadius: '8px',
-          overflow: 'hidden',
-          marginBottom: '20px',
-          background: '#000',
-          height: '260px',
-          cursor: hasLink ? 'pointer' : 'default',
-          transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
+        style={{ position: 'relative', borderRadius: '8px', overflow: 'hidden', marginBottom: '20px', background: '#000', height: '260px', cursor: hasLink ? 'pointer' : 'default', transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)' }}
       >
-        <img
-          src={banner.banner_url}
-          alt={banner.title || 'Product banner'}
-          loading="lazy"
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            transition: 'transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1)',
-          }}
+        <img src={banner.banner_url} alt={banner.title || 'Product banner'} loading="lazy"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1)' }}
           onError={(e) => { e.currentTarget.style.display = 'none'; }}
         />
-        <div
-          className="banner-overlay"
-          style={{
-            position: 'absolute',
-            inset: 0,
-            background:
-              'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.02) 100%)',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'flex-end',
-            padding: '24px 20px',
-          }}
-        >
+        <div className="banner-overlay" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.02) 100%)', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '24px 20px' }}>
           {banner.title && (
-            <h3
-              className="banner-title"
-              style={{
-                color: 'white',
-                fontSize: '18px',
-                marginBottom: '4px',
-                textShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                fontFamily: 'var(--font-heading)',
-                fontWeight: 600,
-                letterSpacing: '0.02em',
-              }}
-            >
+            <h3 className="banner-title" style={{ color: 'white', fontSize: '18px', marginBottom: '4px', textShadow: '0 2px 8px rgba(0,0,0,0.3)', fontFamily: 'var(--font-heading)', fontWeight: 600, letterSpacing: '0.02em' }}>
               {banner.title}
             </h3>
           )}
           {banner.subtitle && (
-            <p
-              className="banner-subtitle"
-              style={{
-                color: 'rgba(255,255,255,0.85)',
-                fontSize: '12px',
-                textShadow: '0 1px 4px rgba(0,0,0,0.2)',
-                fontFamily: 'var(--font-body)',
-                fontWeight: 400,
-                letterSpacing: '0.03em',
-              }}
-            >
+            <p className="banner-subtitle" style={{ color: 'rgba(255,255,255,0.85)', fontSize: '12px', textShadow: '0 1px 4px rgba(0,0,0,0.2)', fontFamily: 'var(--font-body)', fontWeight: 400, letterSpacing: '0.03em' }}>
               {banner.subtitle}
             </p>
           )}
           {hasLink && (
-            <span
-              className="banner-link"
-              style={{
-                color: 'white',
-                fontSize: '11px',
-                textDecoration: 'none',
-                marginTop: '10px',
-                borderBottom: '1px solid rgba(255,255,255,0.5)',
-                paddingBottom: '2px',
-                transition: 'all 0.3s',
-                display: 'inline-block',
-                width: 'fit-content',
-                textShadow: '0 1px 4px rgba(0,0,0,0.2)',
-                fontFamily: 'var(--font-body)',
-                fontWeight: 500,
-                letterSpacing: '0.08em',
-                textTransform: 'uppercase',
-              }}
-            >
+            <span className="banner-link" style={{ color: 'white', fontSize: '11px', textDecoration: 'none', marginTop: '10px', borderBottom: '1px solid rgba(255,255,255,0.5)', paddingBottom: '2px', transition: 'all 0.3s', display: 'inline-block', width: 'fit-content', textShadow: '0 1px 4px rgba(0,0,0,0.2)', fontFamily: 'var(--font-body)', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
               {linkText} ↗
             </span>
           )}
@@ -576,19 +276,8 @@ const BannerSection = ({ banners }) => {
   });
 };
 
-// ================================================================
-// Collapsible Section Component
-// ================================================================
-type CollapsibleSectionProps = {
-  icon: string;
-  title: string;
-  children: React.ReactNode;
-  onToggle?: (open: boolean) => void;
-};
-
-const CollapsibleSection = ({ icon, title, children, onToggle }: CollapsibleSectionProps) => {
+const CollapsibleSection = ({ icon, title, children, onToggle }) => {
   const [isOpen, setIsOpen] = useState(false);
-
   const toggle = () => {
     setIsOpen(!isOpen);
     if (onToggle) onToggle(!isOpen);
@@ -599,26 +288,7 @@ const CollapsibleSection = ({ icon, title, children, onToggle }: CollapsibleSect
       <button
         className="toggle-btn"
         onClick={toggle}
-        style={{
-          background: '#ffffff',
-          border: '1px solid #e5e5e5',
-          borderRadius: '4px',
-          padding: '14px 18px',
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: '11px',
-          textTransform: 'uppercase',
-          cursor: 'pointer',
-          marginBottom: '8px',
-          transition: 'all 0.3s',
-          textAlign: 'left',
-          color: '#1a1a1a',
-          fontWeight: 600,
-          fontFamily: 'var(--font-subtitle)',
-          letterSpacing: '0.1em',
-        }}
+        style={{ background: '#ffffff', border: '1px solid #e5e5e5', borderRadius: '4px', padding: '14px 18px', width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', textTransform: 'uppercase', cursor: 'pointer', marginBottom: '8px', transition: 'all 0.3s', textAlign: 'left', color: '#1a1a1a', fontWeight: 600, fontFamily: 'var(--font-subtitle)', letterSpacing: '0.1em' }}
       >
         <span>
           <i className={`fa-solid ${icon}`} style={{ marginRight: '10px', color: '#666' }} />
@@ -626,31 +296,16 @@ const CollapsibleSection = ({ icon, title, children, onToggle }: CollapsibleSect
         </span>
         <i
           className="fa-solid fa-chevron-down toggle-icon-right"
-          style={{
-            transition: 'transform 0.3s',
-            transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-            fontSize: '10px',
-            color: '#666',
-          }}
+          style={{ transition: 'transform 0.3s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', fontSize: '10px', color: '#666' }}
         />
       </button>
-      <div
-        className="collapse-section"
-        style={{
-          maxHeight: isOpen ? '2000px' : 0,
-          overflow: 'hidden',
-          transition: 'max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-      >
+      <div className="collapse-section" style={{ maxHeight: isOpen ? '2000px' : 0, overflow: 'hidden', transition: 'max-height 0.45s cubic-bezier(0.4, 0, 0.2, 1)' }}>
         {children}
       </div>
     </>
   );
 };
 
-// ================================================================
-// MAIN PRODUCT PAGE COMPONENT
-// ================================================================
 export default function ProductPage() {
   const router = useRouter();
   const { slug } = router.query;
@@ -715,9 +370,7 @@ export default function ProductPage() {
   );
 
   const getVariant = useCallback(
-    (colorId, sizeId) => {
-      return productVariants.find((v) => v.color_id == colorId && v.size_id == sizeId) || null;
-    },
+    (colorId, sizeId) => productVariants.find((v) => v.color_id == colorId && v.size_id == sizeId) || null,
     [productVariants]
   );
 
@@ -726,7 +379,6 @@ export default function ProductPage() {
       setSelectedColorId(colorId);
       setSelectedSizeId(null);
       setSelectedVariant(null);
-
       const color = productColors.find((c) => c.id == colorId);
       if (color && color.color_image) {
         setActiveImage(color.color_image);
@@ -812,39 +464,16 @@ export default function ProductPage() {
       addToCart(productId, productData);
       showToast('Added to Bag', 'success');
 
-      if (buyNow) {
-        router.push('/checkout');
-      }
+      if (buyNow) router.push('/checkout');
     },
-    [
-      allProducts,
-      productColors,
-      colorSizes,
-      selectedVariant,
-      selectedColorId,
-      selectedSizeId,
-      showToast,
-      router,
-      addToCart,
-    ]
+    [allProducts, productColors, colorSizes, selectedVariant, selectedColorId, selectedSizeId, showToast, router, addToCart]
   );
 
   const generateBarcode = useCallback((barcodeText) => {
-    if (!barcodeText || typeof window === 'undefined' || !window.JsBarcode) {
-      return;
-    }
+    if (!barcodeText || typeof window === 'undefined' || !window.JsBarcode) return;
     try {
       const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      window.JsBarcode(svg, barcodeText, {
-        format: 'CODE128',
-        width: 1.5,
-        height: 60,
-        displayValue: true,
-        fontSize: 12,
-        margin: 8,
-        background: '#ffffff',
-        lineColor: '#1d1d1f',
-      });
+      window.JsBarcode(svg, barcodeText, { format: 'CODE128', width: 1.5, height: 60, displayValue: true, fontSize: 12, margin: 8, background: '#ffffff', lineColor: '#1d1d1f' });
       setBarcodeSvg(svg.outerHTML);
       setBarcodeGenerated(true);
     } catch (e) {
@@ -861,9 +490,7 @@ export default function ProductPage() {
     setIsZoomed(true);
   }, []);
 
-  const handleMouseLeave = useCallback(() => {
-    setIsZoomed(false);
-  }, []);
+  const handleMouseLeave = useCallback(() => { setIsZoomed(false); }, []);
 
   const handleTouchMove = useCallback((e) => {
     if (!heroRef.current) return;
@@ -874,20 +501,16 @@ export default function ProductPage() {
     setIsZoomed(true);
   }, []);
 
-  const handleTouchEnd = useCallback(() => {
-    setIsZoomed(false);
-  }, []);
+  const handleTouchEnd = useCallback(() => { setIsZoomed(false); }, []);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    
     const handleScroll = () => {
       if (buySectionRef.current) {
         const rect = buySectionRef.current.getBoundingClientRect();
         setStickyVisible(rect.bottom < 0);
       }
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -905,9 +528,7 @@ export default function ProductPage() {
 
         setAllProducts(products);
 
-        const product = products.find(
-          (p) => (p.slug || generateSlug(p.title)) === slug
-        );
+        const product = products.find((p) => (p.slug || generateSlug(p.title)) === slug);
 
         if (!product) {
           setNotFound(true);
@@ -965,11 +586,7 @@ export default function ProductPage() {
   const selectedSize = colorSizes.find((s) => s.id == selectedSizeId);
 
   const colorImagesData = productColors
-    .map((color) => ({
-      src: color.color_image,
-      colorCode: color.color_code,
-      colorName: color.color_name,
-    }))
+    .map((color) => ({ src: color.color_image, colorCode: color.color_code, colorName: color.color_name }))
     .filter((item) => item.src);
 
   const thumbnails = (() => {
@@ -996,9 +613,7 @@ export default function ProductPage() {
   const displayPrice = (() => {
     if (selectedVariant) return selectedVariant.price;
     if (selectedColorId) {
-      const variantsForColor = productVariants.filter(
-        (v) => v.color_id == selectedColorId && v.is_active
-      );
+      const variantsForColor = productVariants.filter((v) => v.color_id == selectedColorId && v.is_active);
       if (variantsForColor.length > 0) {
         const minPrice = Math.min(...variantsForColor.map((v) => v.price));
         const maxPrice = Math.max(...variantsForColor.map((v) => v.price));
@@ -1011,7 +626,6 @@ export default function ProductPage() {
   const displayOldPrice = selectedVariant?.old_price || currentProduct?.old_price || null;
   const isOutOfStock = selectedVariant ? selectedVariant.stock <= 0 : false;
 
-  // ✅ FIX: useMemo দিয়ে - জুম করার সময় আর shuffle হবে না
   const relatedProducts = useMemo(() => {
     if (!allProducts.length || !currentProduct?.id) return [];
     return [...allProducts.filter((p) => p.id !== currentProduct.id)]
@@ -1042,32 +656,14 @@ export default function ProductPage() {
         </Head>
         <main style={{ flexGrow: 1, background: '#ffffff' }}>
           <div style={{ textAlign: 'center', padding: '100px 20px' }}>
-            <i
-              className="fa-solid fa-box-open"
-              style={{ fontSize: '64px', color: '#e5e5e5', marginBottom: '20px' }}
-            />
+            <i className="fa-solid fa-box-open" style={{ fontSize: '64px', color: '#e5e5e5', marginBottom: '20px' }} />
             <h2 style={{ fontSize: '20px', fontWeight: 600, color: '#1d1d1f', marginBottom: '8px', fontFamily: 'var(--font-heading)' }}>
               Product Not Found
             </h2>
             <p style={{ color: '#6b7280', marginBottom: '28px', fontFamily: 'var(--font-body)', fontSize: '13px' }}>
               The product you're looking for doesn't exist or has been removed.
             </p>
-            <Link
-              href="/products"
-              style={{
-                display: 'inline-block',
-                padding: '12px 28px',
-                background: '#1d1d1f',
-                color: 'white',
-                borderRadius: '9999px',
-                fontWeight: 600,
-                textTransform: 'uppercase',
-                letterSpacing: '0.1em',
-                fontSize: '11px',
-                textDecoration: 'none',
-                fontFamily: 'var(--font-body)',
-              }}
-            >
+            <Link href="/products" style={{ display: 'inline-block', padding: '12px 28px', background: '#1d1d1f', color: 'white', borderRadius: '9999px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.1em', fontSize: '11px', textDecoration: 'none', fontFamily: 'var(--font-body)' }}>
               Browse Products
             </Link>
           </div>
@@ -1082,25 +678,16 @@ export default function ProductPage() {
     <>
       <Head>
         <title>{currentProduct.title || 'Product'} | JAYENWARE</title>
-        <meta
-          name="description"
-          content={(currentProduct.description || currentProduct.title || '').substring(0, 155) + '...'}
-        />
+        <meta name="description" content={(currentProduct.description || currentProduct.title || '').substring(0, 155) + '...'} />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js" />
       </Head>
 
       <main style={{ flexGrow: 1, background: '#ffffff' }}>
-        {toast && (
-          <Toast
-            message={toast.message}
-            type={toast.type}
-            onClose={() => setToast(null)}
-          />
-        )}
+        {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
 
         <div className="desktop-layout" style={{ display: 'block', background: '#ffffff' }}>
-          {/* Left Column - Images */}
+          {/* Left Column - Images (Full bleed) */}
           <div className="desktop-image-col">
             <div className="main-image-wrapper">
               <div
@@ -1110,85 +697,31 @@ export default function ProductPage() {
                 onMouseLeave={handleMouseLeave}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
-                style={{
-                  position: 'relative',
-                  width: '100%',
-                  background: '#ffffff',
-                  height: '60vh',
-                  minHeight: '400px',
-                  maxHeight: '600px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden',
-                  cursor: isZoomed ? 'zoom-out' : 'zoom-in',
-                  touchAction: 'none',
-                }}
+                style={{ position: 'relative', width: '100%', background: '#ffffff', height: '60vh', minHeight: '400px', maxHeight: '600px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', cursor: isZoomed ? 'zoom-out' : 'zoom-in', touchAction: 'none' }}
               >
                 <img
                   src={activeImage}
                   alt={currentProduct.title || ''}
                   draggable="false"
-                  style={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
-                    transition: isZoomed ? 'none' : 'transform 0.3s ease',
-                    transform: isZoomed ? `scale(2.5)` : 'scale(1)',
-                    transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`,
-                    pointerEvents: 'none',
-                    userSelect: 'none',
-                    WebkitUserSelect: 'none',
-                  }}
-                  onError={(e) => {
-                    e.currentTarget.src = '/logo.png';
-                  }}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', transition: isZoomed ? 'none' : 'transform 0.3s ease', transform: isZoomed ? `scale(2.5)` : 'scale(1)', transformOrigin: `${zoomOrigin.x}% ${zoomOrigin.y}%`, pointerEvents: 'none', userSelect: 'none', WebkitUserSelect: 'none' }}
+                  onError={(e) => { e.currentTarget.src = '/logo.png'; }}
                 />
               </div>
             </div>
 
             {thumbnails.length > 1 && (
-              <div
-                className="thumbnail-grid no-scrollbar"
-                style={{
-                  display: 'flex',
-                  flexWrap: 'nowrap',
-                  gap: '10px',
-                  marginTop: '12px',
-                  overflowX: 'auto',
-                  padding: '4px 0 8px',
-                  WebkitOverflowScrolling: 'touch',
-                }}
-              >
+              <div className="thumbnail-grid no-scrollbar" style={{ display: 'flex', flexWrap: 'nowrap', gap: '10px', marginTop: '12px', overflowX: 'auto', padding: '4px 16px 8px', WebkitOverflowScrolling: 'touch' }}>
                 {thumbnails.map((thumb, index) => (
                   <img
                     key={index}
                     src={thumb.src}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      selectThumbnail(thumb.src);
-                    }}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); selectThumbnail(thumb.src); }}
                     className={`thumbnail-item${activeImage === thumb.src ? ' active' : ''}`}
                     alt={thumb.colorName || `Image ${index + 1}`}
                     loading="lazy"
                     draggable="false"
-                    style={{
-                      width: '68px',
-                      height: '68px',
-                      objectFit: 'cover',
-                      cursor: 'pointer',
-                      border: activeImage === thumb.src
-                        ? '1.5px solid #1d1d1f'
-                        : '1.5px solid #e8e8e8',
-                      flexShrink: 0,
-                      transition: 'all 0.3s',
-                      opacity: activeImage === thumb.src ? 1 : 0.7,
-                      background: '#ffffff',
-                    }}
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none';
-                    }}
+                    style={{ width: '68px', height: '68px', objectFit: 'cover', cursor: 'pointer', border: activeImage === thumb.src ? '1.5px solid #1d1d1f' : '1.5px solid #e8e8e8', flexShrink: 0, transition: 'all 0.3s', opacity: activeImage === thumb.src ? 1 : 0.7, background: '#ffffff' }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
                   />
                 ))}
               </div>
@@ -1197,99 +730,33 @@ export default function ProductPage() {
 
           {/* Right Column - Product Info */}
           <div className="desktop-info-col">
-            <div
-              className="product-info-card"
-              style={{
-                background: '#ffffff',
-                padding: '20px 0',
-                marginBottom: '16px',
-              }}
-            >
+            <div className="product-info-card" style={{ background: '#ffffff', padding: '20px 0', marginBottom: '16px' }}>
               {currentProduct.category && (
-                <span
-                  style={{
-                    color: '#999',
-                    padding: 0,
-                    fontSize: '10px',
-                    fontWeight: 500,
-                    display: 'inline-block',
-                    marginBottom: '10px',
-                    fontFamily: 'var(--font-accent)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.15em',
-                  }}
-                >
+                <span style={{ color: '#999', padding: 0, fontSize: '10px', fontWeight: 500, display: 'inline-block', marginBottom: '10px', fontFamily: 'var(--font-accent)', textTransform: 'uppercase', letterSpacing: '0.15em' }}>
                   {currentProduct.category}
                   {currentProduct.subcategory && ` · ${currentProduct.subcategory}`}
                 </span>
               )}
 
-              <h1
-                className="title-text"
-                style={{
-                  fontSize: '20px',
-                  fontWeight: 500,
-                  color: '#1a1a1a',
-                  marginBottom: '4px',
-                  lineHeight: 1.3,
-                  fontFamily: 'var(--font-heading)',
-                  letterSpacing: '0.01em',
-                }}
-              >
+              <h1 className="title-text" style={{ fontSize: '20px', fontWeight: 500, color: '#1a1a1a', marginBottom: '4px', lineHeight: 1.3, fontFamily: 'var(--font-heading)', letterSpacing: '0.01em' }}>
                 {currentProduct.title || ''}
               </h1>
 
               {currentProduct.short_description && (
-                <p
-                  style={{
-                    fontSize: '12px',
-                    color: '#666',
-                    margin: '8px 0 0',
-                    lineHeight: 1.6,
-                    fontFamily: 'var(--font-body)',
-                    letterSpacing: '0.01em',
-                  }}
-                >
+                <p style={{ fontSize: '12px', color: '#666', margin: '8px 0 0', lineHeight: 1.6, fontFamily: 'var(--font-body)', letterSpacing: '0.01em' }}>
                   {currentProduct.short_description}
                 </p>
               )}
 
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'baseline',
-                  justifyContent: 'space-between',
-                  marginTop: '18px',
-                  gap: '16px',
-                }}
-              >
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginTop: '18px', gap: '16px' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
-                  <span
-                    id="variant-price-display"
-                    style={{
-                      fontSize: '22px',
-                      fontWeight: 600,
-                      color: '#000',
-                      fontFamily: 'var(--font-body)',
-                      letterSpacing: '-0.01em',
-                    }}
-                  >
+                  <span id="variant-price-display" style={{ fontSize: '22px', fontWeight: 600, color: '#000', fontFamily: 'var(--font-body)', letterSpacing: '-0.01em' }}>
                     {typeof displayPrice === 'string' && displayPrice.includes(' - ')
                       ? displayPrice.split(' - ').map((price) => formatMoney(price)).join(' – ')
                       : formatMoney(displayPrice)}
                   </span>
                   {displayOldPrice && (
-                    <span
-                      id="variant-old-price-display"
-                      style={{
-                        fontSize: '12px',
-                        color: '#a0a0a0',
-                        textDecoration: 'line-through',
-                        textDecorationThickness: '1px',
-                        fontFamily: 'var(--font-body)',
-                        fontWeight: 400,
-                      }}
-                    >
+                    <span id="variant-old-price-display" style={{ fontSize: '12px', color: '#a0a0a0', textDecoration: 'line-through', textDecorationThickness: '1px', fontFamily: 'var(--font-body)', fontWeight: 400 }}>
                       {formatMoney(displayOldPrice)}
                     </span>
                   )}
@@ -1297,77 +764,17 @@ export default function ProductPage() {
                 <button
                   onClick={() => toggleWishlist(currentProduct.id)}
                   data-wishlist-btn
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 14px',
-                    border: '1px solid #e8e8e8',
-                    borderRadius: '9999px',
-                    fontSize: '10px',
-                    fontWeight: 500,
-                    background: '#ffffff',
-                    cursor: 'pointer',
-                    color: '#1a1a1a',
-                    transition: 'all 0.3s',
-                    fontFamily: 'var(--font-body)',
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    flexShrink: 0,
-                  }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '8px 14px', border: '1px solid #e8e8e8', borderRadius: '9999px', fontSize: '10px', fontWeight: 500, background: '#ffffff', cursor: 'pointer', color: '#1a1a1a', transition: 'all 0.3s', fontFamily: 'var(--font-body)', letterSpacing: '0.08em', textTransform: 'uppercase', flexShrink: 0 }}
                 >
-                  <i
-                    className={`fa-${wishlist.includes(currentProduct.id) ? 'solid' : 'regular'} fa-heart`}
-                    style={{
-                      color: wishlist.includes(currentProduct.id) ? '#ef4444' : '#999',
-                      fontSize: '12px',
-                    }}
-                  />
+                  <i className={`fa-${wishlist.includes(currentProduct.id) ? 'solid' : 'regular'} fa-heart`} style={{ color: wishlist.includes(currentProduct.id) ? '#ef4444' : '#999', fontSize: '12px' }} />
                   {wishlist.includes(currentProduct.id) ? 'Saved' : 'Save'}
                 </button>
               </div>
 
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  marginTop: '12px',
-                }}
-              >
-                <span
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    background: selectedVariant
-                      ? isOutOfStock
-                        ? '#ef4444'
-                        : '#22c55e'
-                      : '#f59e0b',
-                    display: 'inline-block',
-                    flexShrink: 0,
-                  }}
-                />
-                <span
-                  style={{
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    fontFamily: 'var(--font-body)',
-                    letterSpacing: '0.1em',
-                    textTransform: 'uppercase',
-                    color: selectedVariant
-                      ? isOutOfStock
-                        ? '#ef4444'
-                        : '#16a34a'
-                      : '#d97706',
-                  }}
-                >
-                  {selectedVariant
-                    ? isOutOfStock
-                      ? 'Out of Stock'
-                      : 'In Stock'
-                    : 'Select options'}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '12px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: selectedVariant ? (isOutOfStock ? '#ef4444' : '#22c55e') : '#f59e0b', display: 'inline-block', flexShrink: 0 }} />
+                <span style={{ fontSize: '10px', fontWeight: 600, fontFamily: 'var(--font-body)', letterSpacing: '0.1em', textTransform: 'uppercase', color: selectedVariant ? (isOutOfStock ? '#ef4444' : '#16a34a') : '#d97706' }}>
+                  {selectedVariant ? (isOutOfStock ? 'Out of Stock' : 'In Stock') : 'Select options'}
                 </span>
               </div>
 
@@ -1377,36 +784,13 @@ export default function ProductPage() {
                 <CollapsibleSection icon="fa-palette" title="Color & Size">
                   <div style={{ padding: '10px 0 16px' }}>
                     <div style={{ marginBottom: '8px' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginBottom: '12px',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.12em',
-                            fontSize: '9px',
-                            color: '#999',
-                            fontFamily: 'var(--font-body)',
-                          }}
-                        >
-                          Color
-                        </span>
-                        <span style={{ fontSize: '11px', fontWeight: 500, color: '#1a1a1a', fontFamily: 'var(--font-body)' }}>
-                          {selectedColor?.color_name || 'Select'}
-                        </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '9px', color: '#999', fontFamily: 'var(--font-body)' }}>Color</span>
+                        <span style={{ fontSize: '11px', fontWeight: 500, color: '#1a1a1a', fontFamily: 'var(--font-body)' }}>{selectedColor?.color_name || 'Select'}</span>
                       </div>
                       <div className="no-scrollbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                         {productColors.map((color) => {
-                          const hasStock =
-                            productVariants.filter(
-                              (v) => v.color_id == color.id && v.is_active && v.stock > 0
-                            ).length > 0;
+                          const hasStock = productVariants.filter((v) => v.color_id == color.id && v.is_active && v.stock > 0).length > 0;
                           const isSelected = selectedColorId === color.id;
                           return (
                             <button
@@ -1415,49 +799,11 @@ export default function ProductPage() {
                               onClick={() => hasStock && selectColor(color.id)}
                               title={`${color.color_name}${!hasStock ? ' (Out of Stock)' : ''}`}
                               disabled={!hasStock}
-                              style={{
-                                width: '36px',
-                                height: '36px',
-                                borderRadius: '50%',
-                                border: isSelected
-                                  ? '1.5px solid #1a1a1a'
-                                  : '1.5px solid #e0e0e0',
-                                cursor: hasStock ? 'pointer' : 'not-allowed',
-                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                position: 'relative',
-                                flexShrink: 0,
-                                background: '#ffffff',
-                                padding: '3px',
-                                outline: 'none',
-                                opacity: !hasStock ? 0.3 : 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                transform: isSelected ? 'scale(1.05)' : 'scale(1)',
-                              }}
+                              style={{ width: '36px', height: '36px', borderRadius: '50%', border: isSelected ? '1.5px solid #1a1a1a' : '1.5px solid #e0e0e0', cursor: hasStock ? 'pointer' : 'not-allowed', transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', position: 'relative', flexShrink: 0, background: '#ffffff', padding: '3px', outline: 'none', opacity: !hasStock ? 0.3 : 1, display: 'flex', alignItems: 'center', justifyContent: 'center', transform: isSelected ? 'scale(1.05)' : 'scale(1)' }}
                             >
-                              <span
-                                style={{
-                                  width: '100%',
-                                  height: '100%',
-                                  borderRadius: '50%',
-                                  display: 'block',
-                                  background: color.color_code || '#ccc',
-                                  boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)',
-                                }}
-                              />
+                              <span style={{ width: '100%', height: '100%', borderRadius: '50%', display: 'block', background: color.color_code || '#ccc', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.06)' }} />
                               {!hasStock && (
-                                <span
-                                  style={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    left: '-5%',
-                                    width: '110%',
-                                    height: '1.5px',
-                                    background: '#ef4444',
-                                    transform: 'rotate(-45deg)',
-                                  }}
-                                />
+                                <span style={{ position: 'absolute', top: '50%', left: '-5%', width: '110%', height: '1.5px', background: '#ef4444', transform: 'rotate(-45deg)' }} />
                               )}
                             </button>
                           );
@@ -1467,39 +813,15 @@ export default function ProductPage() {
 
                     <div style={{ height: '14px' }} />
                     <div style={{ marginBottom: '8px' }}>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginBottom: '12px',
-                        }}
-                      >
-                        <span
-                          style={{
-                            fontWeight: 600,
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.12em',
-                            fontSize: '9px',
-                            color: '#999',
-                            fontFamily: 'var(--font-body)',
-                          }}
-                        >
-                          Size
-                        </span>
-                        <span style={{ fontSize: '11px', fontWeight: 500, color: '#1a1a1a', fontFamily: 'var(--font-body)' }}>
-                          {selectedSize?.size_name || 'Select'}
-                        </span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                        <span style={{ fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.12em', fontSize: '9px', color: '#999', fontFamily: 'var(--font-body)' }}>Size</span>
+                        <span style={{ fontSize: '11px', fontWeight: 500, color: '#1a1a1a', fontFamily: 'var(--font-body)' }}>{selectedSize?.size_name || 'Select'}</span>
                       </div>
                       <div className="no-scrollbar" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {!selectedColorId ? (
-                          <p style={{ fontSize: '11px', color: '#999', padding: '6px 0', fontFamily: 'var(--font-body)' }}>
-                            Choose a color first
-                          </p>
+                          <p style={{ fontSize: '11px', color: '#999', padding: '6px 0', fontFamily: 'var(--font-body)' }}>Choose a color first</p>
                         ) : availableSizesForColor.length === 0 ? (
-                          <p style={{ fontSize: '11px', color: '#999', padding: '8px 0', fontFamily: 'var(--font-body)' }}>
-                            No sizes available
-                          </p>
+                          <p style={{ fontSize: '11px', color: '#999', padding: '8px 0', fontFamily: 'var(--font-body)' }}>No sizes available</p>
                         ) : (
                           availableSizesForColor.map((size) => {
                             const variant = getVariant(selectedColorId, size.id);
@@ -1511,26 +833,7 @@ export default function ProductPage() {
                                 className={`size-btn${isSelected ? ' selected' : ''}${!isAvailable ? ' disabled' : ''}`}
                                 onClick={() => isAvailable && selectSize(size.id)}
                                 disabled={!isAvailable}
-                                style={{
-                                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                                  cursor: isAvailable ? 'pointer' : 'not-allowed',
-                                  border: isSelected
-                                    ? '1px solid #1a1a1a'
-                                    : '1px solid #e0e0e0',
-                                  borderRadius: '2px',
-                                  padding: '9px 16px',
-                                  fontWeight: 500,
-                                  fontSize: '11px',
-                                  fontFamily: 'var(--font-body)',
-                                  letterSpacing: '0.08em',
-                                  background: isSelected ? '#1a1a1a' : '#ffffff',
-                                  color: isSelected ? '#ffffff' : '#1a1a1a',
-                                  minWidth: '44px',
-                                  textAlign: 'center',
-                                  flexShrink: 0,
-                                  opacity: !isAvailable ? 0.3 : 1,
-                                  textDecoration: !isAvailable ? 'line-through' : 'none',
-                                }}
+                                style={{ transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', cursor: isAvailable ? 'pointer' : 'not-allowed', border: isSelected ? '1px solid #1a1a1a' : '1px solid #e0e0e0', borderRadius: '2px', padding: '9px 16px', fontWeight: 500, fontSize: '11px', fontFamily: 'var(--font-body)', letterSpacing: '0.08em', background: isSelected ? '#1a1a1a' : '#ffffff', color: isSelected ? '#ffffff' : '#1a1a1a', minWidth: '44px', textAlign: 'center', flexShrink: 0, opacity: !isAvailable ? 0.3 : 1, textDecoration: !isAvailable ? 'line-through' : 'none' }}
                               >
                                 {size.size_name}
                               </button>
@@ -1541,23 +844,7 @@ export default function ProductPage() {
                     </div>
 
                     {selectedVariant && (
-                      <div
-                        style={{
-                          background: '#fafafa',
-                          borderRadius: '4px',
-                          padding: '12px 14px',
-                          marginTop: '14px',
-                          fontSize: '10px',
-                          color: '#666',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '8px',
-                          flexWrap: 'wrap',
-                          fontFamily: 'var(--font-body)',
-                          letterSpacing: '0.05em',
-                          textTransform: 'uppercase',
-                        }}
-                      >
+                      <div style={{ background: '#fafafa', borderRadius: '4px', padding: '12px 14px', marginTop: '14px', fontSize: '10px', color: '#666', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', fontFamily: 'var(--font-body)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
                         {selectedVariant.sku && (
                           <>
                             <span style={{ fontWeight: 600 }}>SKU</span>
@@ -1586,35 +873,12 @@ export default function ProductPage() {
             </div>
 
             {/* Buy Buttons */}
-            <div
-              id="buy-section"
-              ref={buySectionRef}
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '10px',
-                margin: '14px 0 24px',
-              }}
-            >
+            <div id="buy-section" ref={buySectionRef} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', margin: '14px 0 24px' }}>
               <button
                 id="add-to-bag-btn"
                 onClick={() => addToCartHandler(currentProduct.id)}
                 disabled={isOutOfStock && selectedVariant}
-                style={{
-                  padding: '16px',
-                  background: '#1a1a1a',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '2px',
-                  fontWeight: 500,
-                  fontSize: '11px',
-                  fontFamily: 'var(--font-body)',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s',
-                  opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
-                }}
+                style={{ padding: '16px', background: '#1a1a1a', color: 'white', border: 'none', borderRadius: '2px', fontWeight: 500, fontSize: '11px', fontFamily: 'var(--font-body)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer', transition: 'all 0.3s', opacity: isOutOfStock && selectedVariant ? 0.5 : 1 }}
               >
                 Add to Bag
               </button>
@@ -1622,21 +886,7 @@ export default function ProductPage() {
                 id="buy-now-btn"
                 onClick={() => addToCartHandler(currentProduct.id, true)}
                 disabled={isOutOfStock && selectedVariant}
-                style={{
-                  padding: '16px',
-                  background: '#ffffff',
-                  border: '1px solid #1a1a1a',
-                  borderRadius: '2px',
-                  fontWeight: 500,
-                  fontSize: '11px',
-                  fontFamily: 'var(--font-body)',
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s',
-                  color: '#1a1a1a',
-                  opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
-                }}
+                style={{ padding: '16px', background: '#ffffff', border: '1px solid #1a1a1a', borderRadius: '2px', fontWeight: 500, fontSize: '11px', fontFamily: 'var(--font-body)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer', transition: 'all 0.3s', color: '#1a1a1a', opacity: isOutOfStock && selectedVariant ? 0.5 : 1 }}
               >
                 Buy Now
               </button>
@@ -1699,17 +949,7 @@ export default function ProductPage() {
               <CollapsibleSection icon="fa-align-left" title="Description">
                 <div
                   className="description-content"
-                  style={{
-                    background: '#fafafa',
-                    padding: '16px',
-                    borderRadius: '4px',
-                    marginTop: '4px',
-                    marginBottom: '16px',
-                    fontSize: '12px',
-                    color: '#555',
-                    lineHeight: 1.8,
-                    fontFamily: 'var(--font-body)',
-                  }}
+                  style={{ background: '#fafafa', padding: '16px', borderRadius: '4px', marginTop: '4px', marginBottom: '16px', fontSize: '12px', color: '#555', lineHeight: 1.8, fontFamily: 'var(--font-body)' }}
                   dangerouslySetInnerHTML={{ __html: currentProduct.description }}
                 />
               </CollapsibleSection>
@@ -1720,33 +960,14 @@ export default function ProductPage() {
                 icon="fa-barcode"
                 title="Barcode"
                 onToggle={(open) => {
-                  if (open && !barcodeGenerated && currentProduct.barcode) {
-                    generateBarcode(currentProduct.barcode);
-                  }
+                  if (open && !barcodeGenerated && currentProduct.barcode) generateBarcode(currentProduct.barcode);
                 }}
               >
-                <div
-                  style={{
-                    background: '#ffffff',
-                    padding: '16px 12px',
-                    border: '1px solid #e5e5e5',
-                    borderRadius: '4px',
-                    marginTop: '4px',
-                    marginBottom: '16px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    minHeight: '90px',
-                    overflowX: 'auto',
-                  }}
-                >
+                <div style={{ background: '#ffffff', padding: '16px 12px', border: '1px solid #e5e5e5', borderRadius: '4px', marginTop: '4px', marginBottom: '16px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '90px', overflowX: 'auto' }}>
                   {barcodeSvg ? (
                     <div dangerouslySetInnerHTML={{ __html: barcodeSvg }} />
                   ) : (
-                    <p style={{ color: '#999', fontSize: '11px', textAlign: 'center', padding: '20px' }}>
-                      Click to generate barcode
-                    </p>
+                    <p style={{ color: '#999', fontSize: '11px', textAlign: 'center', padding: '20px' }}>Click to generate barcode</p>
                   )}
                 </div>
               </CollapsibleSection>
@@ -1770,12 +991,10 @@ export default function ProductPage() {
           <div style={{ height: '40px' }} />
         </div>
 
-        {/* ✅ Complete the Look — Mobile first, pure white, refined */}
+        {/* Complete the Look */}
         {relatedProducts.length > 0 && (
           <section className="complete-look-section">
-            <h3 className="complete-look-heading">
-              Complete the Look
-            </h3>
+            <h3 className="complete-look-heading">Complete the Look</h3>
             <div className="complete-look-grid">
               {relatedProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
@@ -1785,22 +1004,7 @@ export default function ProductPage() {
         )}
 
         {/* Sticky Add Bar */}
-        <div
-          className={`sticky-add-bar${stickyVisible ? ' active' : ''}`}
-          style={{
-            position: 'fixed',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            background: '#ffffff',
-            borderTop: '1px solid #e5e5e5',
-            padding: '12px 20px calc(12px + env(safe-area-inset-bottom, 0px))',
-            zIndex: 49,
-            display: stickyVisible ? 'flex' : 'none',
-            alignItems: 'center',
-            gap: '16px',
-          }}
-        >
+        <div className={`sticky-add-bar${stickyVisible ? ' active' : ''}`} style={{ position: 'fixed', bottom: 0, left: 0, right: 0, background: '#ffffff', borderTop: '1px solid #e5e5e5', padding: '12px 20px calc(12px + env(safe-area-inset-bottom, 0px))', zIndex: 49, display: stickyVisible ? 'flex' : 'none', alignItems: 'center', gap: '16px' }}>
           <div style={{ flexGrow: 1 }}>
             <span style={{ fontSize: '16px', fontWeight: 600, fontFamily: 'var(--font-body)', color: '#000' }}>
               {formatMoney(selectedVariant?.price || currentProduct?.price || 0)}
@@ -1809,28 +1013,12 @@ export default function ProductPage() {
           <button
             onClick={() => addToCartHandler(currentProduct.id)}
             disabled={isOutOfStock && selectedVariant}
-            style={{
-              padding: '12px 28px',
-              background: '#1a1a1a',
-              color: 'white',
-              border: 'none',
-              borderRadius: '2px',
-              fontWeight: 500,
-              textTransform: 'uppercase',
-              fontSize: '11px',
-              fontFamily: 'var(--font-body)',
-              letterSpacing: '0.12em',
-              cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer',
-              whiteSpace: 'nowrap',
-              transition: 'all 0.3s',
-              opacity: isOutOfStock && selectedVariant ? 0.5 : 1,
-            }}
+            style={{ padding: '12px 28px', background: '#1a1a1a', color: 'white', border: 'none', borderRadius: '2px', fontWeight: 500, textTransform: 'uppercase', fontSize: '11px', fontFamily: 'var(--font-body)', letterSpacing: '0.12em', cursor: isOutOfStock && selectedVariant ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap', transition: 'all 0.3s', opacity: isOutOfStock && selectedVariant ? 0.5 : 1 }}
           >
             Add to Bag
           </button>
         </div>
 
-        {/* Styles */}
         <style jsx global>{`
           :root {
             --primary: #1d1d1f;
@@ -1844,25 +1032,10 @@ export default function ProductPage() {
             --font-accent: 'Manrope', sans-serif;
           }
 
-          * {
-            -webkit-tap-highlight-color: transparent;
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-          }
-
+          * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; margin: 0; padding: 0; }
           img { max-width: 100%; height: auto; display: block; }
-
-          body {
-            font-family: var(--font-body);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background: #ffffff;
-          }
-
-          h1, h2, h3, h4, h5, h6 {
-            font-family: var(--font-heading);
-          }
+          body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; background: #ffffff; }
+          h1, h2, h3, h4, h5, h6 { font-family: var(--font-heading); }
 
           .skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
@@ -1870,14 +1043,9 @@ export default function ProductPage() {
             animation: shimmer 1.5s infinite;
           }
 
-          @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-          }
+          @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
-          .complete-look-card:hover .product-image {
-            transform: scale(1.03);
-          }
+          .complete-look-card:hover .product-image { transform: scale(1.03); }
 
           .product-hero {
             position: relative;
@@ -1901,59 +1069,46 @@ export default function ProductPage() {
             transition: transform 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
           }
 
-          .product-hero.zoomed img { 
-            transform: scale(2.5) !important;
-            transition: none !important;
-          }
+          .product-hero.zoomed img { transform: scale(2.5) !important; transition: none !important; }
 
-          .thumbnail-item {
-            cursor: pointer !important;
-            pointer-events: auto !important;
-          }
-
-          .thumbnail-item:hover {
-            opacity: 1 !important;
-          }
+          .thumbnail-item { cursor: pointer !important; pointer-events: auto !important; }
+          .thumbnail-item:hover { opacity: 1 !important; }
 
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-
           .thumbnail-grid::-webkit-scrollbar { height: 3px; }
-          .thumbnail-grid::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.1);
-            border-radius: 10px;
-          }
+          .thumbnail-grid::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
 
-          .video-section.paused .video-play-indicator {
-            opacity: 1;
-          }
-
-          .video-link-clean:hover {
-            border-bottom-color: white;
-            padding-bottom: 4px;
-          }
-
-          .sound-btn:hover {
-            background: rgba(0,0,0,0.6);
-            border-color: rgba(255,255,255,0.35);
-            transform: scale(1.05);
-          }
-
-          .product-banner-card:hover img {
-            transform: scale(1.05);
-          }
-
-          .banner-link:hover {
-            border-bottom-color: white;
-            padding-bottom: 5px;
-          }
+          .video-section.paused .video-play-indicator { opacity: 1; }
+          .video-link-clean:hover { border-bottom-color: white; padding-bottom: 4px; }
+          .sound-btn:hover { background: rgba(0,0,0,0.6); border-color: rgba(255,255,255,0.35); transform: scale(1.05); }
+          .product-banner-card:hover img { transform: scale(1.05); }
+          .banner-link:hover { border-bottom-color: white; padding-bottom: 5px; }
 
           #components-footer + footer,
-          #components-footer ~ footer:not(#components-footer) {
-            display: none !important;
+          #components-footer ~ footer:not(#components-footer) { display: none !important; }
+
+          /* ✅ FIX — Mobile/Tablet horizontal gap so buttons & text don't touch screen edges */
+          @media (max-width: 1023px) {
+            .desktop-info-col {
+              padding-left: 16px;
+              padding-right: 16px;
+            }
+            .desktop-full-width-buttons {
+              padding-left: 16px;
+              padding-right: 16px;
+            }
+            .mobile-banner-section {
+              padding-left: 16px;
+              padding-right: 16px;
+            }
+            .mobile-video-section {
+              padding-left: 16px;
+              padding-right: 16px;
+            }
           }
 
-          /* ✅ COMPLETE THE LOOK — Mobile first, pure white, refined */
+          /* Complete the Look */
           .complete-look-section {
             padding: 32px 16px 60px;
             background: #ffffff;
@@ -1980,28 +1135,12 @@ export default function ProductPage() {
           }
 
           @media (min-width: 768px) {
-            .complete-look-section {
-              padding: 48px 24px 80px;
-            }
-            .complete-look-heading {
-              font-size: 13px;
-              margin-bottom: 28px;
-            }
-            .complete-look-grid {
-              grid-template-columns: repeat(4, minmax(0, 1fr));
-              gap: 20px;
-            }
-            .product-hero {
-              height: 70vh;
-              min-height: 500px;
-              max-height: 800px;
-            }
-            .video-section {
-              min-height: 480px;
-            }
-            .product-banner-card {
-              height: 320px;
-            }
+            .complete-look-section { padding: 48px 24px 80px; }
+            .complete-look-heading { font-size: 13px; margin-bottom: 28px; }
+            .complete-look-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+            .product-hero { height: 70vh; min-height: 500px; max-height: 800px; }
+            .video-section { min-height: 480px; }
+            .product-banner-card { height: 320px; }
           }
 
           @media (min-width: 1024px) {
@@ -2015,38 +1154,16 @@ export default function ProductPage() {
               padding: 40px;
               background: #ffffff;
             }
-            .product-hero {
-              height: auto;
-              min-height: 500px;
-              max-height: none;
-              border-radius: 4px;
-            }
-            .product-hero img {
-              max-height: 80vh;
-            }
-            .full-width-section {
-              grid-column: 1 / -1;
-              width: 100%;
-              margin-top: 20px;
-            }
-            .mobile-video-section, .mobile-banner-section, .desktop-full-width-buttons {
-              grid-column: 1 / -1;
-              width: 100%;
-            }
-            .video-section {
-              min-height: 560px;
-            }
-            .product-banner-card {
-              height: 550px;
-            }
+            .product-hero { height: auto; min-height: 500px; max-height: none; border-radius: 4px; }
+            .product-hero img { max-height: 80vh; }
+            .full-width-section { grid-column: 1 / -1; width: 100%; margin-top: 20px; }
+            .mobile-video-section, .mobile-banner-section, .desktop-full-width-buttons { grid-column: 1 / -1; width: 100%; }
+            .video-section { min-height: 560px; }
+            .product-banner-card { height: 550px; }
           }
 
           @media (prefers-reduced-motion: reduce) {
-            .product-hero img,
-            .complete-look-card,
-            .thumbnail-item {
-              transition: none !important;
-            }
+            .product-hero img, .complete-look-card, .thumbnail-item { transition: none !important; }
           }
         `}</style>
       </main>
