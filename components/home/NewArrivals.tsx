@@ -3,17 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-
-const WISHLIST_KEY = 'jayen_wishlist';
-
-function readWishlist() {
-  if (typeof window === 'undefined') return [];
-  try {
-    return JSON.parse(localStorage.getItem(WISHLIST_KEY) || '[]');
-  } catch {
-    return [];
-  }
-}
+import { useCurrency } from '../currency/CurrencyProvider';
 
 export default function NewArrivals({ products = [] }) {
   const [arrivals, setArrivals] = useState([]);
@@ -33,7 +23,7 @@ export default function NewArrivals({ products = [] }) {
         const filtered = (Array.isArray(data) ? data : data?.data || data?.products || [])
           .filter(p => p.is_new_arrival === true || p.is_new_arrival === 1 || p.is_new_arrival === 'true');
         setArrivals(filtered.slice(0, maxProducts));
-      } catch {
+      } catch (e) {
         const filtered = products.filter(p => p.is_new_arrival === true || p.is_new_arrival === 1);
         setArrivals(filtered.slice(0, maxProducts));
       }
@@ -49,16 +39,20 @@ export default function NewArrivals({ products = [] }) {
     }
   }, [products]);
 
+  // Track scroll state for arrows
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
+
     const update = () => {
       setCanScrollLeft(el.scrollLeft > 2);
       setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
     };
+
     update();
     el.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
+
     return () => {
       el.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
@@ -69,8 +63,9 @@ export default function NewArrivals({ products = [] }) {
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.na-card');
-    const cardW = card ? card.offsetWidth : 280;
-    el.scrollBy({ left: (cardW + 12) * 2 * direction, behavior: 'smooth' });
+    const cardW = card ? card.offsetWidth : 260;
+    const gap = 12;
+    el.scrollBy({ left: (cardW + gap) * 2 * direction, behavior: 'smooth' });
   };
 
   const getImageUrl = (product) => {
@@ -90,10 +85,10 @@ export default function NewArrivals({ products = [] }) {
           <Image src="/newarrivalicon.png" alt="New Arrivals" width={180} height={40} style={{ objectFit: 'contain' }} priority />
         </div>
         <div className="na-scroll">
-          {[...Array(4)].map((_, i) => (
+          {[...Array(6)].map((_, i) => (
             <div key={i} className="na-card">
               <div className="na-image-wrap na-shimmer" />
-              <div className="na-underline-skeleton na-shimmer" />
+              <div className="na-underline" />
             </div>
           ))}
         </div>
@@ -112,14 +107,15 @@ export default function NewArrivals({ products = [] }) {
       <div className="na-scroll-wrap">
         {canScrollLeft && (
           <button className="na-arrow na-arrow-left" onClick={() => scrollByCards(-1)} aria-label="Previous">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
         )}
+
         {canScrollRight && (
           <button className="na-arrow na-arrow-right" onClick={() => scrollByCards(1)} aria-label="Next">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -145,7 +141,7 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-header {
           text-align: center;
-          margin-bottom: 24px;
+          margin-bottom: 28px;
           padding: 0 16px;
         }
         .na-scroll-wrap {
@@ -153,25 +149,57 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-scroll {
           display: flex;
-          gap: 10px;
+          gap: 8px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 16px;
-          padding: 0 16px 8px;
+          scroll-padding-left: 12px;
+          padding: 0 12px 8px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
+          align-items: flex-start;
         }
-        .na-scroll::-webkit-scrollbar {
-          display: none;
-        }
+        .na-scroll::-webkit-scrollbar { display: none; }
+
+        /* ✅ Fixed card size — same aspect ratio for all */
         .na-card {
-          flex: 0 0 78vw;
+          flex: 0 0 72vw;
+          max-width: 340px;
           scroll-snap-align: start;
         }
-        .na-underline-skeleton {
-          height: 1px;
-          margin-top: 10px;
+
+        .na-arrow {
+          position: absolute;
+          top: 40%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1px solid #e5e5e5;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #1a1a1a;
+          transition: all 0.25s ease;
+          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
         }
+        .na-arrow:hover {
+          background: #1a1a1a;
+          color: #fff;
+          border-color: #1a1a1a;
+        }
+        .na-arrow-left { left: 20px; }
+        .na-arrow-right { right: 20px; }
+
+        .na-underline {
+          height: 1px;
+          background: #e0e0e0;
+          margin-top: 14px;
+          width: 100%;
+        }
+
         .na-shimmer {
           background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
           background-size: 800px 100%;
@@ -182,60 +210,22 @@ export default function NewArrivals({ products = [] }) {
           100% { background-position: 400px 0; }
         }
 
-        .na-arrow {
-          position: absolute;
-          top: 45%;
-          transform: translateY(-50%);
-          z-index: 10;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          background: #ffffff;
-          border: 1px solid #e5e5e5;
-          display: none;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: #1a1a1a;
-          transition: all 0.2s ease;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
-        }
-        .na-arrow:hover {
-          background: #1a1a1a;
-          color: #fff;
-          border-color: #1a1a1a;
-        }
-        .na-arrow-left { left: 20px; }
-        .na-arrow-right { right: 20px; }
-
         @media (min-width: 640px) {
-          .na-scroll {
-            gap: 12px;
-            scroll-padding-left: 24px;
-            padding: 0 24px 8px;
-          }
-          .na-card { flex: 0 0 46vw; }
+          .na-scroll { gap: 10px; scroll-padding-left: 20px; padding: 0 20px 8px; }
+          .na-card { flex: 0 0 45vw; max-width: 320px; }
         }
 
         @media (min-width: 768px) {
           .na-section { padding: 56px 0 32px; }
-          .na-header { margin-bottom: 32px; }
-          .na-scroll {
-            gap: 16px;
-            scroll-padding-left: 32px;
-            padding: 0 32px 12px;
-          }
-          .na-card { flex: 0 0 300px; }
+          .na-header { margin-bottom: 36px; }
+          .na-scroll { gap: 12px; scroll-padding-left: 32px; padding: 0 32px 12px; }
+          .na-card { flex: 0 0 260px; max-width: none; }
           .na-arrow { display: flex; }
         }
 
         @media (min-width: 1024px) {
-          .na-scroll {
-            gap: 20px;
-            scroll-padding-left: 48px;
-            padding: 0 48px 16px;
-          }
-          .na-card { flex: 0 0 320px; }
+          .na-scroll { gap: 14px; scroll-padding-left: 48px; padding: 0 48px 16px; }
+          .na-card { flex: 0 0 300px; }
           .na-arrow-left { left: 28px; }
           .na-arrow-right { right: 28px; }
         }
@@ -249,80 +239,31 @@ export default function NewArrivals({ products = [] }) {
 }
 
 function NewArrivalCard({ product, getImageUrl, getSlug }) {
-  const [isLiked, setIsLiked] = useState(false);
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = getSlug(product);
   const imageUrl = getImageUrl(product);
 
-  useEffect(() => {
-    const list = readWishlist();
-    setIsLiked(list.includes(product.id));
-  }, [product.id]);
-
-  const toggleLike = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const list = readWishlist();
-    let next;
-    if (list.includes(product.id)) {
-      next = list.filter((id) => id !== product.id);
-      setIsLiked(false);
-    } else {
-      next = [...list, product.id];
-      setIsLiked(true);
-    }
-    try {
-      localStorage.setItem(WISHLIST_KEY, JSON.stringify(next));
-    } catch {}
-  };
-
   return (
     <Link href={`/product/${encodeURIComponent(slug)}`} className="na-card-link">
       <div className="na-image-wrap">
-        <img
-          src={imageUrl}
-          alt={product.title || 'Product'}
-          className="na-image"
-          loading="lazy"
-          onError={(e) => {
-            e.currentTarget.src = '/placeholder.png';
-          }}
-        />
+        <img src={imageUrl} alt={product.title || 'Product'} className="na-image" loading="lazy" />
 
-        {/* Shortcut like button — always visible */}
-        <button
-          className={`na-like ${isLiked ? 'liked' : ''}`}
-          onClick={toggleLike}
-          aria-label={isLiked ? 'Remove from wishlist' : 'Add to wishlist'}
-        >
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill={isLiked ? 'currentColor' : 'none'}
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-          </svg>
-        </button>
+        {/* ✅ Dark overlay for title readability */}
+        <div className="na-dark-overlay" />
 
-        {/* Sold out */}
+        {/* ✅ Title on image — luxury fashion style */}
+        <div className="na-title-on-image">
+          <h3 className="na-title">{product.title}</h3>
+        </div>
+
         {isOut && (
-          <div className="na-soldout">
+          <div className="na-soldout-overlay">
             <span className="na-soldout-label">Sold Out</span>
           </div>
         )}
-
-        {/* Title overlay — slides up over image */}
-        <div className="na-title-overlay">
-          <span className="na-title">{product.title}</span>
-        </div>
       </div>
 
-      {/* Underline below image */}
+      {/* ✅ Underline below each image */}
       <div className="na-underline" />
 
       <style jsx>{`
@@ -331,152 +272,116 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           text-decoration: none;
           color: inherit;
         }
+
+        /* ✅ Fixed aspect ratio — every card is identical size */
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 3/4;
+          width: 100%;
+          aspect-ratio: 4/5;
           background: #f5f5f7;
           overflow: hidden;
         }
         .na-image {
+          position: absolute;
+          inset: 0;
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
-          transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
+          transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
-        /* Like shortcut */
-        .na-like {
-          position: absolute;
-          top: 10px;
-          right: 10px;
-          z-index: 6;
-          width: 30px;
-          height: 30px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.92);
-          backdrop-filter: blur(6px);
-          -webkit-backdrop-filter: blur(6px);
-          border: none;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: #1a1a1a;
-          transition: transform 0.2s ease, background 0.2s ease;
-          padding: 0;
-          box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-        }
-        .na-like:hover { transform: scale(1.08); }
-        .na-like.liked { color: #ef4444; }
-
-        /* Sold out overlay */
-        .na-soldout {
+        /* ✅ Dark gradient overlay — bottom for title */
+        .na-dark-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(255, 255, 255, 0.6);
+          background: linear-gradient(
+            to top,
+            rgba(0, 0, 0, 0.72) 0%,
+            rgba(0, 0, 0, 0.45) 30%,
+            rgba(0, 0, 0, 0.15) 55%,
+            transparent 75%
+          );
+          z-index: 2;
+          pointer-events: none;
+          transition: opacity 0.4s ease;
+        }
+
+        /* ✅ Title overlay — bottom-left of image */
+        .na-title-on-image {
+          position: absolute;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          padding: 20px 16px 16px;
+          z-index: 3;
+          pointer-events: none;
+        }
+        .na-title {
+          font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
+          font-weight: 400;
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: #ffffff;
+          margin: 0;
+          line-height: 1.4;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Sold out */
+        .na-soldout-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.55);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 4;
         }
         .na-soldout-label {
-          background: #1a1a1a;
-          color: #fff;
+          background: #ffffff;
+          color: #1a1a1a;
           font-family: 'Sora', 'Inter', sans-serif;
           font-weight: 500;
-          font-size: 8px;
+          font-size: 9px;
           text-transform: uppercase;
-          padding: 5px 12px;
+          padding: 6px 14px;
           letter-spacing: 0.14em;
         }
 
-        /* Title overlay — hidden below image, slides up on hover */
-        .na-title-overlay {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          padding: 44px 12px 12px;
-          background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.6) 0%,
-            rgba(0, 0, 0, 0.15) 60%,
-            transparent 100%
-          );
-          z-index: 3;
-          pointer-events: none;
-          transform: translateY(100%) scale(0.94);
-          transform-origin: bottom center;
-          transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
-        }
-        .na-title {
-          display: block;
-          font-family: 'Sora', 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 10px;
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
-          color: #ffffff;
-          line-height: 1.4;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
-
-        /* Underline below image */
+        /* ✅ Underline below image */
         .na-underline {
           height: 1px;
-          background: #e5e5e5;
-          margin-top: 10px;
+          background: #e0e0e0;
+          margin-top: 14px;
+          width: 100%;
           transition: background 0.3s ease;
         }
 
-        /* Hover: image zoom + title slide up + underline becomes black */
         @media (hover: hover) {
           .na-card-link:hover .na-image {
             transform: scale(1.04);
-          }
-          .na-card-link:hover .na-title-overlay {
-            transform: translateY(0) scale(1);
           }
           .na-card-link:hover .na-underline {
             background: #1a1a1a;
           }
         }
 
-        /* Touch devices — title always visible since no hover */
-        @media (hover: none) {
-          .na-title-overlay {
-            transform: translateY(0) scale(1);
-          }
-        }
-
         @media (min-width: 768px) {
-          .na-like {
-            width: 34px;
-            height: 34px;
-            top: 12px;
-            right: 12px;
+          .na-title-on-image {
+            padding: 24px 18px 18px;
           }
           .na-title {
-            font-size: 11px;
+            font-size: 12px;
             letter-spacing: 0.18em;
           }
-          .na-title-overlay {
-            padding: 52px 14px 14px;
-          }
           .na-underline {
-            margin-top: 12px;
-          }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .na-image,
-          .na-title-overlay,
-          .na-like,
-          .na-underline {
-            transition: none !important;
+            margin-top: 16px;
           }
         }
       `}</style>
