@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useCurrency } from './currency/CurrencyProvider';
+import { useCurrency } from '../currency/CurrencyProvider';
 
 export default function NewArrivals({ products = [] }) {
   const [arrivals, setArrivals] = useState([]);
