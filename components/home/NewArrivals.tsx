@@ -269,6 +269,9 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
       <style jsx>{`
         .na-card-link {
           display: block;
+          flex: 0 0 72vw;
+          max-width: 340px;
+          scroll-snap-align: start;
           text-decoration: none;
           color: inherit;
         }
@@ -370,6 +373,22 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           .na-card-link:hover .na-underline {
             background: #1a1a1a;
           }
+        }
+
+        @media (min-width: 640px) {
+          .na-card-link { flex: 0 0 45vw; max-width: 320px; }
+        }
+
+        @media (min-width: 768px) {
+          .na-card-link { flex: 0 0 260px; max-width: none; }
+        }
+
+        @media (min-width: 1024px) {
+          .na-card-link { flex: 0 0 300px; }
+        }
+
+        @media (min-width: 1280px) {
+          .na-card-link { flex: 0 0 340px; }
         }
 
         @media (min-width: 768px) {
