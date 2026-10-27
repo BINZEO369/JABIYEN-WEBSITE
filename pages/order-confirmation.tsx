@@ -170,6 +170,9 @@ export default function OrderConfirmationPage() {
   const [token, setToken] = useState('');
   const [authToken, setAuthToken] = useState('');
   const [handoffStarted, setHandoffStarted] = useState(false);
+  const [handoffToken, setHandoffToken] = useState('');
+  const [handoffRetryCount, setHandoffRetryCount] = useState(0);
+  const [canRetryHandoff, setCanRetryHandoff] = useState(false);
 
   const orderNumber = router.query.order;
 
@@ -205,21 +208,37 @@ export default function OrderConfirmationPage() {
     }
   }, [orderNumber, authToken]);
 
-  // The one-time capability stays in the URL fragment, which is never sent to
-  // the server as a Referer. Remove it from browser history before redemption.
+  // Read the one-time capability from the fragment, then remove it from browser
+  // history before retaining it in memory or making the redemption request.
   useEffect(() => {
     if (!router.isReady || typeof window === 'undefined') return;
     const fragment = new URLSearchParams(window.location.hash.slice(1));
     const handoffToken = fragment.get('payment_handoff');
-    if (!handoffToken) return;
+    if (!handoffToken) {
+      setHandoffStarted(false);
+      setHandoffToken('');
+      return;
+    }
 
     window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
     setHandoffStarted(true);
     setStatus('loading');
     setError('');
+    setHandoffToken(handoffToken);
+  }, [router.isReady, orderNumber]);
+
+  // Submit only to the same-origin endpoint. Keep the token in React memory so
+  // a transient connection failure can be retried without restoring the URL.
+  useEffect(() => {
+    if (!handoffStarted || !handoffToken) return;
     const requestedOrderNumber = Array.isArray(orderNumber) ? orderNumber[0] : orderNumber;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    let active = true;
+
+    setCanRetryHandoff(false);
+    setStatus('loading');
+    setError('');
 
     fetch('/api/payment-handoff', {
       method: 'POST',
@@ -232,29 +251,41 @@ export default function OrderConfirmationPage() {
       .then(async (response) => {
         const result = await response.json().catch(() => null);
         const redeemedOrder = result?.order;
-        if (!response.ok || !result?.success || !redeemedOrder
+        if (!response.ok) {
+          const retryable = response.status === 429 || response.status >= 500;
+          throw Object.assign(new Error('SECURE_HANDOFF_REJECTED'), { retryable });
+        }
+        if (!result?.success || !redeemedOrder || !requestedOrderNumber
             || redeemedOrder.order_number !== requestedOrderNumber
             || redeemedOrder.status !== 'confirmed'
             || redeemedOrder.payment?.method !== 'stripe'
             || redeemedOrder.payment?.status !== 'collected') {
-          throw new Error('SECURE_HANDOFF_NOT_VERIFIED');
+          throw Object.assign(new Error('SECURE_HANDOFF_NOT_VERIFIED'), { retryable: false });
         }
+        if (!active) return;
         setOrder(redeemedOrder);
         setStatus('ready');
+        setHandoffToken('');
       })
       .catch((err) => {
-        setError(err?.name === 'AbortError'
-          ? 'The secure order link timed out. Return to BINZEO and request a new confirmation link.'
-          : 'This secure order link has expired, was already used, or could not be verified. Return to BINZEO and request a new link.');
+        if (!active) return;
+        const retryable = err?.name === 'AbortError' || err?.name === 'TypeError' || err?.retryable === true;
+        setCanRetryHandoff(retryable);
+        setError(retryable
+          ? (err?.name === 'AbortError'
+            ? 'The secure confirmation request timed out. Your order has not been verified. Please retry.'
+            : 'We could not connect to the secure order service. Your order has not been verified. Please retry.')
+          : 'This secure link is invalid, expired, or already used. Return to BINZEO and request a fresh secure link.');
         setStatus('error');
       })
       .finally(() => clearTimeout(timeout));
 
     return () => {
+      active = false;
       controller.abort();
       clearTimeout(timeout);
     };
-  }, [router.isReady, orderNumber]);
+  }, [handoffStarted, handoffToken, handoffRetryCount, orderNumber]);
 
   // Fetch order from API
   useEffect(() => {
@@ -429,6 +460,15 @@ export default function OrderConfirmationPage() {
             <section className="form-block animate-fade-up">
               <div className="minimal-box">
                 <p>{error}</p>
+                {canRetryHandoff && handoffToken && (
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => setHandoffRetryCount((count) => count + 1)}
+                  >
+                    Retry secure confirmation
+                  </button>
+                )}
                 <Link href="/" className="btn-outline">Return to Store</Link>
               </div>
             </section>
