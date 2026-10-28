@@ -10,7 +10,7 @@ export default function NewArrivals({ products = [] }) {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isScrollable, setIsScrollable] = useState(false);   // NEW
+  const [isScrollable, setIsScrollable] = useState(false);
   const scrollRef = useRef(null);
 
   const maxProducts = 12;
@@ -40,7 +40,6 @@ export default function NewArrivals({ products = [] }) {
     }
   }, [products]);
 
-  // scroll state + train-line progress
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -53,7 +52,6 @@ export default function NewArrivals({ products = [] }) {
       setIsScrollable(maxScroll > 2);
 
       if (maxScroll > 0) {
-        // 0 → 1 ঠিকভাবে স্ক্রল হলে, নাহলে 0 বা 1 এ clamp
         const raw = el.scrollLeft / maxScroll;
         setScrollProgress(Math.min(1, Math.max(0, raw)));
       } else {
@@ -65,7 +63,6 @@ export default function NewArrivals({ products = [] }) {
     el.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
 
-    // layout / image load এর পর re-calc
     const raf = requestAnimationFrame(update);
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -82,8 +79,10 @@ export default function NewArrivals({ products = [] }) {
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.na-card');
-    const cardW = card ? card.offsetWidth : 500;
-    const gap = 24;
+    if (!card) return;
+    const cardW = card.offsetWidth;
+    // CSS থেকে gap পড়া — সব breakpoint এ অটোমেটিক ঠিক থাকবে
+    const gap = parseFloat(getComputedStyle(el).gap) || 24;
     el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
   };
 
@@ -153,15 +152,12 @@ export default function NewArrivals({ products = [] }) {
           ))}
         </div>
 
-        {/* train-line track — scrollable হলে দেখাবে */}
         {isScrollable && (
           <div className="na-track-container">
             <div className="na-track-line">
               <div
                 className="na-train-thumb"
                 style={{
-                  // progress 0 → left:0 / translate:0
-                  // progress 1 → left:100% / translate:-100% (নিজের width বাদ দিয়ে ডান প্রান্তে)
                   left: `${scrollProgress * 100}%`,
                   transform: `translateX(-${scrollProgress * 100}%)`,
                 }}
@@ -185,21 +181,27 @@ export default function NewArrivals({ products = [] }) {
         .na-scroll-wrap {
           position: relative;
         }
+
+        /* === মূল ফিক্স: align-items: flex-start + বড় গ্যাপ === */
         .na-scroll {
           display: flex;
-          gap: 24px;
+          align-items: flex-start;   /* কার্ড আর স্ট্রেচ হবে না */
+          gap: 40px;                 /* বড় গ্যাপ */
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 32px;
-          padding: 0 32px 20px;
+          scroll-padding-left: 28px;
+          padding: 0 28px 20px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
 
+        /* কার্ড — বড়, ফিক্সড স্ট্রাকচার */
         .na-card {
-          flex: 0 0 92vw;
-          max-width: 680px;
+          flex: 0 0 88vw;
+          max-width: 720px;
+          display: flex;
+          flex-direction: column;
           scroll-snap-align: start;
         }
 
@@ -261,20 +263,25 @@ export default function NewArrivals({ products = [] }) {
         }
 
         @media (min-width: 640px) {
-          .na-card { flex: 0 0 65vw; max-width: 580px; }
+          .na-scroll { gap: 48px; scroll-padding-left: 40px; padding: 0 40px 20px; }
+          .na-card { flex: 0 0 60vw; max-width: 640px; }
         }
 
         @media (min-width: 768px) {
           .na-section { padding: 80px 0 60px; }
           .na-header { margin-bottom: 55px; }
-          .na-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
-          .na-card { flex: 0 0 54vw; max-width: 640px; }
+          .na-scroll { gap: 56px; scroll-padding-left: 60px; padding: 0 60px 24px; }
+          .na-card { flex: 0 0 48vw; max-width: 620px; }
           .na-arrow { display: flex; }
           .na-track-container { padding: 35px 60px 0; }
         }
 
         @media (min-width: 1024px) {
-          .na-card { flex: 0 0 45vw; max-width: 700px; }
+          .na-card { flex: 0 0 40vw; max-width: 620px; }
+        }
+
+        @media (min-width: 1280px) {
+          .na-card { flex: 0 0 34vw; max-width: 600px; }
         }
       `}</style>
     </section>
@@ -304,20 +311,33 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
 
       <style jsx>{`
         .na-card-link {
-          display: block;
+          display: flex;
+          flex-direction: column;
           text-decoration: none;
           color: inherit;
+          width: 100%;
         }
+
+        /* === ইমেজ র‍্যাপার: ফিক্সড ৪:৫ + সেন্টার প্যাডিং === */
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 4/5;
-          background: #f7f7f7;
+          aspect-ratio: 4 / 5;
+          width: 100%;
+          background: #f5f5f5;
           overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 14px;           /* প্রোডাক্টে ব্রিদিং রুম */
+          box-sizing: border-box;
         }
+
+        /* === মূল ফিক্স: contain = কোনো ক্রপ/জুম নয়, সব প্রোডাক্ট একই স্কেলে === */
         .na-image {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
+          object-position: center;
           display: block;
           transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
@@ -342,10 +362,16 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           letter-spacing: 0.14em;
         }
 
+        /* === ফিক্সড মিন-হাইট: টাইটেল ১ লাইন হোক বা না হোক কার্ডের উচ্চতা সমান === */
         .na-info {
-          padding: 20px 4px 4px;
+          padding: 22px 6px 4px;
           text-align: center;
+          min-height: 56px;
+          display: flex;
+          align-items: flex-start;
+          justify-content: center;
         }
+
         .na-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
           font-weight: 400;
@@ -355,25 +381,23 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           color: #1a1a1a;
           margin: 0;
           line-height: 1.4;
-          display: -webkit-box;
-          -webkit-line-clamp: 1;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
+          display: block;
           white-space: nowrap;
+          overflow: hidden;
           text-overflow: ellipsis;
+          width: 100%;
         }
 
         @media (hover: hover) {
           .na-card-link:hover .na-image {
-            transform: scale(1.03);
+            transform: scale(1.04);
           }
         }
 
         @media (min-width: 768px) {
-          .na-info { padding: 24px 4px 4px; }
-          .na-title {
-            font-size: 15px;
-          }
+          .na-image-wrap { padding: 18px; }
+          .na-info { padding: 26px 6px 4px; min-height: 64px; }
+          .na-title { font-size: 15px; }
         }
       `}</style>
     </Link>
