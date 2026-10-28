@@ -6,11 +6,60 @@ import Link from 'next/link';
 export default function HeroSecondaryBanner({ slides = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [loadedImages, setLoadedImages] = useState(new Set());
+  const [fontsLoaded, setFontsLoaded] = useState(false);
   const slideIntervalRef = useRef(null);
   const containerRef = useRef(null);
   const touchStartX = useRef(0);
 
   const totalSlides = slides.length;
+
+  // Load fonts from window.JABIYEN_FONTS
+  useEffect(() => {
+    const loadFonts = () => {
+      if (window.JABIYEN_FONTS) {
+        const { families } = window.JABIYEN_FONTS;
+        const root = document.documentElement;
+        
+        root.style.setProperty('--font-heading', families.heading);
+        root.style.setProperty('--font-subtitle', families.subtitle);
+        root.style.setProperty('--font-body', families.body);
+        
+        setFontsLoaded(true);
+      } else {
+        setTimeout(loadFonts, 100);
+      }
+    };
+    
+    loadFonts();
+  }, []);
+
+  // Get font families from global config
+  const getFont = (type) => {
+    if (typeof window !== 'undefined' && window.JABIYEN_FONTS?.families) {
+      return window.JABIYEN_FONTS.families[type] || getFallbackFont(type);
+    }
+    return getFallbackFont(type);
+  };
+
+  const getFallbackFont = (type) => {
+    const fallbacks = {
+      heading: "'Manrope', sans-serif",
+      subtitle: "'Sora', sans-serif",
+      body: "'Inter', sans-serif"
+    };
+    return fallbacks[type] || fallbacks.body;
+  };
+
+  // Preload all images
+  useEffect(() => {
+    if (!slides.length) return;
+    slides.forEach((slide, index) => {
+      const img = new Image();
+      img.onload = () => setLoadedImages(prev => new Set([...prev, index]));
+      img.src = slide.img;
+    });
+  }, [slides]);
 
   // Auto slide
   useEffect(() => {
@@ -90,6 +139,7 @@ export default function HeroSecondaryBanner({ slides = [] }) {
               position: 'absolute', inset: 0,
               opacity: index === currentSlide ? 1 : 0,
               transition: 'opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
+              visibility: 'visible',
               pointerEvents: index === currentSlide ? 'auto' : 'none'
             }}
           >
@@ -98,7 +148,8 @@ export default function HeroSecondaryBanner({ slides = [] }) {
               alt={slide.title || 'JAYENWARE Secondary'}
               style={{
                 width: '100%', height: '100%', objectFit: 'cover',
-                animation: index === currentSlide ? 'heroSecondaryZoom 20s ease-in-out infinite alternate' : 'none'
+                animation: index === currentSlide ? 'heroSecondaryZoom 20s ease-in-out infinite alternate' : 'none',
+                background: '#0a0a0a'
               }}
             />
           </div>
@@ -110,19 +161,19 @@ export default function HeroSecondaryBanner({ slides = [] }) {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 30%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.7) 90%, rgba(0,0,0,0.85) 100%)'
         }} />
 
-        {/* Content */}
+        {/* Content - Center Position for Title & Subtitle */}
         <div style={{
-          position: 'absolute', bottom: 'clamp(30px, 8vh, 70px)', left: '50%',
-          transform: 'translateX(-50%)', zIndex: 2, textAlign: 'center',
-          width: '88%', maxWidth: 680, padding: '0 16px',
+          position: 'absolute', top: '45%', left: '50%',
+          transform: 'translate(-50%, -50%)', zIndex: 2, textAlign: 'center',
+          width: '88%', maxWidth: 800, padding: '0 16px',
           display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
           {/* Title */}
           <h1 style={{
-            fontFamily: "'Manrope', sans-serif",
-            fontSize: 'clamp(18px, 3.5vw, 48px)', fontWeight: 700,
+            fontFamily: getFont('heading'),
+            fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 700,
             lineHeight: 1.1, color: '#fff', margin: 0,
-            letterSpacing: '-0.3px', order: 1
+            letterSpacing: '-0.5px'
           }}>
             {current?.title}
           </h1>
@@ -130,39 +181,78 @@ export default function HeroSecondaryBanner({ slides = [] }) {
           {/* Subtitle */}
           {current?.subtitle && (
             <p style={{
-              fontFamily: "'Inter', sans-serif",
-              fontSize: 'clamp(6px, 0.85vw, 8px)', fontWeight: 400,
-              letterSpacing: '0.35em', textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.5)',
-              marginTop: 'clamp(6px, 1vh, 10px)', marginBottom: 0,
-              lineHeight: 1, order: 2
+              fontFamily: getFont('body'),
+              fontSize: 'clamp(10px, 1.2vw, 14px)', fontWeight: 400,
+              letterSpacing: '0.3em', textTransform: 'uppercase',
+              color: 'rgba(255,255,255,0.6)',
+              marginTop: 'clamp(10px, 1.5vh, 16px)', marginBottom: 0,
+              lineHeight: 1.2
             }}>
               {current.subtitle}
             </p>
           )}
-
-          {/* CTA */}
-          {current?.cta_text && current?.cta_link && (
-            <div style={{ marginTop: 'clamp(8px, 1.5vh, 16px)', order: 3 }}>
-              <Link
-                href={current.cta_link}
-                style={{
-                  display: 'inline-flex', alignItems: 'center',
-                  fontFamily: "'Inter', sans-serif",
-                  fontSize: 'clamp(7px, 0.85vw, 9px)', fontWeight: 500,
-                  letterSpacing: '0.2em', textTransform: 'uppercase',
-                  color: 'rgba(255,255,255,0.75)', textDecoration: 'none',
-                  padding: '0 0 3px 0',
-                  borderBottom: '1px solid rgba(255,255,255,0.25)',
-                  transition: 'all 0.4s ease'
-                }}
-                className="hero-secondary-cta-link"
-              >
-                {current.cta_text}
-              </Link>
-            </div>
-          )}
         </div>
+
+        {/* CTA - Bottom Position, Liquid Button Style */}
+        {current?.cta_text && current?.cta_link && (
+          <div style={{
+            position: 'absolute', bottom: 'clamp(80px, 12vh, 120px)', left: '50%',
+            transform: 'translateX(-50%)', zIndex: 2
+          }}>
+            <Link
+              href={current.cta_link}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#fff',
+                fontSize: 'clamp(9px, 1vw, 11px)',
+                fontWeight: 600,
+                letterSpacing: '0.12em',
+                textTransform: 'uppercase',
+                textDecoration: 'none',
+                padding: 'clamp(8px, 1.2vw, 10px) clamp(22px, 3vw, 28px)',
+                borderRadius: '100px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+                position: 'relative',
+                overflow: 'hidden',
+                fontFamily: getFont('body'),
+                transform: 'translateY(0)'
+              }}
+              className="hero-secondary-cta-liquid"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              {/* Liquid shine effect */}
+              <span style={{
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '100%',
+                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                transition: 'left 0.6s ease'
+              }}
+              className="liquid-shine"
+              />
+              {current.cta_text}
+            </Link>
+          </div>
+        )}
 
         {/* Navigation Arrows */}
         {totalSlides > 1 && (
@@ -227,10 +317,8 @@ export default function HeroSecondaryBanner({ slides = [] }) {
         .hero-secondary-container:hover .hero-secondary-arrow {
           opacity: 1 !important;
         }
-        .hero-secondary-cta-link:hover {
-          color: #fff !important;
-          border-bottom-color: rgba(255,255,255,0.8) !important;
-          padding-right: 16px !important;
+        .hero-secondary-cta-liquid:hover .liquid-shine {
+          left: 100% !important;
         }
         @keyframes heroSecondaryZoom {
           from { transform: scale(1); }
