@@ -5,7 +5,7 @@ export default [
     ignores: [".next/**", "node_modules/**"],
   },
   {
-    files: ["**/*.ts", "**/*.tsx"],
+    files: ["**/*.js", "**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser: babelParser,
       parserOptions: {
