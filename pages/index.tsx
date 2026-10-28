@@ -12,96 +12,99 @@ import OnSale from '../components/home/OnSale';
 import LimitedEdition from '../components/home/LimitedEdition';
 import { useCurrency } from '../components/currency/CurrencyProvider';
 
-/* ---------- Skeleton এর CSS ---------- */
-const CSS = `
-.sk{position:relative;overflow:hidden;background:#ececf0;border-radius:12px}
-.sk::after{content:'';position:absolute;inset:0;transform:translateX(-100%);
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
-  animation:shimmer 1.5s infinite}
-@keyframes shimmer{100%{transform:translateX(100%)}}
-.reveal{animation:up .8s cubic-bezier(.22,1,.36,1) both}
-@keyframes up{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:none}}
-.img-fade{opacity:0;transition:opacity .6s ease}
-.img-fade.loaded{opacity:1}
-`;
-
-/* ---------- ছোট ছোট Skeleton অংশ ---------- */
-const Sk = ({ w = '100%', h = 16, r = 12, style = {} }: any) => (
-  <div className="sk" style={{ width: w, height: h, borderRadius: r, ...style }} />
+/* ============================================================
+   SKELETON PRIMITIVES — World-class shimmer placeholders
+   ============================================================ */
+const Sk = ({ w = '100%', h = 16, r = 8, style = {} }) => (
+  <div className="sk-shimmer" style={{ width: w, height: h, borderRadius: r, ...style }} />
 );
 
-const Box = ({ children }: any) => (
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">{children}</div>
-);
-
-const CardSkeleton = () => (
-  <div>
-    <Sk h="auto" r={16} style={{ aspectRatio: '3/4' }} />
-    <Sk w="35%" h={10} style={{ marginTop: 12 }} />
-    <Sk w="85%" h={14} style={{ marginTop: 10 }} />
-    <Sk w="45%" h={14} style={{ marginTop: 10 }} />
+const HeroVideoSkeleton = () => (
+  <div className="sk-hero-video">
+    <Sk w="100%" h="100%" r={0} style={{ position: 'absolute', inset: 0 }} />
+    <div className="sk-hero-video-content">
+      <Sk w={120} h={14} r={20} style={{ marginBottom: 18 }} />
+      <Sk w="70%" h={64} r={12} style={{ marginBottom: 18 }} />
+      <Sk w="50%" h={44} r={10} style={{ marginBottom: 24 }} />
+      <div style={{ display: 'flex', gap: 12 }}>
+        <Sk w={160} h={48} r={24} />
+        <Sk w={160} h={48} r={24} />
+      </div>
+    </div>
   </div>
 );
 
-const VideoSkeleton = () => (
-  <Sk h="auto" r={0} style={{ aspectRatio: '16/8', minHeight: 260 }} />
-);
-
-const CategorySkeleton = () => (
-  <div className="py-8"><Box>
-    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-      {[1, 2, 3, 4, 5, 6].map(i => (
+const CategoryShowcaseSkeleton = () => (
+  <section className="sk-section">
+    <div className="sk-section-header">
+      <Sk w={200} h={14} r={20} style={{ margin: '0 auto 12px' }} />
+      <Sk w={340} h={36} r={10} style={{ margin: '0 auto 48px' }} />
+    </div>
+    <div className="sk-category-grid">
+      {Array.from({ length: 6 }).map((_, i) => (
         <div key={i}>
-          <Sk h="auto" r={20} style={{ aspectRatio: '1/1' }} />
-          <Sk w="60%" h={12} style={{ marginTop: 10 }} />
+          <Sk w="100%" h="auto" r={20} style={{ aspectRatio: '1', marginBottom: 14 }} />
+          <Sk w="60%" h={16} r={6} style={{ margin: '0 auto 8px' }} />
+          <Sk w="40%" h={12} r={6} style={{ margin: '0 auto' }} />
         </div>
       ))}
     </div>
-  </Box></div>
+  </section>
 );
 
-const BannerSkeleton = ({ ratio = '21/9' }: any) => (
-  <div className="py-4 sm:py-8"><Box>
-    <Sk h="auto" r={24} style={{ aspectRatio: ratio, minHeight: 180 }} />
-  </Box></div>
-);
-
-const RowSkeleton = () => (
-  <div className="py-8 sm:py-12"><Box>
-    <Sk w={200} h={26} style={{ marginBottom: 20 }} />
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {[1, 2, 3, 4].map(i => <CardSkeleton key={i} />)}
+const HeroBannerSkeleton = () => (
+  <section className="sk-section-tight">
+    <div className="sk-hero-banner">
+      <Sk w="100%" h="100%" r={24} style={{ position: 'absolute', inset: 0 }} />
+      <div className="sk-hero-banner-content">
+        <Sk w={100} h={14} r={20} style={{ marginBottom: 16 }} />
+        <Sk w="65%" h={56} r={12} style={{ marginBottom: 16 }} />
+        <Sk w="45%" h={20} r={8} style={{ marginBottom: 28 }} />
+        <Sk w={150} h={46} r={23} />
+      </div>
     </div>
-  </Box></div>
+  </section>
 );
 
-const NewsSkeleton = () => (
-  <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
-    <Sk h={192} r={0} />
-    <div className="p-4">
-      <Sk w={110} h={10} />
-      <Sk w="90%" h={20} style={{ marginTop: 12 }} />
-      <Sk h={10} style={{ marginTop: 12 }} />
-      <Sk w="60%" h={10} style={{ marginTop: 8 }} />
+const ProductCarouselSkeleton = ({ cards = 5 }) => (
+  <section className="sk-section">
+    <div className="sk-section-header-row">
+      <div>
+        <Sk w={100} h={12} r={20} style={{ marginBottom: 10 }} />
+        <Sk w={260} h={32} r={10} />
+      </div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Sk w={44} h={44} r={22} />
+        <Sk w={44} h={44} r={22} />
+      </div>
     </div>
-  </div>
+    <div className="sk-carousel">
+      {Array.from({ length: cards }).map((_, i) => (
+        <div key={i} className="sk-carousel-card">
+          <Sk w="100%" h="auto" r={16} style={{ aspectRatio: '3/4', marginBottom: 14 }} />
+          <Sk w="40%" h={11} r={4} style={{ marginBottom: 10 }} />
+          <Sk w="85%" h={16} r={6} style={{ marginBottom: 10 }} />
+          <Sk w="35%" h={16} r={6} />
+        </div>
+      ))}
+    </div>
+  </section>
 );
 
-/* ছবি লোড হওয়া পর্যন্ত skeleton, তারপর fade-in */
-const FadeImage = ({ src, alt }: any) => {
-  const [ok, setOk] = useState(false);
-  return (
-    <>
-      {!ok && <Sk h="100%" r={0} style={{ position: 'absolute', inset: 0 }} />}
-      <img
-        src={src} alt={alt} loading="lazy"
-        className={`img-fade ${ok ? 'loaded' : ''}`}
-        onLoad={() => setOk(true)} onError={() => setOk(true)}
-        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-      />
-    </>
-  );
-};
+const HeroSecondarySkeleton = () => (
+  <section className="sk-section-tight">
+    <div className="sk-hero-secondary-inner">
+      <Sk w="100%" h="100%" r={20} style={{ position: 'absolute', inset: 0 }} />
+      <div className="sk-hero-secondary-content">
+        <Sk w={80} h={12} r={20} style={{ marginBottom: 14 }} />
+        <Sk w="70%" h={40} r={10} style={{ marginBottom: 14 }} />
+        <Sk w={140} h={42} r={21} />
+      </div>
+    </div>
+  </section>
+);
+
+/* ============================================================ */
 
 export default function Home() {
   const { formatMoney, convertToUsd, selectedCurrency } = useCurrency();
@@ -112,7 +115,7 @@ export default function Home() {
   const [productsDisplayLimit, setProductsDisplayLimit] = useState(12);
   const [activePage, setActivePage] = useState('home');
   const [loading, setLoading] = useState(true);
-  const [shown, setShown] = useState(0); // কয়টি সেকশন দেখানো হয়েছে
+  const [revealedSections, setRevealedSections] = useState(new Set());
   const productsLoadMoreIncrement = 12;
 
   const fetchAPI = useCallback(async (endpoint) => {
@@ -120,7 +123,8 @@ export default function Home() {
     catch (e) { return []; }
   }, []);
 
-  const getProductSlug = (p) => (p.slug || p.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
+  const getProductSlug = (p) =>
+    (p.slug || p.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
 
   const getFilteredProducts = useCallback(() => {
     let list = currentData.products;
@@ -130,7 +134,6 @@ export default function Home() {
     return list;
   }, [currentData.products, currentFilters]);
 
-  /* ডেটা লোড */
   useEffect(() => {
     async function loadData() {
       try {
@@ -151,34 +154,26 @@ export default function Home() {
     loadData();
   }, [fetchAPI]);
 
-  /* সেকশনের তালিকা: skeleton + আসল কম্পোনেন্ট */
-  const sections = [
-    { sk: <VideoSkeleton />, el: <HeroVideo videos={currentData.heroVideos} /> },
-    { sk: <CategorySkeleton />, el: <CategoryShowcase /> },
-    { sk: <BannerSkeleton />, el: <HeroBanner slides={currentData.hero} /> },
-    { sk: <RowSkeleton />, el: <NewArrivals products={currentData.products} /> },
-    { sk: <BannerSkeleton ratio="3/1" />, el: <HeroSecondaryBanner slides={currentData.hero_secondary} /> },
-    { sk: <RowSkeleton />, el: <TrendingNow products={currentData.products} /> },
-    { sk: <RowSkeleton />, el: <FeaturedProducts products={currentData.products} /> },
-    { sk: <RowSkeleton />, el: <BestSellers products={currentData.products} /> },
-    { sk: <RowSkeleton />, el: <OnSale products={currentData.products} /> },
-    { sk: <RowSkeleton />, el: <LimitedEdition products={currentData.products} /> },
-  ];
-
-  /* ডেটা আসার পর একটার পর একটা সেকশন দেখাও */
+  /* ---- STAGGERED SECTION REVEAL: sections load one-by-one, world-class fade ---- */
   useEffect(() => {
-    if (loading || shown >= sections.length) return;
-    const t = setTimeout(() => setShown(n => n + 1), shown === 0 ? 60 : 160);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, shown]);
+    if (loading) return;
+    const order = ['hero', 'categories', 'banner', 'newArrivals', 'secondary', 'trending', 'featured', 'bestSellers', 'onSale', 'limited'];
+    const timers = order.map((name, i) =>
+      setTimeout(() => {
+        setRevealedSections(prev => new Set([...prev, name]));
+      }, i * 170)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [loading]);
 
-  const productCard = (p, i = 0) => {
+  const isRevealed = (name) => revealedSections.has(name);
+
+  const productCard = (p) => {
     const isOut = p.stock <= 0; const slug = getProductSlug(p);
     return (
-      <a key={p.id} href={`/product/${slug}`} className="carousel-card reveal" style={{ width: '100%', animationDelay: `${(i % 12) * 60}ms` }}>
-        <div className="card-img" style={{ aspectRatio: '3/4', position: 'relative', overflow: 'hidden' }}>
-          <FadeImage src={p.img} alt={p.title} />
+      <a key={p.id} href={`/product/${slug}`} className="carousel-card" style={{ width: '100%' }}>
+        <div className="card-img" style={{ aspectRatio: '3/4' }}>
+          <img src={p.img} alt={p.title} loading="lazy" />
           {isOut && <div className="card-soldout-overlay"><span>Sold Out</span></div>}
         </div>
         <div className="card-body">
@@ -192,8 +187,8 @@ export default function Home() {
 
   const filterByCategory = (cat) => { setCurrentFilters(prev => ({ ...prev, cat })); setProductsDisplayLimit(12); };
   const applyPriceFilter = () => {
-    const minValue = parseFloat((document.getElementById('filter-min-price') as HTMLInputElement | null)?.value);
-    const maxValue = parseFloat((document.getElementById('filter-max-price') as HTMLInputElement | null)?.value);
+    const minValue = parseFloat(document.getElementById('filter-min-price')?.value);
+    const maxValue = parseFloat(document.getElementById('filter-max-price')?.value);
     const minPrice = Number.isFinite(minValue) && minValue > 0 ? convertToUsd(minValue) : null;
     const maxPrice = Number.isFinite(maxValue) && maxValue > 0 ? convertToUsd(maxValue) : null;
     setCurrentFilters(prev => ({ ...prev, minPrice, maxPrice })); setProductsDisplayLimit(12);
@@ -206,11 +201,26 @@ export default function Home() {
     else sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     setCurrentData(prev => ({ ...prev, products: sorted })); setProductsDisplayLimit(12);
   };
+  const slideCarousel = (carouselId, direction) => {
+    const carousel = document.getElementById(carouselId); if (!carousel) return;
+    const cardWidth = carousel.querySelector('.carousel-card')?.offsetWidth || 260;
+    const gap = parseInt(getComputedStyle(carousel).gap) || 16;
+    carousel.scrollBy({ left: direction === 'next' ? (cardWidth + gap) * 2 : -(cardWidth + gap) * 2, behavior: 'smooth' });
+  };
 
   const filteredProducts = getFilteredProducts();
   const displayedProducts = filteredProducts.slice(0, productsDisplayLimit);
   const totalProducts = filteredProducts.length;
   const hasMore = totalProducts > productsDisplayLimit;
+
+  /* ---------- helpers to render either skeleton or revealed content ---------- */
+  const Reveal = ({ name, children, skeleton }) => (
+    <>
+      {isRevealed(name)
+        ? <div className="reveal-section">{children}</div>
+        : skeleton}
+    </>
+  );
 
   return (
     <>
@@ -227,18 +237,104 @@ export default function Home() {
         })}} />
       </Head>
 
-      <style>{CSS}</style>
+      {/* ======================= GLOBAL STYLES ======================= */}
+      <style jsx global>{`
+        @keyframes skShimmer {
+          0%   { background-position:  200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        .sk-shimmer {
+          background: linear-gradient(90deg, #f2f2f5 0%, #e6e6eb 50%, #f2f2f5 100%);
+          background-size: 200% 100%;
+          animation: skShimmer 1.6s infinite linear;
+        }
+        @keyframes revealUp {
+          0%   { opacity: 0; transform: translateY(44px) scale(0.985); }
+          100% { opacity: 1; transform: translateY(0)    scale(1);     }
+        }
+        .reveal-section {
+          animation: revealUp 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
+          will-change: transform, opacity;
+        }
+        .sk-section        { padding: 60px 5%; }
+        .sk-section-tight  { padding: 30px 5%; }
+        .sk-section-header { text-align: center; margin-bottom: 8px; }
+        .sk-section-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; }
+        .sk-hero-video {
+          position: relative; width: 100%; aspect-ratio: 16/9;
+          overflow: hidden; background: #0a0a0a;
+        }
+        .sk-hero-video-content {
+          position: absolute; left: 8%; right: 8%; bottom: 14%;
+          max-width: 620px;
+        }
+        .sk-category-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 20px;
+        }
+        .sk-hero-banner {
+          position: relative; aspect-ratio: 21/9;
+          border-radius: 24px; overflow: hidden; background: #f2f2f4;
+        }
+        .sk-hero-banner-content {
+          position: absolute; left: 8%; right: 8%; bottom: 14%;
+          max-width: 560px;
+        }
+        .sk-carousel      { display: flex; gap: 20px; overflow: hidden; }
+        .sk-carousel-card { flex: 0 0 auto; min-width: 240px; width: 240px; }
+        .sk-hero-secondary-inner {
+          position: relative; aspect-ratio: 16/7;
+          border-radius: 20px; overflow: hidden; background: #f2f2f4;
+        }
+        .sk-hero-secondary-content {
+          position: absolute; left: 8%; right: 8%; bottom: 16%;
+          max-width: 500px;
+        }
+        @media (max-width: 768px) {
+          .sk-hero-video           { aspect-ratio: 4/5; }
+          .sk-hero-banner          { aspect-ratio: 4/5; }
+          .sk-hero-secondary-inner { aspect-ratio: 4/3; }
+          .sk-carousel-card        { min-width: 200px; width: 200px; }
+          .sk-section              { padding: 40px 4%; }
+        }
+      `}</style>
 
-      {/* ==================== HOME PAGE ==================== */}
+      {/* ======================== HOME PAGE ======================== */}
       <section id="home" className="page-section active-page" style={{ display: activePage === 'home' ? 'block' : 'none' }}>
-        {sections.map((s, i) =>
-          !loading && i < shown
-            ? <div key={i} className="reveal">{s.el}</div>
-            : <div key={i}>{s.sk}</div>
-        )}
+        <Reveal name="hero"       skeleton={<HeroVideoSkeleton />}>
+          <HeroVideo videos={currentData.heroVideos} />
+        </Reveal>
+        <Reveal name="categories" skeleton={<CategoryShowcaseSkeleton />}>
+          <CategoryShowcase />
+        </Reveal>
+        <Reveal name="banner"     skeleton={<HeroBannerSkeleton />}>
+          <HeroBanner slides={currentData.hero} />
+        </Reveal>
+        <Reveal name="newArrivals" skeleton={<ProductCarouselSkeleton cards={5} />}>
+          <NewArrivals products={currentData.products} />
+        </Reveal>
+        <Reveal name="secondary"  skeleton={<HeroSecondarySkeleton />}>
+          <HeroSecondaryBanner slides={currentData.hero_secondary} />
+        </Reveal>
+        <Reveal name="trending"   skeleton={<ProductCarouselSkeleton cards={5} />}>
+          <TrendingNow products={currentData.products} />
+        </Reveal>
+        <Reveal name="featured"   skeleton={<ProductCarouselSkeleton cards={5} />}>
+          <FeaturedProducts products={currentData.products} />
+        </Reveal>
+        <Reveal name="bestSellers" skeleton={<ProductCarouselSkeleton cards={5} />}>
+          <BestSellers products={currentData.products} />
+        </Reveal>
+        <Reveal name="onSale"     skeleton={<ProductCarouselSkeleton cards={5} />}>
+          <OnSale products={currentData.products} />
+        </Reveal>
+        <Reveal name="limited"    skeleton={<ProductCarouselSkeleton cards={5} />}>
+          <LimitedEdition products={currentData.products} />
+        </Reveal>
       </section>
 
-      {/* ==================== PRODUCTS PAGE ==================== */}
+      {/* ======================== PRODUCTS PAGE ======================== */}
       <section id="products" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'products' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
@@ -246,16 +342,10 @@ export default function Home() {
               <div className="bg-white rounded-2xl p-4 sm:p-6 border border-gray-100">
                 <h3 className="font-semibold text-sm uppercase mb-4">Categories</h3>
                 <div id="sidebar-categories" className="space-y-1" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-                  {loading ? (
-                    [1, 2, 3, 4, 5, 6, 7].map(i => <Sk key={i} h={32} r={8} style={{ marginBottom: 6 }} />)
-                  ) : (
-                    <>
-                      <button onClick={() => filterByCategory('all')} className={`block w-full text-left py-2 px-3 rounded-lg text-xs font-semibold ${currentFilters.cat==='all'?'bg-primary text-white':'hover:bg-gray-50'}`}>All</button>
-                      {currentData.categories.map(c => (
-                        <button key={c.id||c.name} onClick={() => filterByCategory(c.name)} className={`block w-full text-left py-2 px-3 rounded-lg text-xs font-semibold ${currentFilters.cat===c.name?'bg-primary text-white':'hover:bg-gray-50'}`}>{c.name}</button>
-                      ))}
-                    </>
-                  )}
+                  <button onClick={() => filterByCategory('all')} className={`block w-full text-left py-2 px-3 rounded-lg text-xs font-semibold ${currentFilters.cat==='all'?'bg-primary text-white':'hover:bg-gray-50'}`}>All</button>
+                  {currentData.categories.map(c => (
+                    <button key={c.id||c.name} onClick={() => filterByCategory(c.name)} className={`block w-full text-left py-2 px-3 rounded-lg text-xs font-semibold ${currentFilters.cat===c.name?'bg-primary text-white':'hover:bg-gray-50'}`}>{c.name}</button>
+                  ))}
                 </div>
                 <div id="mobile-filters" className="hidden mt-4 pt-4 border-t border-gray-100 space-y-3">
                   <div><label className="text-[10px] font-semibold uppercase text-accent block mb-1">Min Price ({selectedCurrency.currency_code})</label><input type="number" id="filter-min-price" placeholder={`${selectedCurrency.currency_symbol} Min`} className="w-full p-2 rounded-xl bg-gray-50 border border-gray-100 text-xs" /></div>
@@ -266,32 +356,26 @@ export default function Home() {
             </aside>
             <div className="flex-1">
               <div className="flex items-center justify-between mb-4 sm:mb-6">
-                {loading
-                  ? <Sk w={180} h={14} />
-                  : <p className="text-xs font-medium text-accent">Showing {displayedProducts.length} of {totalProducts} products</p>}
-                <select onChange={(e) => handleSorting(e.target.value)} disabled={loading} className="bg-white border border-gray-100 rounded-xl px-4 py-2 text-xs font-semibold">
+                <p className="text-xs font-medium text-accent">Showing {displayedProducts.length} of {totalProducts} products</p>
+                <select onChange={(e) => handleSorting(e.target.value)} className="bg-white border border-gray-100 rounded-xl px-4 py-2 text-xs font-semibold">
                   <option value="newest">Newest</option>
                   <option value="price-low">Price: Low to High</option>
                   <option value="price-high">Price: High to Low</option>
                 </select>
               </div>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-                {loading
-                  ? [1, 2, 3, 4, 5, 6].map(i => <CardSkeleton key={i} />)
-                  : displayedProducts.length > 0
-                    ? displayedProducts.map((p, i) => productCard(p, i))
-                    : <div className="col-span-full text-center py-20"><p className="text-accent text-lg">No products found</p></div>}
+                {displayedProducts.length > 0 ? displayedProducts.map(p => productCard(p)) : <div className="col-span-full text-center py-20"><p className="text-accent text-lg">No products found</p></div>}
               </div>
-              {!loading && hasMore && <div className="text-center mt-8"><button onClick={loadMoreProducts} className="px-8 py-3 bg-primary text-white rounded-full font-semibold uppercase text-xs">Load More ({totalProducts - productsDisplayLimit} remaining)</button></div>}
+              {hasMore && <div className="text-center mt-8"><button onClick={loadMoreProducts} className="px-8 py-3 bg-primary text-white rounded-full font-semibold uppercase text-xs">Load More ({totalProducts - productsDisplayLimit} remaining)</button></div>}
             </div>
           </div>
         </div>
       </section>
 
-      {/* ==================== PRODUCT DETAILS ==================== */}
+      {/* ======================== PRODUCT DETAILS ======================== */}
       <section id="product-details" className="page-section" style={{ display: activePage === 'product-details' ? 'block' : 'none' }}></section>
 
-      {/* ==================== WISHLIST ==================== */}
+      {/* ======================== WISHLIST ======================== */}
       <section id="wishlist" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'wishlist' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-bold mb-8">Your Wishlist</h2>
@@ -304,18 +388,14 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ==================== NEWS / JOURNAL ==================== */}
+      {/* ======================== NEWS / JOURNAL ======================== */}
       <section id="news" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'news' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-4xl font-bold text-center mb-8">The Journal</h2>
           <div id="news-grid" className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {loading
-              ? [1, 2, 3].map(i => <NewsSkeleton key={i} />)
-              : currentData.news.length > 0 ? currentData.news.map((n, i) => (
-              <article key={n.id||n.title} className="reveal bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition" style={{ animationDelay: `${i * 80}ms` }}>
-                <div style={{ position: 'relative', height: 192, overflow: 'hidden' }}>
-                  <FadeImage src={n.img} alt={n.title} />
-                </div>
+            {currentData.news.length > 0 ? currentData.news.map(n => (
+              <article key={n.id||n.title} className="bg-white rounded-2xl overflow-hidden border border-gray-100 hover:shadow-lg transition">
+                <img src={n.img} alt={n.title} className="w-full h-48 object-cover" loading="lazy" />
                 <div className="p-4 sm:p-6">
                   <time className="text-[10px] font-semibold uppercase text-accent">{new Date(n.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</time>
                   <h3 className="font-bold text-lg mt-2 mb-3 text-primary">{n.title}</h3>
