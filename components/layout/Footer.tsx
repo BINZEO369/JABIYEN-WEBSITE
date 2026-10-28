@@ -76,17 +76,6 @@ export default function Footer() {
     return available.includes(slug) ? `/icons/${folder}/${slug}.svg` : '';
   };
 
-  // Social Icons
-  const getSocialIcon = (platform) => {
-    const icons = {
-      facebook: '<svg viewBox="0 0 24 24" fill="none"><path d="M18 2H15C13.67 2 12.4 2.53 11.46 3.46C10.53 4.4 10 5.67 10 7V10H7V14H10V22H14V14H17L18 10H14V7C14 6.73 14.11 6.48 14.29 6.29C14.48 6.11 14.73 6 15 6H18V2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>',
-      instagram: '<svg viewBox="0 0 24 24" fill="none"><rect x="2" y="2" width="20" height="20" rx="5" stroke="currentColor" strokeWidth="2"/><circle cx="12" cy="12" r="5" stroke="currentColor" strokeWidth="2"/><circle cx="17.5" cy="6.5" r="1.5" fill="currentColor"/></svg>',
-      youtube: '<svg viewBox="0 0 24 24" fill="none"><path d="M22.54 6.42a2.78 2.78 0 00-1.94-1.99C18.88 4 12 4 12 4s-6.88 0-9.14.46a2.78 2.78 0 00-1.94 1.99A29.94 29.94 0 001 11.68a29.94 29.94 0 00.46 5.23 2.78 2.78 0 001.94 1.99C5.12 19.36 12 19.36 12 19.36s6.88 0 9.14-.46a2.78 2.78 0 001.94-1.99A29.94 29.94 0 0023 11.68a29.94 29.94 0 00-.46-5.26z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M9.75 15.02L15.5 11.68L9.75 8.34V15.02Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>',
-      x: '<svg viewBox="0 0 24 24" fill="none"><path d="M18.244 2.25H21.552L14.325 10.51L22.827 21.75H16.17L10.956 14.933L4.99 21.75H1.68L9.41 12.915L1.254 2.25H8.08L12.793 8.481L18.244 2.25ZM17.083 19.77H18.916L7.084 4.126H5.117L17.083 19.77Z" fill="currentColor"/></svg>'
-    };
-    return icons[platform.toLowerCase()] || '';
-  };
-
   return (
     <>
       <footer style={{
@@ -113,17 +102,17 @@ export default function Footer() {
               {socialLinks?.length > 0 && (
                 <div>
                   <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Connect</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                     {socialLinks.sort((a, b) => a.sort_order - b.sort_order).map(link => (
                       <a key={link.id || link.platform_name} href={link.link_url} target="_blank" rel="noopener noreferrer"
                         style={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                          width: 36, height: 36, borderRadius: '50%',
+                          width: 40, height: 40, borderRadius: '50%',
                           background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
                           color: '#fff', transition: 'all 0.3s ease'
                         }}
                         className="social-icon"
-                        dangerouslySetInnerHTML={{ __html: `<img src="${localIconPath('social', link.platform_name) || link.platform_icon || ''}" alt="${link.platform_name}" style="width:18px;height:18px;object-fit:contain"/>` }}
+                        dangerouslySetInnerHTML={{ __html: `<img src="${localIconPath('social', link.platform_name) || link.platform_icon || ''}" alt="${link.platform_name}" style="width:20px;height:20px;object-fit:contain"/>` }}
                       />
                     ))}
                   </div>
@@ -229,32 +218,40 @@ export default function Footer() {
                 );
               })}
 
-              {/* Trust Badges */}
-              {trustBadges?.length > 0 && (
+              {/* Payment Options (Huyen style clean grid without text names) */}
+              {paymentMethods?.length > 0 && (
                 <div>
-                  <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 10 }}>Trust & Security</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                    {trustBadges.map(badge => (
-                      <div key={badge.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.65rem', color: '#999', opacity: 0.6 }}>
-                        {badge.badge_url && <img src={badge.badge_url} alt={badge.title} style={{ maxHeight: 22, objectFit: 'contain' }} />}
-                        <strong>{badge.title}</strong>
-                        {badge.subtitle && <span style={{ fontSize: '0.55rem', opacity: 0.5 }}>{badge.subtitle}</span>}
-                      </div>
+                  <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Payment Options</h5>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+                    {paymentMethods.map(pm => (
+                      pm.icon_url ? (
+                        <div key={pm.id} style={{ background: '#141414', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <img src={pm.icon_url} alt="Payment" style={{ height: 22, objectFit: 'contain', display: 'block' }} />
+                        </div>
+                      ) : null
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Certifications */}
-              {certifications?.length > 0 && (
+              {/* Certified By (Clean badge layout) */}
+              {(trustBadges?.length > 0 || certifications?.length > 0) && (
                 <div>
-                  <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 10 }}>Certifications</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                  <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Certified By</h5>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {trustBadges.map(badge => (
+                      badge.badge_url ? (
+                        <div key={badge.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#141414', padding: '10px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', width: 'fit-content' }}>
+                          <img src={badge.badge_url} alt="Trust Badge" style={{ height: 32, objectFit: 'contain', display: 'block' }} />
+                        </div>
+                      ) : null
+                    ))}
                     {certifications.map(cert => (
-                      <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.65rem', color: '#999', opacity: 0.6 }}>
-                        {cert.badge_url && <img src={cert.badge_url} alt={cert.name} style={{ maxHeight: 22, objectFit: 'contain' }} />}
-                        <span>{cert.name}</span>
-                      </div>
+                      cert.badge_url ? (
+                        <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#141414', padding: '10px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', width: 'fit-content' }}>
+                          <img src={cert.badge_url} alt="Certification" style={{ height: 32, objectFit: 'contain', display: 'block' }} />
+                        </div>
+                      ) : null
                     ))}
                   </div>
                 </div>
@@ -263,27 +260,14 @@ export default function Footer() {
               {/* Shipping Partners */}
               {shippingPartners?.length > 0 && (
                 <div>
-                  <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 10 }}>Shipping Partners</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                  <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Shipping Partners</h5>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
                     {shippingPartners.map(ship => (
-                      <div key={ship.id} title={ship.name} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: '0.65rem', color: '#999', opacity: 0.6 }}>
-                        {ship.icon_url && <img src={ship.icon_url} alt={ship.name} style={{ maxHeight: 22, objectFit: 'contain' }} />}
-                        <span>{ship.name}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Payment Methods */}
-              {paymentMethods?.length > 0 && (
-                <div>
-                  <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 10 }}>Accepted Payments</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {paymentMethods.map(pm => (
-                      <div key={pm.id} title={pm.name} style={{ opacity: 1 }}>
-                        {pm.icon_url ? <img src={pm.icon_url} alt={pm.name} style={{ height: 22, objectFit: 'contain' }} /> : <span style={{ fontSize: '0.7rem' }}>{pm.name}</span>}
-                      </div>
+                      ship.icon_url ? (
+                        <div key={ship.id} style={{ background: '#141414', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                          <img src={ship.icon_url} alt="Shipping" style={{ height: 24, objectFit: 'contain', display: 'block' }} />
+                        </div>
+                      ) : null
                     ))}
                   </div>
                 </div>
