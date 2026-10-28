@@ -9,7 +9,7 @@ export default function NewArrivals({ products = [] }) {
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0); // কোন প্রোডাক্টটি স্ক্রিনে ফোকাসে আছে তা ট্র্যাক করার জন্য
+  const [scrollProgress, setScrollProgress] = useState(0); 
   const scrollRef = useRef(null);
 
   const maxProducts = 12;
@@ -39,7 +39,7 @@ export default function NewArrivals({ products = [] }) {
     }
   }, [products]);
 
-  // Track scroll state for arrows and active product index for the sliding line
+  // Track scroll state for arrows and train-line progress
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -48,22 +48,10 @@ export default function NewArrivals({ products = [] }) {
       setCanScrollLeft(el.scrollLeft > 2);
       setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
 
-      // স্ক্রোল পজিশন হিসাব করে বর্তমান দৃশ্যমান বা সেন্টারে থাকা কার্ডের ইনডেক্স বের করা
-      const cards = el.querySelectorAll('.na-card');
-      if (cards.length > 0) {
-        const scrollCenter = el.scrollLeft + el.clientWidth / 2;
-        let closestIndex = 0;
-        let minDistance = Infinity;
-
-        cards.forEach((card, index) => {
-          const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-          const distance = Math.abs(scrollCenter - cardCenter);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestIndex = index;
-          }
-        });
-        setActiveIndex(closestIndex);
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      if (maxScroll > 0) {
+        const progress = (el.scrollLeft / maxScroll) * 100;
+        setScrollProgress(progress);
       }
     };
 
@@ -81,8 +69,8 @@ export default function NewArrivals({ products = [] }) {
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.na-card');
-    const cardW = card ? card.offsetWidth : 400;
-    const gap = 20;
+    const cardW = card ? card.offsetWidth : 500;
+    const gap = 24;
     el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
   };
 
@@ -106,7 +94,7 @@ export default function NewArrivals({ products = [] }) {
           {[...Array(4)].map((_, i) => (
             <div key={i} className="na-card">
               <div className="na-image-wrap na-shimmer" />
-              <div style={{ padding: '16px 2px 0', textAlign: 'center' }}>
+              <div style={{ padding: '18px 2px 0', textAlign: 'center' }}>
                 <div className="na-shimmer" style={{ height: 12, width: '60%', margin: '0 auto', borderRadius: 2 }} />
               </div>
             </div>
@@ -121,7 +109,7 @@ export default function NewArrivals({ products = [] }) {
   return (
     <section className="na-section">
       <div className="na-header">
-        <Image src="/newarrivalicon.png" alt="New Arrivals" width={200} height={45} style={{ objectFit: 'contain' }} priority />
+        <Image src="/newarrivalicon.png" alt="New Arrivals" width={220} height={50} style={{ objectFit: 'contain' }} priority />
       </div>
 
       <div className="na-scroll-wrap">
@@ -142,27 +130,36 @@ export default function NewArrivals({ products = [] }) {
         )}
 
         <div className="na-scroll" ref={scrollRef}>
-          {arrivals.map((product, index) => (
+          {arrivals.map(product => (
             <NewArrivalCard
               key={product.id}
               product={product}
-              isActive={activeIndex === index}
               getImageUrl={getImageUrl}
               getSlug={getSlug}
             />
           ))}
         </div>
+
+        {/* ট্রেন লাইন প্রোগ্রেস ট্র্যাক */}
+        <div className="na-track-container">
+          <div className="na-track-line">
+            <div 
+              className="na-train-thumb" 
+              style={{ transform: `translateX(${scrollProgress}%)` }}
+            />
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
         .na-section {
-          padding: 60px 0 40px;
+          padding: 70px 0 50px;
           background: #fff;
           overflow: hidden;
         }
         .na-header {
           text-align: center;
-          margin-bottom: 40px;
+          margin-bottom: 45px;
           padding: 0 20px;
         }
         .na-scroll-wrap {
@@ -170,21 +167,44 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-scroll {
           display: flex;
-          gap: 20px;
+          gap: 24px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 24px;
-          padding: 0 24px 16px;
+          scroll-padding-left: 32px;
+          padding: 0 32px 20px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
         
-        /* বড় ইমেজ কার্ড (Prada Style) */
+        /* আরও বড় ইমেজ কার্ড (বিশাল লাক্সারি সাইজ) */
         .na-card {
-          flex: 0 0 88vw;
-          max-width: 560px;
+          flex: 0 0 92vw;
+          max-width: 680px;
           scroll-snap-align: start;
+        }
+
+        /* ট্রেন স্টাইল ট্র্যাক এবং মুভিং থাম্ব */
+        .na-track-container {
+          padding: 24px 32px 0;
+          display: flex;
+          justify-content: center;
+        }
+        .na-track-line {
+          width: 180px;
+          height: 1.5px;
+          background-color: #e0e0e0;
+          position: relative;
+          overflow: hidden;
+        }
+        .na-train-thumb {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 50px;
+          height: 100%;
+          background-color: #1a1a1a;
+          transition: transform 0.1s ease-out;
         }
 
         /* Arrows */
@@ -193,8 +213,8 @@ export default function NewArrivals({ products = [] }) {
           top: 45%;
           transform: translateY(-50%);
           z-index: 10;
-          width: 44px;
-          height: 44px;
+          width: 48px;
+          height: 48px;
           border-radius: 50%;
           background: #ffffff;
           border: 1px solid #e5e5e5;
@@ -211,8 +231,8 @@ export default function NewArrivals({ products = [] }) {
           color: #fff;
           border-color: #1a1a1a;
         }
-        .na-arrow-left { left: 24px; }
-        .na-arrow-right { right: 24px; }
+        .na-arrow-left { left: 32px; }
+        .na-arrow-right { right: 32px; }
 
         .na-shimmer {
           background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
@@ -225,26 +245,28 @@ export default function NewArrivals({ products = [] }) {
         }
 
         @media (min-width: 640px) {
-          .na-card { flex: 0 0 55vw; max-width: 480px; }
+          .na-card { flex: 0 0 65vw; max-width: 580px; }
         }
 
         @media (min-width: 768px) {
-          .na-section { padding: 70px 0 50px; }
-          .na-header { margin-bottom: 50px; }
-          .na-scroll { gap: 24px; scroll-padding-left: 48px; padding: 0 48px 20px; }
-          .na-card { flex: 0 0 46vw; max-width: 540px; }
+          .na-section { padding: 80px 0 60px; }
+          .na-header { margin-bottom: 55px; }
+          .na-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
+          .na-card { flex: 0 0 54vw; max-width: 640px; }
           .na-arrow { display: flex; }
+          .na-track-container { padding: 28px 60px 0; }
+          .na-track-line { width: 220px; }
         }
 
         @media (min-width: 1024px) {
-          .na-card { flex: 0 0 38vw; max-width: 580px; }
+          .na-card { flex: 0 0 45vw; max-width: 700px; }
         }
       `}</style>
     </section>
   );
 }
 
-function NewArrivalCard({ product, isActive, getImageUrl, getSlug }) {
+function NewArrivalCard({ product, getImageUrl, getSlug }) {
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = getSlug(product);
   const imageUrl = getImageUrl(product);
@@ -264,11 +286,6 @@ function NewArrivalCard({ product, isActive, getImageUrl, getSlug }) {
       {/* প্রোডাক্টের টাইটেল */}
       <div className="na-info">
         <h3 className="na-title">{product.title}</h3>
-        
-        {/* স্ক্রিনশটের মতো একটিমাত্র কালো লাইন যা স্ক্রোল করার সময় অ্যাক্টিভ বা ফোকাসড প্রোডাক্টের নিচে শো করবে */}
-        <div className={`na-divider-wrap ${isActive ? 'active' : ''}`}>
-          <div className="na-divider"></div>
-        </div>
       </div>
 
       <style jsx>{`
@@ -279,7 +296,7 @@ function NewArrivalCard({ product, isActive, getImageUrl, getSlug }) {
         }
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 1/1;
+          aspect-ratio: 4/5; /* আরও বড় এবং লম্বা প্রিমিয়াম লুক (দরকার হলে 1/1 বা 3/4 করতে পারেন) */
           background: #f7f7f7;
           overflow: hidden;
         }
@@ -305,27 +322,24 @@ function NewArrivalCard({ product, isActive, getImageUrl, getSlug }) {
           color: #fff;
           font-family: 'Sora', 'Inter', sans-serif;
           font-weight: 500;
-          font-size: 10px;
+          font-size: 11px;
           text-transform: uppercase;
-          padding: 6px 14px;
+          padding: 8px 16px;
           letter-spacing: 0.14em;
         }
 
         .na-info {
-          padding: 18px 4px 4px;
+          padding: 20px 4px 4px;
           text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
         }
         .na-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
           font-weight: 400;
-          font-size: 13px;
+          font-size: 14px;
           letter-spacing: 0.16em;
           text-transform: uppercase;
           color: #1a1a1a;
-          margin: 0 0 10px 0;
+          margin: 0;
           line-height: 1.4;
           display: -webkit-box;
           -webkit-line-clamp: 1;
@@ -335,42 +349,16 @@ function NewArrivalCard({ product, isActive, getImageUrl, getSlug }) {
           text-overflow: ellipsis;
         }
 
-        /* প্রাদার স্টাইলের স্লাইডিং লাইন ইফেক্ট */
-        .na-divider-wrap {
-          height: 2px;
-          width: 100%;
-          display: flex;
-          justify-content: center;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        .na-divider-wrap.active {
-          opacity: 1;
-        }
-        .na-divider {
-          width: 50px;
-          height: 1.5px;
-          background-color: #1a1a1a;
-        }
-
         @media (hover: hover) {
           .na-card-link:hover .na-image {
             transform: scale(1.03);
           }
-          /* মাউস হোভার করলেও লাইনটি ঐ প্রোডাক্টের নিচে ভেসে উঠবে */
-          .na-card-link:hover .na-divider-wrap {
-            opacity: 1;
-          }
         }
 
         @media (min-width: 768px) {
-          .na-info { padding: 22px 4px 4px; }
+          .na-info { padding: 24px 4px 4px; }
           .na-title {
-            font-size: 14px;
-            margin-bottom: 12px;
-          }
-          .na-divider {
-            width: 65px;
+            font-size: 15px;
           }
         }
       `}</style>
