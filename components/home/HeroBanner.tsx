@@ -12,15 +12,6 @@ export default function HeroBanner({ slides = [] }) {
 
   const totalSlides = slides.length;
 
-  // Preload images
-  useEffect(() => {
-    if (!slides.length) return;
-    slides.forEach((slide) => {
-      const img = new Image();
-      img.src = slide.img;
-    });
-  }, [slides]);
-
   // Auto slide
   useEffect(() => {
     if (totalSlides <= 1) return;
@@ -70,7 +61,6 @@ export default function HeroBanner({ slides = [] }) {
   }, [currentSlide, totalSlides]);
 
   if (!slides.length) return null;
-
   const current = slides[currentSlide];
 
   return (
@@ -83,7 +73,7 @@ export default function HeroBanner({ slides = [] }) {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
-        {/* Slides — full bleed image with subtle fade */}
+        {/* Slides */}
         {slides.map((slide, index) => (
           <div
             key={index}
@@ -91,31 +81,32 @@ export default function HeroBanner({ slides = [] }) {
           >
             <img
               src={slide.img}
-              alt={slide.title || 'JABIYEN'}
-              className="hero-image"
+              alt={slide.title || 'JAYENWARE Hero'}
+              className={`hero-image ${index === currentSlide ? 'zooming' : ''}`}
             />
           </div>
         ))}
 
-        {/* Gradient overlay — subtle, bottom-anchored */}
-        <div className="hero-overlay" />
+        {/* Gradient Overlay */}
+        <div className="hero-gradient" />
 
-        {/* Content — bottom center, editorial */}
+        {/* Content */}
         <div className="hero-content">
-          {current?.subtitle && (
-            <span className="hero-eyebrow">{current.subtitle}</span>
-          )}
-
+          <span className="hero-eyebrow">New Collection</span>
           <h1 className="hero-title">{current?.title}</h1>
-
+          {current?.subtitle && (
+            <p className="hero-subtitle">{current.subtitle}</p>
+          )}
           {current?.cta_text && current?.cta_link && (
-            <Link href={current.cta_link} className="hero-cta">
-              {current.cta_text}
-            </Link>
+            <div className="hero-cta-wrap">
+              <Link href={current.cta_link} className="hero-cta">
+                {current.cta_text}
+              </Link>
+            </div>
           )}
         </div>
 
-        {/* Arrows */}
+        {/* Navigation Arrows */}
         {totalSlides > 1 && (
           <>
             <button
@@ -123,7 +114,7 @@ export default function HeroBanner({ slides = [] }) {
               className="hero-arrow hero-arrow-left"
               aria-label="Previous slide"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
@@ -132,24 +123,22 @@ export default function HeroBanner({ slides = [] }) {
               className="hero-arrow hero-arrow-right"
               aria-label="Next slide"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           </>
         )}
 
-        {/* Indicators — thin bars */}
+        {/* Indicators */}
         {totalSlides > 1 && (
-          <div className="hero-indicators" role="tablist">
+          <div className="hero-indicators">
             {slides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => { goToSlide(index); pauseAutoSlide(); setTimeout(resumeAutoSlide, 5000); }}
                 className={`hero-indicator ${index === currentSlide ? 'active' : ''}`}
                 aria-label={`Go to slide ${index + 1}`}
-                aria-selected={index === currentSlide}
-                role="tab"
               />
             ))}
           </div>
@@ -158,24 +147,24 @@ export default function HeroBanner({ slides = [] }) {
 
       <style jsx>{`
         /* ============================================
-           HERO CONTAINER — Full bleed, luxury
+           HERO CONTAINER
            ============================================ */
         .hero-container {
           position: relative;
           width: 100%;
-          height: 88vh;
-          min-height: 560px;
-          max-height: 900px;
+          height: 62vh;
+          min-height: 480px;
+          max-height: 760px;
           overflow: hidden;
           background: #000;
-          user-select: none;
         }
 
+        /* Slides */
         .hero-slide {
           position: absolute;
           inset: 0;
           opacity: 0;
-          transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1);
           pointer-events: none;
         }
         .hero-slide.active {
@@ -189,115 +178,121 @@ export default function HeroBanner({ slides = [] }) {
           object-fit: cover;
           display: block;
         }
-        .hero-slide.active .hero-image {
-          animation: heroZoom 24s ease-in-out infinite alternate;
+        .hero-image.zooming {
+          animation: heroZoom 22s ease-in-out infinite alternate;
         }
-
         @keyframes heroZoom {
           from { transform: scale(1); }
-          to { transform: scale(1.04); }
+          to { transform: scale(1.06); }
         }
 
-        /* ============================================
-           OVERLAY — Subtle bottom gradient only
-           ============================================ */
-        .hero-overlay {
+        /* Gradient */
+        .hero-gradient {
           position: absolute;
           inset: 0;
           z-index: 1;
           background: linear-gradient(
             to bottom,
             rgba(0, 0, 0, 0) 0%,
-            rgba(0, 0, 0, 0) 40%,
-            rgba(0, 0, 0, 0.22) 68%,
-            rgba(0, 0, 0, 0.55) 100%
+            rgba(0, 0, 0, 0.08) 35%,
+            rgba(0, 0, 0, 0.28) 60%,
+            rgba(0, 0, 0, 0.58) 85%,
+            rgba(0, 0, 0, 0.78) 100%
           );
-          pointer-events: none;
         }
 
         /* ============================================
-           CONTENT — Bottom center, editorial
+           CONTENT — Matches checkout/payment typography
            ============================================ */
         .hero-content {
           position: absolute;
-          left: 50%;
-          bottom: clamp(80px, 12vh, 140px);
-          transform: translateX(-50%);
+          inset: 0;
           z-index: 2;
-          text-align: center;
-          width: 100%;
-          max-width: 780px;
-          padding: 0 24px;
           display: flex;
           flex-direction: column;
           align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 0 24px 70px;
         }
 
-        /* Eyebrow — small uppercase, wide tracking */
         .hero-eyebrow {
-          font-family: var(--font-body, "Helvetica Neue", Helvetica, Arial, sans-serif);
-          font-size: clamp(9px, 1vw, 11px);
-          font-weight: 500;
-          letter-spacing: 0.32em;
+          font-family: var(--font-body, 'Inter', sans-serif);
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.35em;
           text-transform: uppercase;
-          color: rgba(255, 255, 255, 0.78);
-          display: block;
+          color: rgba(255, 255, 255, 0.7);
+          margin-bottom: 22px;
           line-height: 1;
-          margin-bottom: clamp(12px, 2vh, 18px);
         }
 
-        /* Title — large but refined weight 300 */
         .hero-title {
-          font-family: var(--font-heading, "Helvetica Neue", Helvetica, Arial, sans-serif);
-          font-size: clamp(34px, 5.5vw, 72px);
+          font-family: var(--font-heading, 'Manrope', sans-serif);
+          font-size: clamp(32px, 5.5vw, 76px);
           font-weight: 300;
-          letter-spacing: -0.02em;
-          line-height: 1.05;
+          line-height: 1.02;
+          letter-spacing: 2px;
+          text-transform: uppercase;
           color: #ffffff;
           margin: 0;
-          padding: 0;
-          max-width: 100%;
-          word-wrap: break-word;
+          max-width: 900px;
         }
 
-        /* CTA — thin border, sharp corners, no blur */
+        .hero-subtitle {
+          font-family: var(--font-body, 'Inter', sans-serif);
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 4px;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.75);
+          margin: 24px 0 0;
+          line-height: 1.5;
+          max-width: 560px;
+        }
+
+        /* CTA — Matches checkout btn-outline (white on dark) */
+        .hero-cta-wrap {
+          margin-top: 38px;
+        }
+
         .hero-cta {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          margin-top: clamp(20px, 3vh, 32px);
-          padding: 14px 40px;
+          height: 52px;
+          padding: 0 40px;
           background: transparent;
           color: #ffffff;
-          font-family: var(--font-body, "Helvetica Neue", Helvetica, Arial, sans-serif);
+          border: 1px solid #ffffff;
+          border-radius: 0;
+          font-family: var(--font-body, 'Inter', sans-serif);
           font-size: 11px;
           font-weight: 500;
-          letter-spacing: 0.22em;
+          letter-spacing: 2px;
           text-transform: uppercase;
           text-decoration: none;
-          border: 1px solid rgba(255, 255, 255, 0.85);
-          border-radius: 0;
-          transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+          cursor: pointer;
+          transition: background 0.3s ease, color 0.3s ease;
         }
         .hero-cta:hover {
           background: #ffffff;
           color: #000000;
-          border-color: #ffffff;
         }
 
         /* ============================================
-           ARROWS — Minimal, hidden until hover
+           ARROWS — Sharp, thin border
            ============================================ */
         .hero-arrow {
           position: absolute;
           top: 50%;
           transform: translateY(-50%);
           z-index: 3;
-          width: 44px;
-          height: 44px;
-          border-radius: 50%;
+          width: 52px;
+          height: 52px;
           background: transparent;
-          border: 1px solid rgba(255, 255, 255, 0.32);
+          border: 1px solid rgba(255, 255, 255, 0.35);
+          border-radius: 0;
           color: #ffffff;
           cursor: pointer;
           display: flex;
@@ -306,81 +301,118 @@ export default function HeroBanner({ slides = [] }) {
           opacity: 0;
           transition: opacity 0.3s ease, background 0.3s ease, border-color 0.3s ease;
         }
+        .hero-arrow:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: #ffffff;
+        }
+        .hero-arrow-left { left: 28px; }
+        .hero-arrow-right { right: 28px; }
         .hero-container:hover .hero-arrow {
           opacity: 1;
         }
-        .hero-arrow:hover {
-          background: rgba(255, 255, 255, 0.08);
-          border-color: rgba(255, 255, 255, 0.65);
-        }
-        .hero-arrow-left { left: 24px; }
-        .hero-arrow-right { right: 24px; }
 
         /* ============================================
-           INDICATORS — Thin bars at bottom
+           INDICATORS — Thin lines
            ============================================ */
         .hero-indicators {
           position: absolute;
-          bottom: clamp(24px, 4vh, 40px);
+          bottom: 32px;
           left: 50%;
           transform: translateX(-50%);
           z-index: 3;
           display: flex;
+          gap: 10px;
           align-items: center;
-          gap: 8px;
         }
 
         .hero-indicator {
-          width: 24px;
+          width: 32px;
           height: 1px;
-          background: rgba(255, 255, 255, 0.32);
+          background: rgba(255, 255, 255, 0.28);
           border: none;
+          border-radius: 0;
           cursor: pointer;
           padding: 0;
-          border-radius: 0;
-          transition: width 0.4s ease, background 0.4s ease;
+          transition: background 0.4s ease, width 0.4s ease;
         }
         .hero-indicator.active {
-          width: 44px;
+          width: 60px;
           background: #ffffff;
         }
 
         /* ============================================
-           MOBILE
+           RESPONSIVE
            ============================================ */
-        @media (max-width: 768px) {
+        @media (max-width: 767px) {
           .hero-container {
-            height: 82vh;
-            min-height: 500px;
-            max-height: 720px;
+            height: 72vh;
+            min-height: 540px;
           }
-          .hero-arrow {
-            width: 36px;
-            height: 36px;
-            opacity: 1;
-            background: rgba(255, 255, 255, 0.04);
-            border-color: rgba(255, 255, 255, 0.25);
-          }
-          .hero-arrow-left { left: 12px; }
-          .hero-arrow-right { right: 12px; }
-          .hero-cta {
-            padding: 12px 30px;
-            font-size: 10px;
-            letter-spacing: 0.2em;
-          }
-          .hero-eyebrow {
-            letter-spacing: 0.28em;
-          }
+
           .hero-content {
-            bottom: clamp(72px, 11vh, 110px);
-            padding: 0 20px;
+            padding: 0 20px 60px;
+          }
+
+          .hero-eyebrow {
+            font-size: 9px;
+            letter-spacing: 0.3em;
+            margin-bottom: 16px;
+          }
+
+          .hero-title {
+            font-size: clamp(28px, 9vw, 44px);
+            letter-spacing: 1.5px;
+            line-height: 1.05;
+          }
+
+          .hero-subtitle {
+            font-size: 9px;
+            letter-spacing: 3px;
+            margin-top: 16px;
+          }
+
+          .hero-cta-wrap {
+            margin-top: 28px;
+          }
+
+          .hero-cta {
+            height: 46px;
+            padding: 0 32px;
+            font-size: 10px;
+            letter-spacing: 1.6px;
+          }
+
+          .hero-arrow {
+            display: none;
+          }
+
+          .hero-indicators {
+            bottom: 22px;
+            gap: 8px;
+          }
+
+          .hero-indicator {
+            width: 24px;
+          }
+          .hero-indicator.active {
+            width: 44px;
+          }
+        }
+
+        @media (min-width: 1280px) {
+          .hero-container {
+            height: 88vh;
+            max-height: 880px;
           }
         }
 
         @media (prefers-reduced-motion: reduce) {
-          .hero-slide.active .hero-image { animation: none; }
-          .hero-slide { transition: none; }
-          .hero-cta, .hero-arrow, .hero-indicator { transition: none; }
+          .hero-image.zooming {
+            animation: none;
+          }
+          .hero-slide {
+            transition: opacity 0.4s ease;
+          }
         }
       `}</style>
     </>
