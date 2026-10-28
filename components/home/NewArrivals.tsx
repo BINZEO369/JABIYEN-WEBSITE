@@ -38,6 +38,7 @@ export default function NewArrivals({ products = [] }) {
     }
   }, [products]);
 
+  // Track scroll state for arrows
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -61,9 +62,9 @@ export default function NewArrivals({ products = [] }) {
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.na-card');
-    const cardW = card ? card.offsetWidth : 340;
-    const gap = 12;
-    el.scrollBy({ left: (cardW + gap) * 2 * direction, behavior: 'smooth' });
+    const cardW = card ? card.offsetWidth : 300;
+    const gap = 16;
+    el.scrollBy({ left: (cardW + gap) * 1 * direction, behavior: 'smooth' });
   };
 
   const getImageUrl = (product) => {
@@ -83,10 +84,12 @@ export default function NewArrivals({ products = [] }) {
           <Image src="/newarrivalicon.png" alt="New Arrivals" width={180} height={40} style={{ objectFit: 'contain' }} priority />
         </div>
         <div className="na-scroll" ref={scrollRef}>
-          {[...Array(5)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <div key={i} className="na-card">
               <div className="na-image-wrap na-shimmer" />
-              <div className="na-underline na-shimmer" style={{ height: 1 }} />
+              <div style={{ padding: '16px 0' }}>
+                <div className="na-shimmer" style={{ height: 12, width: '50%', borderRadius: 2, margin: '0 auto' }} />
+              </div>
             </div>
           ))}
         </div>
@@ -147,27 +150,27 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-scroll {
           display: flex;
-          align-items: flex-start;
-          gap: 12px;
+          gap: 16px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
           scroll-padding-left: 16px;
-          padding: 0 16px 12px;
+          padding: 0 16px 8px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
-
-        /* ✅ Bada uniform card */
+        
+        /* ইমেজ অনেক বড় করার জন্য flex বাড়ানো হয়েছে */
         .na-card {
-          flex: 0 0 86vw;
-          max-width: 460px;
-          scroll-snap-align: start;
+          flex: 0 0 85vw; /* মোবাইলে ৮৫% জায়গা নিবে */
+          max-width: 450px; /* ম্যাক্সিমাম সাইজ */
+          scroll-snap-align: center; /* সেন্টারে স্ন্যাপ করবে */
         }
 
+        /* Arrows — desktop only */
         .na-arrow {
           position: absolute;
-          top: 40%;
+          top: 45%;
           transform: translateY(-50%);
           z-index: 10;
           width: 44px;
@@ -202,27 +205,29 @@ export default function NewArrivals({ products = [] }) {
         }
 
         @media (min-width: 640px) {
-          .na-scroll { gap: 14px; scroll-padding-left: 24px; padding: 0 24px 14px; }
-          .na-card { flex: 0 0 52vw; max-width: 420px; }
+          .na-scroll { gap: 20px; scroll-padding-left: 24px; padding: 0 24px 8px; }
+          .na-card { flex: 0 0 50vw; max-width: 350px; }
         }
 
         @media (min-width: 768px) {
           .na-section { padding: 56px 0 32px; }
           .na-header { margin-bottom: 36px; }
-          .na-scroll { gap: 16px; scroll-padding-left: 32px; padding: 0 32px 16px; }
-          .na-card { flex: 0 0 340px; max-width: none; }
+          .na-scroll { gap: 24px; scroll-padding-left: 32px; padding: 0 32px 12px; }
+          .na-card { flex: 0 0 35vw; max-width: 380px; }
           .na-arrow { display: flex; }
+          .na-arrow-left { left: 20px; }
+          .na-arrow-right { right: 20px; }
         }
 
         @media (min-width: 1024px) {
-          .na-scroll { gap: 20px; scroll-padding-left: 48px; padding: 0 48px 20px; }
-          .na-card { flex: 0 0 380px; }
+          .na-scroll { gap: 32px; scroll-padding-left: 48px; padding: 0 48px 16px; }
+          .na-card { flex: 0 0 30vw; max-width: 420px; }
           .na-arrow-left { left: 28px; }
           .na-arrow-right { right: 28px; }
         }
 
         @media (min-width: 1280px) {
-          .na-card { flex: 0 0 440px; }
+          .na-card { flex: 0 0 25vw; max-width: 450px; }
         }
       `}</style>
     </section>
@@ -236,19 +241,9 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
 
   return (
     <Link href={`/product/${encodeURIComponent(slug)}`} className="na-card-link">
+      {/* ইমেজ কন্টেইনার - সাইজ ফিক্সড করা হয়েছে যাতে সব সমান দেখায় */}
       <div className="na-image-wrap">
-        <img
-          src={imageUrl}
-          alt={product.title || 'Product'}
-          className="na-image"
-          loading="lazy"
-          onError={(e) => { e.currentTarget.src = '/placeholder.png'; }}
-        />
-
-        {/* Dark gradient + title (bottom of image) */}
-        <div className="na-overlay">
-          <h3 className="na-title">{product.title || 'Product'}</h3>
-        </div>
+        <img src={imageUrl} alt={product.title || 'Product'} className="na-image" loading="lazy" />
 
         {isOut && (
           <div className="na-soldout-overlay">
@@ -257,71 +252,35 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         )}
       </div>
 
-      {/* Underline below image */}
-      <div className="na-underline" />
+      {/* শুধুমাত্র টাইটেল - দাম বা কালার ডট নেই */}
+      <div className="na-info">
+        <h3 className="na-title">{product.title}</h3>
+      </div>
 
       <style jsx>{`
         .na-card-link {
           display: block;
           text-decoration: none;
           color: inherit;
-          width: 100%;
         }
-
-        /* ✅ Bada fixed-ratio image — সব কার্ড এক সাইজ */
+        
+        /* 4/5 অ্যাসপেক্ট রেশিও দেওয়া হয়েছে যাতে সব ছবি একই সাইজের হয় */
         .na-image-wrap {
           position: relative;
-          width: 100%;
-          aspect-ratio: 3/4;
+          aspect-ratio: 4 / 5; 
           background: #f5f5f7;
           overflow: hidden;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-
+        
         .na-image {
           width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: cover; /* ছবি পুরো বক্স জুড়ে থাকবে, কোনো ছোট-বড় গ্যাপ থাকবে না */
           display: block;
           transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
-        }
-
-        /* Dark gradient + title at bottom */
-        .na-overlay {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          padding: 56px 18px 18px;
-          background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.78) 0%,
-            rgba(0, 0, 0, 0.45) 50%,
-            rgba(0, 0, 0, 0) 100%
-          );
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        .na-title {
-          font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
-          font-weight: 500;
-          font-size: 11px;
-          letter-spacing: 0.18em;
-          text-transform: uppercase;
-          color: #ffffff;
-          margin: 0;
-          line-height: 1.35;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        /* Underline */
-        .na-underline {
-          height: 1px;
-          width: 100%;
-          background: #1a1a1a;
         }
 
         .na-soldout-overlay {
@@ -338,31 +297,47 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           color: #fff;
           font-family: 'Sora', 'Inter', sans-serif;
           font-weight: 500;
-          font-size: 9px;
+          font-size: 10px;
           text-transform: uppercase;
-          padding: 6px 14px;
+          padding: 6px 16px;
           letter-spacing: 0.14em;
+        }
+
+        /* টাইটেল সেন্টারে থাকবে */
+        .na-info {
+          padding: 16px 10px 8px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+        }
+        
+        .na-title {
+          font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
+          font-weight: 500;
+          font-size: 13px; /* টাইটেল ফন্ট সাইজ বড় করা হয়েছে */
+          letter-spacing: 0.05em;
+          color: #1a1a1a;
+          margin: 0;
+          line-height: 1.4;
+          text-transform: capitalize; /* Prada স্টাইলের জন্য */
+          display: -webkit-box;
+          -webkit-line-clamp: 2; /* সর্বোচ্চ ২ লাইন দেখাবে */
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
 
         @media (hover: hover) {
           .na-card-link:hover .na-image {
-            transform: scale(1.04);
+            transform: scale(1.03);
           }
         }
 
         @media (min-width: 768px) {
-          .na-overlay { padding: 64px 20px 20px; }
+          .na-info { padding: 20px 10px 10px; }
           .na-title {
-            font-size: 12px;
-            letter-spacing: 0.2em;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .na-overlay { padding: 72px 22px 22px; }
-          .na-title {
-            font-size: 13px;
-            letter-spacing: 0.22em;
+            font-size: 14px;
+            letter-spacing: 0.08em;
           }
         }
       `}</style>
