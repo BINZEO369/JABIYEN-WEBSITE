@@ -39,7 +39,7 @@ export default function NewArrivals({ products = [] }) {
     }
   }, [products]);
 
-  // Track scroll state for arrows and train-line progress
+  // Track scroll state for arrows and full-width train-line progress
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -50,7 +50,7 @@ export default function NewArrivals({ products = [] }) {
 
       const maxScroll = el.scrollWidth - el.clientWidth;
       if (maxScroll > 0) {
-        const progress = (el.scrollLeft / maxScroll) * 100;
+        const progress = el.scrollLeft / maxScroll;
         setScrollProgress(progress);
       }
     };
@@ -140,12 +140,15 @@ export default function NewArrivals({ products = [] }) {
           ))}
         </div>
 
-        {/* ট্রেন লাইন প্রোগ্রেস ট্র্যাক */}
+        {/* ফুল-উইথ ট্রেন লাইন ট্র্যাক (স্ক্রিনের এক প্রান্ত থেকে অন্য প্রান্ত) */}
         <div className="na-track-container">
           <div className="na-track-line">
             <div 
               className="na-train-thumb" 
-              style={{ transform: `translateX(${scrollProgress}%)` }}
+              style={{ 
+                transform: `translateX(${scrollProgress * 100}%)`,
+                width: '80px' // থাম্বের সাইজ প্রয়োজনমতো ছোট-বড় করতে পারেন
+              }}
             />
           </div>
         </div>
@@ -177,21 +180,20 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-scroll::-webkit-scrollbar { display: none; }
         
-        /* আরও বড় ইমেজ কার্ড (বিশাল লাক্সারি সাইজ) */
+        /* বিশাল লাক্সারি ইমেজ সাইজ */
         .na-card {
           flex: 0 0 92vw;
           max-width: 680px;
           scroll-snap-align: start;
         }
 
-        /* ট্রেন স্টাইল ট্র্যাক এবং মুভিং থাম্ব */
+        /* ফুল-উইথ ট্র্যাক কন্টেইনার — প্যাডিং জিরো করে একদম বাম থেকে ডান পর্যন্ত */
         .na-track-container {
-          padding: 24px 32px 0;
-          display: flex;
-          justify-content: center;
+          width: 100%;
+          padding: 30px 20px 0;
         }
         .na-track-line {
-          width: 180px;
+          width: 100%;
           height: 1.5px;
           background-color: #e0e0e0;
           position: relative;
@@ -201,10 +203,9 @@ export default function NewArrivals({ products = [] }) {
           position: absolute;
           top: 0;
           left: 0;
-          width: 50px;
           height: 100%;
           background-color: #1a1a1a;
-          transition: transform 0.1s ease-out;
+          will-change: transform;
         }
 
         /* Arrows */
@@ -254,8 +255,7 @@ export default function NewArrivals({ products = [] }) {
           .na-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
           .na-card { flex: 0 0 54vw; max-width: 640px; }
           .na-arrow { display: flex; }
-          .na-track-container { padding: 28px 60px 0; }
-          .na-track-line { width: 220px; }
+          .na-track-container { padding: 35px 60px 0; }
         }
 
         @media (min-width: 1024px) {
@@ -296,7 +296,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         }
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 4/5; /* আরও বড় এবং লম্বা প্রিমিয়াম লুক (দরকার হলে 1/1 বা 3/4 করতে পারেন) */
+          aspect-ratio: 4/5;
           background: #f7f7f7;
           overflow: hidden;
         }
