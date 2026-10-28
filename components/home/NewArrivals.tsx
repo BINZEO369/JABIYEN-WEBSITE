@@ -9,7 +9,8 @@ export default function NewArrivals({ products = [] }) {
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [thumbStyle, setThumbStyle] = useState({ left: 0, width: '60px' });
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrollable, setIsScrollable] = useState(false);   // NEW
   const scrollRef = useRef(null);
 
   const maxProducts = 12;
@@ -39,36 +40,24 @@ export default function NewArrivals({ products = [] }) {
     }
   }, [products]);
 
-  // প্রোডাক্ট সংখ্যা এবং স্ক্রোল পজিশন অনুযায়ী ট্রেন ট্র্যাক থাম্বের ডায়নামিক সাইজ ও পজিশন ক্যালকুলেশন
+  // scroll state + train-line progress
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el || arrivals.length === 0) return;
+    if (!el) return;
 
     const update = () => {
       setCanScrollLeft(el.scrollLeft > 2);
       setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
 
-      const scrollWidth = el.scrollWidth;
-      const clientWidth = el.clientWidth;
-      const scrollLeft = el.scrollLeft;
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      setIsScrollable(maxScroll > 2);
 
-      const maxScroll = scrollWidth - clientWidth;
-      
-      const trackContainer = el.parentElement?.querySelector('.na-track-line');
-      if (trackContainer) {
-        const trackWidth = trackContainer.clientWidth;
-        
-        // থাম্বের সাইজ ট্র্যাকের তুলনায় প্রোডাক্টের দৃশ্যমান অনুপাতে অটো অ্যাডজাস্ট হবে
-        const thumbWidth = Math.max(40, (clientWidth / scrollWidth) * trackWidth);
-        const availableSpace = trackWidth - thumbWidth;
-        
-        const scrollFraction = maxScroll > 0 ? scrollLeft / maxScroll : 0;
-        const thumbLeft = scrollFraction * availableSpace;
-
-        setThumbStyle({
-          left: `${thumbLeft}px`,
-          width: `${thumbWidth}px`
-        });
+      if (maxScroll > 0) {
+        // 0 → 1 ঠিকভাবে স্ক্রল হলে, নাহলে 0 বা 1 এ clamp
+        const raw = el.scrollLeft / maxScroll;
+        setScrollProgress(Math.min(1, Math.max(0, raw)));
+      } else {
+        setScrollProgress(0);
       }
     };
 
@@ -76,9 +65,16 @@ export default function NewArrivals({ products = [] }) {
     el.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
 
+    // layout / image load এর পর re-calc
+    const raf = requestAnimationFrame(update);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+
     return () => {
       el.removeEventListener('scroll', update);
       window.removeEventListener('resize', update);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
     };
   }, [arrivals]);
 
@@ -125,10 +121,8 @@ export default function NewArrivals({ products = [] }) {
 
   return (
     <section className="na-section">
-      {/* প্রিমিয়াম ডিজাইন্ড হেডার */}
       <div className="na-header">
         <Image src="/newarrivalicon.png" alt="New Arrivals" width={220} height={50} style={{ objectFit: 'contain' }} priority />
-        <div className="na-header-line"></div>
       </div>
 
       <div className="na-scroll-wrap">
@@ -159,18 +153,22 @@ export default function NewArrivals({ products = [] }) {
           ))}
         </div>
 
-        {/* ট্রেন লাইন ট্র্যাক — যা প্রোডাক্ট সংখ্যা অনুযায়ী শুরু থেকে শেষ পর্যন্ত নির্ভুলভাবে মুভ করবে */}
-        <div className="na-track-container">
-          <div className="na-track-line">
-            <div 
-              className="na-train-thumb" 
-              style={{ 
-                left: thumbStyle.left, 
-                width: thumbStyle.width 
-              }}
-            />
+        {/* train-line track — scrollable হলে দেখাবে */}
+        {isScrollable && (
+          <div className="na-track-container">
+            <div className="na-track-line">
+              <div
+                className="na-train-thumb"
+                style={{
+                  // progress 0 → left:0 / translate:0
+                  // progress 1 → left:100% / translate:-100% (নিজের width বাদ দিয়ে ডান প্রান্তে)
+                  left: `${scrollProgress * 100}%`,
+                  transform: `translateX(-${scrollProgress * 100}%)`,
+                }}
+              />
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <style jsx>{`
@@ -183,17 +181,7 @@ export default function NewArrivals({ products = [] }) {
           text-align: center;
           margin-bottom: 45px;
           padding: 0 20px;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
         }
-        .na-header-line {
-          width: 50px;
-          height: 1.5px;
-          background-color: #1a1a1a;
-          margin-top: 14px;
-        }
-
         .na-scroll-wrap {
           position: relative;
         }
@@ -208,18 +196,16 @@ export default function NewArrivals({ products = [] }) {
           scrollbar-width: none;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
-        
-        /* বিশাল লাক্সারি ইমেজ সাইজ */
+
         .na-card {
           flex: 0 0 92vw;
           max-width: 680px;
           scroll-snap-align: start;
         }
 
-        /* ফুল-উইথ ট্রেন ট্র্যাক কন্টেইনার */
         .na-track-container {
           width: 100%;
-          padding: 30px 32px 0;
+          padding: 30px 20px 0;
         }
         .na-track-line {
           width: 100%;
@@ -231,13 +217,13 @@ export default function NewArrivals({ products = [] }) {
         .na-train-thumb {
           position: absolute;
           top: 0;
+          left: 0;
           height: 100%;
+          width: 80px;
           background-color: #1a1a1a;
-          will-change: left, width;
-          transition: transform 0.05s linear;
+          will-change: transform;
         }
 
-        /* Arrows */
         .na-arrow {
           position: absolute;
           top: 45%;
@@ -312,7 +298,6 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         )}
       </div>
 
-      {/* প্রোডাক্টের টাইটেল */}
       <div className="na-info">
         <h3 className="na-title">{product.title}</h3>
       </div>
