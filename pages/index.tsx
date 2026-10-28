@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type CSSProperties } from 'react';
 import Head from 'next/head';
 import HeroVideo from '../components/home/HeroVideo';
 import CategoryShowcase from '../components/home/CategoryShowcase';
@@ -15,7 +15,7 @@ import { useCurrency } from '../components/currency/CurrencyProvider';
 /* ============================================================
    SKELETON PRIMITIVES — World-class shimmer placeholders
    ============================================================ */
-const Sk = ({ w = '100%', h = 16, r = 8, style = {} }) => (
+const Sk = ({ w = '100%', h = 16, r = 8, style = {} }: { w?: string | number; h?: string | number; r?: string | number; style?: CSSProperties }) => (
   <div className="sk-shimmer" style={{ width: w, height: h, borderRadius: r, ...style }} />
 );
 
@@ -187,8 +187,8 @@ export default function Home() {
 
   const filterByCategory = (cat) => { setCurrentFilters(prev => ({ ...prev, cat })); setProductsDisplayLimit(12); };
   const applyPriceFilter = () => {
-    const minValue = parseFloat(document.getElementById('filter-min-price')?.value);
-    const maxValue = parseFloat(document.getElementById('filter-max-price')?.value);
+    const minValue = parseFloat((document.getElementById('filter-min-price') as HTMLInputElement | null)?.value ?? '');
+    const maxValue = parseFloat((document.getElementById('filter-max-price') as HTMLInputElement | null)?.value ?? '');
     const minPrice = Number.isFinite(minValue) && minValue > 0 ? convertToUsd(minValue) : null;
     const maxPrice = Number.isFinite(maxValue) && maxValue > 0 ? convertToUsd(maxValue) : null;
     setCurrentFilters(prev => ({ ...prev, minPrice, maxPrice })); setProductsDisplayLimit(12);
@@ -203,7 +203,7 @@ export default function Home() {
   };
   const slideCarousel = (carouselId, direction) => {
     const carousel = document.getElementById(carouselId); if (!carousel) return;
-    const cardWidth = carousel.querySelector('.carousel-card')?.offsetWidth || 260;
+    const cardWidth = carousel.querySelector<HTMLElement>('.carousel-card')?.offsetWidth || 260;
     const gap = parseInt(getComputedStyle(carousel).gap) || 16;
     carousel.scrollBy({ left: direction === 'next' ? (cardWidth + gap) * 2 : -(cardWidth + gap) * 2, behavior: 'smooth' });
   };
