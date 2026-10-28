@@ -9,7 +9,7 @@ export default function NewArrivals({ products = [] }) {
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0); 
+  const [thumbStyle, setThumbStyle] = useState({ left: 0, width: '60px' });
   const scrollRef = useRef(null);
 
   const maxProducts = 12;
@@ -39,19 +39,36 @@ export default function NewArrivals({ products = [] }) {
     }
   }, [products]);
 
-  // Track scroll state for arrows and full-width train-line progress
+  // প্রোডাক্ট সংখ্যা এবং স্ক্রোল পজিশন অনুযায়ী ট্রেন ট্র্যাক থাম্বের ডায়নামিক সাইজ ও পজিশন ক্যালকুলেশন
   useEffect(() => {
     const el = scrollRef.current;
-    if (!el) return;
+    if (!el || arrivals.length === 0) return;
 
     const update = () => {
       setCanScrollLeft(el.scrollLeft > 2);
       setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
 
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      if (maxScroll > 0) {
-        const progress = el.scrollLeft / maxScroll;
-        setScrollProgress(progress);
+      const scrollWidth = el.scrollWidth;
+      const clientWidth = el.clientWidth;
+      const scrollLeft = el.scrollLeft;
+
+      const maxScroll = scrollWidth - clientWidth;
+      
+      const trackContainer = el.parentElement?.querySelector('.na-track-line');
+      if (trackContainer) {
+        const trackWidth = trackContainer.clientWidth;
+        
+        // থাম্বের সাইজ ট্র্যাকের তুলনায় প্রোডাক্টের দৃশ্যমান অনুপাতে অটো অ্যাডজাস্ট হবে
+        const thumbWidth = Math.max(40, (clientWidth / scrollWidth) * trackWidth);
+        const availableSpace = trackWidth - thumbWidth;
+        
+        const scrollFraction = maxScroll > 0 ? scrollLeft / maxScroll : 0;
+        const thumbLeft = scrollFraction * availableSpace;
+
+        setThumbStyle({
+          left: `${thumbLeft}px`,
+          width: `${thumbWidth}px`
+        });
       }
     };
 
@@ -108,8 +125,10 @@ export default function NewArrivals({ products = [] }) {
 
   return (
     <section className="na-section">
+      {/* প্রিমিয়াম ডিজাইন্ড হেডার */}
       <div className="na-header">
         <Image src="/newarrivalicon.png" alt="New Arrivals" width={220} height={50} style={{ objectFit: 'contain' }} priority />
+        <div className="na-header-line"></div>
       </div>
 
       <div className="na-scroll-wrap">
@@ -140,14 +159,14 @@ export default function NewArrivals({ products = [] }) {
           ))}
         </div>
 
-        {/* ফুল-উইথ ট্রেন লাইন ট্র্যাক (স্ক্রিনের এক প্রান্ত থেকে অন্য প্রান্ত) */}
+        {/* ট্রেন লাইন ট্র্যাক — যা প্রোডাক্ট সংখ্যা অনুযায়ী শুরু থেকে শেষ পর্যন্ত নির্ভুলভাবে মুভ করবে */}
         <div className="na-track-container">
           <div className="na-track-line">
             <div 
               className="na-train-thumb" 
               style={{ 
-                transform: `translateX(${scrollProgress * 100}%)`,
-                width: '80px' // থাম্বের সাইজ প্রয়োজনমতো ছোট-বড় করতে পারেন
+                left: thumbStyle.left, 
+                width: thumbStyle.width 
               }}
             />
           </div>
@@ -164,7 +183,17 @@ export default function NewArrivals({ products = [] }) {
           text-align: center;
           margin-bottom: 45px;
           padding: 0 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
+        .na-header-line {
+          width: 50px;
+          height: 1.5px;
+          background-color: #1a1a1a;
+          margin-top: 14px;
+        }
+
         .na-scroll-wrap {
           position: relative;
         }
@@ -187,10 +216,10 @@ export default function NewArrivals({ products = [] }) {
           scroll-snap-align: start;
         }
 
-        /* ফুল-উইথ ট্র্যাক কন্টেইনার — প্যাডিং জিরো করে একদম বাম থেকে ডান পর্যন্ত */
+        /* ফুল-উইথ ট্রেন ট্র্যাক কন্টেইনার */
         .na-track-container {
           width: 100%;
-          padding: 30px 20px 0;
+          padding: 30px 32px 0;
         }
         .na-track-line {
           width: 100%;
@@ -202,10 +231,10 @@ export default function NewArrivals({ products = [] }) {
         .na-train-thumb {
           position: absolute;
           top: 0;
-          left: 0;
           height: 100%;
           background-color: #1a1a1a;
-          will-change: transform;
+          will-change: left, width;
+          transition: transform 0.05s linear;
         }
 
         /* Arrows */
