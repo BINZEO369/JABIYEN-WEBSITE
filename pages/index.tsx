@@ -1,4 +1,4 @@
-Import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import HeroVideo from '../components/home/HeroVideo';
 import CategoryShowcase from '../components/home/CategoryShowcase';
