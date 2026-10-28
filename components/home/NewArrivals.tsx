@@ -82,14 +82,14 @@ export default function NewArrivals({ products = [] }) {
       <section className="na-section">
         <div className="na-header">
           <Image src="/newarrivalicon.png" alt="New Arrivals" width={180} height={40} style={{ objectFit: 'contain' }} priority />
+          <div className="na-header-divider"></div>
         </div>
         <div className="na-scroll" ref={scrollRef}>
           {[...Array(4)].map((_, i) => (
             <div key={i} className="na-card">
               <div className="na-image-wrap na-shimmer" />
               <div style={{ padding: '16px 2px 0', textAlign: 'center' }}>
-                <div className="na-shimmer" style={{ height: 12, width: '60%', margin: '0 auto 12px', borderRadius: 2 }} />
-                <div className="na-shimmer" style={{ height: 1, width: '40px', margin: '0 auto' }} />
+                <div className="na-shimmer" style={{ height: 12, width: '60%', margin: '0 auto', borderRadius: 2 }} />
               </div>
             </div>
           ))}
@@ -104,6 +104,8 @@ export default function NewArrivals({ products = [] }) {
     <section className="na-section">
       <div className="na-header">
         <Image src="/newarrivalicon.png" alt="New Arrivals" width={200} height={45} style={{ objectFit: 'contain' }} priority />
+        {/* স্ক্রিনশটের মতো পুরো সেকশনের হেডার বা টাইটেলের নিচে কমন কালো চিকন লাইন */}
+        <div className="na-header-divider"></div>
       </div>
 
       <div className="na-scroll-wrap">
@@ -145,7 +147,18 @@ export default function NewArrivals({ products = [] }) {
           text-align: center;
           margin-bottom: 40px;
           padding: 0 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
+        /* আপনার দেওয়া স্ক্রিনশটের মতো লোগো/টাইটেলের নিচে কমন কালো চিকন লাইন */
+        .na-header-divider {
+          width: 60px;
+          height: 1.5px;
+          background-color: #1a1a1a;
+          margin-top: 16px;
+        }
+
         .na-scroll-wrap {
           position: relative;
         }
@@ -161,7 +174,7 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-scroll::-webkit-scrollbar { display: none; }
         
-        /* আরও বড় ইমেজ কার্ড (Prada Style) */
+        /* বড় ইমেজ কার্ড (Prada Style) */
         .na-card {
           flex: 0 0 88vw;
           max-width: 560px;
@@ -212,6 +225,7 @@ export default function NewArrivals({ products = [] }) {
         @media (min-width: 768px) {
           .na-section { padding: 70px 0 50px; }
           .na-header { margin-bottom: 50px; }
+          .na-header-divider { width: 80px; margin-top: 20px; }
           .na-scroll { gap: 24px; scroll-padding-left: 48px; padding: 0 48px 20px; }
           .na-card { flex: 0 0 46vw; max-width: 540px; }
           .na-arrow { display: flex; }
@@ -242,10 +256,9 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         )}
       </div>
 
-      {/* টাইটেল এবং স্ক্রিনশটের মতো নিচে কালো চিকন লাইন */}
+      {/* এখানে শুধু প্রোডাক্টের টাইটেল থাকবে */}
       <div className="na-info">
         <h3 className="na-title">{product.title}</h3>
-        <div className="na-divider"></div>
       </div>
 
       <style jsx>{`
@@ -256,7 +269,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         }
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 1/1; /* ইমেজগুলোকে আরও বড় ও বর্গাকার বা প্রিমিয়াম লুক দিতে পারেন (দরকার হলে 4/5 করতে পারেন) */
+          aspect-ratio: 1/1; /* বড় ও প্রিমিয়াম লুকের জন্য */
           background: #f7f7f7;
           overflow: hidden;
         }
@@ -288,13 +301,9 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           letter-spacing: 0.14em;
         }
 
-        /* ইনফো ও কালো লাইন স্টাইল */
         .na-info {
           padding: 18px 4px 4px;
           text-align: center;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
         }
         .na-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
@@ -303,7 +312,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           letter-spacing: 0.16em;
           text-transform: uppercase;
           color: #1a1a1a;
-          margin: 0 0 12px 0;
+          margin: 0;
           line-height: 1.4;
           display: -webkit-box;
           -webkit-line-clamp: 1;
@@ -311,14 +320,6 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           overflow: hidden;
           white-space: nowrap;
           text-overflow: ellipsis;
-        }
-
-        /* আপনার দেওয়া স্ক্রিনশটের মতো নিচের কালো চিকন লাইন */
-        .na-divider {
-          width: 45px;
-          height: 1.5px;
-          background-color: #1a1a1a;
-          margin: 0 auto;
         }
 
         @media (hover: hover) {
@@ -331,10 +332,6 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           .na-info { padding: 22px 4px 4px; }
           .na-title {
             font-size: 14px;
-            margin-bottom: 14px;
-          }
-          .na-divider {
-            width: 55px;
           }
         }
       `}</style>
