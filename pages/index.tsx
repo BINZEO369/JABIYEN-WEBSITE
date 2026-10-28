@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, type CSSProperties } from 'react';
+Import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import HeroVideo from '../components/home/HeroVideo';
 import CategoryShowcase from '../components/home/CategoryShowcase';
@@ -12,100 +12,6 @@ import OnSale from '../components/home/OnSale';
 import LimitedEdition from '../components/home/LimitedEdition';
 import { useCurrency } from '../components/currency/CurrencyProvider';
 
-/* ============================================================
-   SKELETON PRIMITIVES — World-class shimmer placeholders
-   ============================================================ */
-const Sk = ({ w = '100%', h = 16, r = 8, style = {} }: { w?: string | number; h?: string | number; r?: string | number; style?: CSSProperties }) => (
-  <div className="sk-shimmer" style={{ width: w, height: h, borderRadius: r, ...style }} />
-);
-
-const HeroVideoSkeleton = () => (
-  <div className="sk-hero-video">
-    <Sk w="100%" h="100%" r={0} style={{ position: 'absolute', inset: 0 }} />
-    <div className="sk-hero-video-content">
-      <Sk w={120} h={14} r={20} style={{ marginBottom: 18 }} />
-      <Sk w="70%" h={64} r={12} style={{ marginBottom: 18 }} />
-      <Sk w="50%" h={44} r={10} style={{ marginBottom: 24 }} />
-      <div style={{ display: 'flex', gap: 12 }}>
-        <Sk w={160} h={48} r={24} />
-        <Sk w={160} h={48} r={24} />
-      </div>
-    </div>
-  </div>
-);
-
-const CategoryShowcaseSkeleton = () => (
-  <section className="sk-section">
-    <div className="sk-section-header">
-      <Sk w={200} h={14} r={20} style={{ margin: '0 auto 12px' }} />
-      <Sk w={340} h={36} r={10} style={{ margin: '0 auto 48px' }} />
-    </div>
-    <div className="sk-category-grid">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <div key={i}>
-          <Sk w="100%" h="auto" r={20} style={{ aspectRatio: '1', marginBottom: 14 }} />
-          <Sk w="60%" h={16} r={6} style={{ margin: '0 auto 8px' }} />
-          <Sk w="40%" h={12} r={6} style={{ margin: '0 auto' }} />
-        </div>
-      ))}
-    </div>
-  </section>
-);
-
-const HeroBannerSkeleton = () => (
-  <section className="sk-section-tight">
-    <div className="sk-hero-banner">
-      <Sk w="100%" h="100%" r={24} style={{ position: 'absolute', inset: 0 }} />
-      <div className="sk-hero-banner-content">
-        <Sk w={100} h={14} r={20} style={{ marginBottom: 16 }} />
-        <Sk w="65%" h={56} r={12} style={{ marginBottom: 16 }} />
-        <Sk w="45%" h={20} r={8} style={{ marginBottom: 28 }} />
-        <Sk w={150} h={46} r={23} />
-      </div>
-    </div>
-  </section>
-);
-
-const ProductCarouselSkeleton = ({ cards = 5 }) => (
-  <section className="sk-section">
-    <div className="sk-section-header-row">
-      <div>
-        <Sk w={100} h={12} r={20} style={{ marginBottom: 10 }} />
-        <Sk w={260} h={32} r={10} />
-      </div>
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Sk w={44} h={44} r={22} />
-        <Sk w={44} h={44} r={22} />
-      </div>
-    </div>
-    <div className="sk-carousel">
-      {Array.from({ length: cards }).map((_, i) => (
-        <div key={i} className="sk-carousel-card">
-          <Sk w="100%" h="auto" r={16} style={{ aspectRatio: '3/4', marginBottom: 14 }} />
-          <Sk w="40%" h={11} r={4} style={{ marginBottom: 10 }} />
-          <Sk w="85%" h={16} r={6} style={{ marginBottom: 10 }} />
-          <Sk w="35%" h={16} r={6} />
-        </div>
-      ))}
-    </div>
-  </section>
-);
-
-const HeroSecondarySkeleton = () => (
-  <section className="sk-section-tight">
-    <div className="sk-hero-secondary-inner">
-      <Sk w="100%" h="100%" r={20} style={{ position: 'absolute', inset: 0 }} />
-      <div className="sk-hero-secondary-content">
-        <Sk w={80} h={12} r={20} style={{ marginBottom: 14 }} />
-        <Sk w="70%" h={40} r={10} style={{ marginBottom: 14 }} />
-        <Sk w={140} h={42} r={21} />
-      </div>
-    </div>
-  </section>
-);
-
-/* ============================================================ */
-
 export default function Home() {
   const { formatMoney, convertToUsd, selectedCurrency } = useCurrency();
   const [currentData, setCurrentData] = useState({
@@ -115,7 +21,6 @@ export default function Home() {
   const [productsDisplayLimit, setProductsDisplayLimit] = useState(12);
   const [activePage, setActivePage] = useState('home');
   const [loading, setLoading] = useState(true);
-  const [revealedSections, setRevealedSections] = useState(new Set());
   const productsLoadMoreIncrement = 12;
 
   const fetchAPI = useCallback(async (endpoint) => {
@@ -123,8 +28,8 @@ export default function Home() {
     catch (e) { return []; }
   }, []);
 
-  const getProductSlug = (p) =>
-    (p.slug || p.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
+  const getCategorySlug = (c) => c ? c.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '') : '';
+  const getProductSlug = (p) => (p.slug || p.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
 
   const getFilteredProducts = useCallback(() => {
     let list = currentData.products;
@@ -154,20 +59,6 @@ export default function Home() {
     loadData();
   }, [fetchAPI]);
 
-  /* ---- STAGGERED SECTION REVEAL: sections load one-by-one, world-class fade ---- */
-  useEffect(() => {
-    if (loading) return;
-    const order = ['hero', 'categories', 'banner', 'newArrivals', 'secondary', 'trending', 'featured', 'bestSellers', 'onSale', 'limited'];
-    const timers = order.map((name, i) =>
-      setTimeout(() => {
-        setRevealedSections(prev => new Set([...prev, name]));
-      }, i * 170)
-    );
-    return () => timers.forEach(clearTimeout);
-  }, [loading]);
-
-  const isRevealed = (name) => revealedSections.has(name);
-
   const productCard = (p) => {
     const isOut = p.stock <= 0; const slug = getProductSlug(p);
     return (
@@ -187,8 +78,8 @@ export default function Home() {
 
   const filterByCategory = (cat) => { setCurrentFilters(prev => ({ ...prev, cat })); setProductsDisplayLimit(12); };
   const applyPriceFilter = () => {
-    const minValue = parseFloat((document.getElementById('filter-min-price') as HTMLInputElement | null)?.value ?? '');
-    const maxValue = parseFloat((document.getElementById('filter-max-price') as HTMLInputElement | null)?.value ?? '');
+    const minValue = parseFloat((document.getElementById('filter-min-price') as HTMLInputElement | null)?.value);
+    const maxValue = parseFloat((document.getElementById('filter-max-price') as HTMLInputElement | null)?.value);
     const minPrice = Number.isFinite(minValue) && minValue > 0 ? convertToUsd(minValue) : null;
     const maxPrice = Number.isFinite(maxValue) && maxValue > 0 ? convertToUsd(maxValue) : null;
     setCurrentFilters(prev => ({ ...prev, minPrice, maxPrice })); setProductsDisplayLimit(12);
@@ -213,14 +104,14 @@ export default function Home() {
   const totalProducts = filteredProducts.length;
   const hasMore = totalProducts > productsDisplayLimit;
 
-  /* ---------- helpers to render either skeleton or revealed content ---------- */
-  const Reveal = ({ name, children, skeleton }) => (
-    <>
-      {isRevealed(name)
-        ? <div className="reveal-section">{children}</div>
-        : skeleton}
-    </>
-  );
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh' }}>
+        <div style={{ width: 48, height: 48, border: '4px solid #e5e5ea', borderTopColor: '#1d1d1f', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -237,104 +128,21 @@ export default function Home() {
         })}} />
       </Head>
 
-      {/* ======================= GLOBAL STYLES ======================= */}
-      <style jsx global>{`
-        @keyframes skShimmer {
-          0%   { background-position:  200% 0; }
-          100% { background-position: -200% 0; }
-        }
-        .sk-shimmer {
-          background: linear-gradient(90deg, #f2f2f5 0%, #e6e6eb 50%, #f2f2f5 100%);
-          background-size: 200% 100%;
-          animation: skShimmer 1.6s infinite linear;
-        }
-        @keyframes revealUp {
-          0%   { opacity: 0; transform: translateY(44px) scale(0.985); }
-          100% { opacity: 1; transform: translateY(0)    scale(1);     }
-        }
-        .reveal-section {
-          animation: revealUp 0.95s cubic-bezier(0.16, 1, 0.3, 1) both;
-          will-change: transform, opacity;
-        }
-        .sk-section        { padding: 60px 5%; }
-        .sk-section-tight  { padding: 30px 5%; }
-        .sk-section-header { text-align: center; margin-bottom: 8px; }
-        .sk-section-header-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 32px; }
-        .sk-hero-video {
-          position: relative; width: 100%; aspect-ratio: 16/9;
-          overflow: hidden; background: #0a0a0a;
-        }
-        .sk-hero-video-content {
-          position: absolute; left: 8%; right: 8%; bottom: 14%;
-          max-width: 620px;
-        }
-        .sk-category-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-          gap: 20px;
-        }
-        .sk-hero-banner {
-          position: relative; aspect-ratio: 21/9;
-          border-radius: 24px; overflow: hidden; background: #f2f2f4;
-        }
-        .sk-hero-banner-content {
-          position: absolute; left: 8%; right: 8%; bottom: 14%;
-          max-width: 560px;
-        }
-        .sk-carousel      { display: flex; gap: 20px; overflow: hidden; }
-        .sk-carousel-card { flex: 0 0 auto; min-width: 240px; width: 240px; }
-        .sk-hero-secondary-inner {
-          position: relative; aspect-ratio: 16/7;
-          border-radius: 20px; overflow: hidden; background: #f2f2f4;
-        }
-        .sk-hero-secondary-content {
-          position: absolute; left: 8%; right: 8%; bottom: 16%;
-          max-width: 500px;
-        }
-        @media (max-width: 768px) {
-          .sk-hero-video           { aspect-ratio: 4/5; }
-          .sk-hero-banner          { aspect-ratio: 4/5; }
-          .sk-hero-secondary-inner { aspect-ratio: 4/3; }
-          .sk-carousel-card        { min-width: 200px; width: 200px; }
-          .sk-section              { padding: 40px 4%; }
-        }
-      `}</style>
-
-      {/* ======================== HOME PAGE ======================== */}
-      <section id="home" className="page-section active-page" style={{ display: activePage === 'home' ? 'block' : 'none' }}>
-        <Reveal name="hero"       skeleton={<HeroVideoSkeleton />}>
-          <HeroVideo videos={currentData.heroVideos} />
-        </Reveal>
-        <Reveal name="categories" skeleton={<CategoryShowcaseSkeleton />}>
-          <CategoryShowcase />
-        </Reveal>
-        <Reveal name="banner"     skeleton={<HeroBannerSkeleton />}>
-          <HeroBanner slides={currentData.hero} />
-        </Reveal>
-        <Reveal name="newArrivals" skeleton={<ProductCarouselSkeleton cards={5} />}>
-          <NewArrivals products={currentData.products} />
-        </Reveal>
-        <Reveal name="secondary"  skeleton={<HeroSecondarySkeleton />}>
-          <HeroSecondaryBanner slides={currentData.hero_secondary} />
-        </Reveal>
-        <Reveal name="trending"   skeleton={<ProductCarouselSkeleton cards={5} />}>
-          <TrendingNow products={currentData.products} />
-        </Reveal>
-        <Reveal name="featured"   skeleton={<ProductCarouselSkeleton cards={5} />}>
-          <FeaturedProducts products={currentData.products} />
-        </Reveal>
-        <Reveal name="bestSellers" skeleton={<ProductCarouselSkeleton cards={5} />}>
-          <BestSellers products={currentData.products} />
-        </Reveal>
-        <Reveal name="onSale"     skeleton={<ProductCarouselSkeleton cards={5} />}>
-          <OnSale products={currentData.products} />
-        </Reveal>
-        <Reveal name="limited"    skeleton={<ProductCarouselSkeleton cards={5} />}>
-          <LimitedEdition products={currentData.products} />
-        </Reveal>
+      {/* ==================== HOME PAGE ==================== */}
+      <section id="home" className="page-section active-page fade-in" style={{ display: activePage === 'home' ? 'block' : 'none' }}>
+        <HeroVideo videos={currentData.heroVideos} />
+        <CategoryShowcase />
+        <HeroBanner slides={currentData.hero} />
+        <NewArrivals products={currentData.products} />
+        <HeroSecondaryBanner slides={currentData.hero_secondary} />
+        <TrendingNow products={currentData.products} />
+        <FeaturedProducts products={currentData.products} />
+        <BestSellers products={currentData.products} />
+        <OnSale products={currentData.products} />
+        <LimitedEdition products={currentData.products} />
       </section>
 
-      {/* ======================== PRODUCTS PAGE ======================== */}
+      {/* ==================== PRODUCTS PAGE ==================== */}
       <section id="products" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'products' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
@@ -372,10 +180,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ======================== PRODUCT DETAILS ======================== */}
+      {/* ==================== PRODUCT DETAILS ==================== */}
       <section id="product-details" className="page-section" style={{ display: activePage === 'product-details' ? 'block' : 'none' }}></section>
 
-      {/* ======================== WISHLIST ======================== */}
+      {/* ==================== WISHLIST ==================== */}
       <section id="wishlist" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'wishlist' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-2xl sm:text-4xl font-bold mb-8">Your Wishlist</h2>
@@ -388,7 +196,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ======================== NEWS / JOURNAL ======================== */}
+      {/* ==================== NEWS / JOURNAL ==================== */}
       <section id="news" className="py-6 sm:py-8 lg:py-12" style={{ display: activePage === 'news' ? 'block' : 'none' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-4xl font-bold text-center mb-8">The Journal</h2>
@@ -410,3 +218,4 @@ export default function Home() {
     </>
   );
 }
+
