@@ -7,6 +7,7 @@ import { useCurrency } from '../currency/CurrencyProvider';
 
 export default function NewArrivals({ products = [] }) {
   const [arrivals, setArrivals] = useState([]);
+  const [colorCache, setColorCache] = useState({});
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -68,6 +69,17 @@ export default function NewArrivals({ products = [] }) {
     el.scrollBy({ left: (cardW + gap) * 2 * direction, behavior: 'smooth' });
   };
 
+  const fetchColors = async (slug) => {
+    if (colorCache[slug]) return colorCache[slug];
+    try {
+      const res = await fetch(`/api/product-colors?slug=${encodeURIComponent(slug)}`);
+      if (!res.ok) return [];
+      const data = await res.json();
+      setColorCache(prev => ({ ...prev, [slug]: data || [] }));
+      return data || [];
+    } catch { return []; }
+  };
+
   const getImageUrl = (product) => {
     if (product.img?.trim()) return product.img;
     if (product.image?.trim()) return product.image;
@@ -84,11 +96,14 @@ export default function NewArrivals({ products = [] }) {
         <div className="na-header">
           <Image src="/newarrivalicon.png" alt="New Arrivals" width={180} height={40} style={{ objectFit: 'contain' }} priority />
         </div>
-        <div className="na-scroll">
+        <div className="na-scroll" ref={scrollRef}>
           {[...Array(6)].map((_, i) => (
             <div key={i} className="na-card">
               <div className="na-image-wrap na-shimmer" />
-              <div className="na-underline" />
+              <div style={{ padding: '10px 2px 0' }}>
+                <div className="na-shimmer" style={{ height: 10, width: '70%', borderRadius: 2, marginBottom: 6 }} />
+                <div className="na-shimmer" style={{ height: 10, width: '40%', borderRadius: 2 }} />
+              </div>
             </div>
           ))}
         </div>
@@ -107,7 +122,7 @@ export default function NewArrivals({ products = [] }) {
       <div className="na-scroll-wrap">
         {canScrollLeft && (
           <button className="na-arrow na-arrow-left" onClick={() => scrollByCards(-1)} aria-label="Previous">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polyline points="15 18 9 12 15 6" />
             </svg>
           </button>
@@ -115,7 +130,7 @@ export default function NewArrivals({ products = [] }) {
 
         {canScrollRight && (
           <button className="na-arrow na-arrow-right" onClick={() => scrollByCards(1)} aria-label="Next">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
               <polyline points="9 18 15 12 9 6" />
             </svg>
           </button>
@@ -126,6 +141,7 @@ export default function NewArrivals({ products = [] }) {
             <NewArrivalCard
               key={product.id}
               product={product}
+              fetchColors={fetchColors}
               getImageUrl={getImageUrl}
               getSlug={getSlug}
             />
@@ -149,31 +165,29 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-scroll {
           display: flex;
-          gap: 8px;
+          gap: 10px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 12px;
-          padding: 0 12px 8px;
+          scroll-padding-left: 16px;
+          padding: 0 16px 8px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
-          align-items: flex-start;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
-
-        /* ✅ Fixed card size — same aspect ratio for all */
         .na-card {
-          flex: 0 0 72vw;
-          max-width: 340px;
+          flex: 0 0 60vw;
+          max-width: 260px;
           scroll-snap-align: start;
         }
 
+        /* Arrows — desktop only */
         .na-arrow {
           position: absolute;
-          top: 40%;
+          top: 45%;
           transform: translateY(-50%);
           z-index: 10;
-          width: 44px;
-          height: 44px;
+          width: 40px;
+          height: 40px;
           border-radius: 50%;
           background: #ffffff;
           border: 1px solid #e5e5e5;
@@ -182,8 +196,8 @@ export default function NewArrivals({ products = [] }) {
           justify-content: center;
           cursor: pointer;
           color: #1a1a1a;
-          transition: all 0.25s ease;
-          box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+          transition: all 0.2s ease;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
         }
         .na-arrow:hover {
           background: #1a1a1a;
@@ -192,13 +206,6 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-arrow-left { left: 20px; }
         .na-arrow-right { right: 20px; }
-
-        .na-underline {
-          height: 1px;
-          background: #e0e0e0;
-          margin-top: 14px;
-          width: 100%;
-        }
 
         .na-shimmer {
           background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
@@ -211,50 +218,55 @@ export default function NewArrivals({ products = [] }) {
         }
 
         @media (min-width: 640px) {
-          .na-scroll { gap: 10px; scroll-padding-left: 20px; padding: 0 20px 8px; }
-          .na-card { flex: 0 0 45vw; max-width: 320px; }
+          .na-scroll { gap: 12px; scroll-padding-left: 24px; padding: 0 24px 8px; }
+          .na-card { flex: 0 0 38vw; max-width: 260px; }
         }
 
         @media (min-width: 768px) {
           .na-section { padding: 56px 0 32px; }
           .na-header { margin-bottom: 36px; }
-          .na-scroll { gap: 12px; scroll-padding-left: 32px; padding: 0 32px 12px; }
-          .na-card { flex: 0 0 260px; max-width: none; }
+          .na-scroll { gap: 14px; scroll-padding-left: 32px; padding: 0 32px 12px; }
+          .na-card { flex: 0 0 220px; max-width: none; }
           .na-arrow { display: flex; }
+          .na-arrow-left { left: 20px; }
+          .na-arrow-right { right: 20px; }
         }
 
         @media (min-width: 1024px) {
-          .na-scroll { gap: 14px; scroll-padding-left: 48px; padding: 0 48px 16px; }
-          .na-card { flex: 0 0 300px; }
+          .na-scroll { gap: 16px; scroll-padding-left: 48px; padding: 0 48px 16px; }
+          .na-card { flex: 0 0 240px; }
           .na-arrow-left { left: 28px; }
           .na-arrow-right { right: 28px; }
         }
 
         @media (min-width: 1280px) {
-          .na-card { flex: 0 0 340px; }
+          .na-card { flex: 0 0 260px; }
         }
       `}</style>
     </section>
   );
 }
 
-function NewArrivalCard({ product, getImageUrl, getSlug }) {
+function NewArrivalCard({ product, fetchColors, getImageUrl, getSlug }) {
+  const { formatMoney } = useCurrency();
+  const [colors, setColors] = useState([]);
+  const [loaded, setLoaded] = useState(false);
+
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = getSlug(product);
   const imageUrl = getImageUrl(product);
+
+  useEffect(() => {
+    fetchColors(slug).then(c => {
+      setColors(c);
+      setLoaded(true);
+    });
+  }, [slug, fetchColors]);
 
   return (
     <Link href={`/product/${encodeURIComponent(slug)}`} className="na-card-link">
       <div className="na-image-wrap">
         <img src={imageUrl} alt={product.title || 'Product'} className="na-image" loading="lazy" />
-
-        {/* ✅ Dark overlay for title readability */}
-        <div className="na-dark-overlay" />
-
-        {/* ✅ Title on image — luxury fashion style */}
-        <div className="na-title-on-image">
-          <h3 className="na-title">{product.title}</h3>
-        </div>
 
         {isOut && (
           <div className="na-soldout-overlay">
@@ -263,147 +275,130 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         )}
       </div>
 
-      {/* ✅ Underline below each image */}
-      <div className="na-underline" />
+      {/* Title + price BELOW image — luxury Zara/COS style */}
+      <div className="na-info">
+        <h3 className="na-title">{product.title}</h3>
+        <span className="na-price">{formatMoney(product.price || 0)}</span>
+        {loaded && colors.length > 0 && (
+          <div className="na-colors">
+            {colors.slice(0, 3).map((c, i) => (
+              <span
+                key={i}
+                className="na-color-dot"
+                style={{ backgroundColor: c.color_code || '#ccc' }}
+                title={c.color_name}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <style jsx>{`
         .na-card-link {
           display: block;
-          flex: 0 0 72vw;
-          max-width: 340px;
-          scroll-snap-align: start;
           text-decoration: none;
           color: inherit;
         }
-
-        /* ✅ Fixed aspect ratio — every card is identical size */
         .na-image-wrap {
           position: relative;
-          width: 100%;
-          aspect-ratio: 4/5;
+          aspect-ratio: 3/4;
           background: #f5f5f7;
           overflow: hidden;
         }
         .na-image {
-          position: absolute;
-          inset: 0;
           width: 100%;
           height: 100%;
           object-fit: cover;
           display: block;
-          transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+          transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
-        /* ✅ Dark gradient overlay — bottom for title */
-        .na-dark-overlay {
+        .na-soldout-overlay {
           position: absolute;
           inset: 0;
-          background: linear-gradient(
-            to top,
-            rgba(0, 0, 0, 0.72) 0%,
-            rgba(0, 0, 0, 0.45) 30%,
-            rgba(0, 0, 0, 0.15) 55%,
-            transparent 75%
-          );
-          z-index: 2;
-          pointer-events: none;
-          transition: opacity 0.4s ease;
+          background: rgba(255, 255, 255, 0.55);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 3;
+        }
+        .na-soldout-label {
+          background: #1a1a1a;
+          color: #fff;
+          font-family: 'Sora', 'Inter', sans-serif;
+          font-weight: 500;
+          font-size: 8px;
+          text-transform: uppercase;
+          padding: 5px 12px;
+          letter-spacing: 0.14em;
         }
 
-        /* ✅ Title overlay — bottom-left of image */
-        .na-title-on-image {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          padding: 20px 16px 16px;
-          z-index: 3;
-          pointer-events: none;
+        /* Info — below image */
+        .na-info {
+          padding: 10px 2px 4px;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
         }
         .na-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
           font-weight: 400;
-          font-size: 11px;
-          letter-spacing: 0.16em;
+          font-size: 10px;
+          letter-spacing: 0.14em;
           text-transform: uppercase;
-          color: #ffffff;
+          color: #1a1a1a;
           margin: 0;
           line-height: 1.4;
           display: -webkit-box;
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 1;
           -webkit-box-orient: vertical;
           overflow: hidden;
-          text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+          white-space: nowrap;
+          text-overflow: ellipsis;
         }
-
-        /* Sold out */
-        .na-soldout-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.55);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 4;
-        }
-        .na-soldout-label {
-          background: #ffffff;
-          color: #1a1a1a;
-          font-family: 'Sora', 'Inter', sans-serif;
+        .na-price {
+          font-family: 'Inter', sans-serif;
           font-weight: 500;
-          font-size: 9px;
-          text-transform: uppercase;
-          padding: 6px 14px;
-          letter-spacing: 0.14em;
+          font-size: 11px;
+          color: #1a1a1a;
+          letter-spacing: 0.02em;
+          white-space: nowrap;
         }
-
-        /* ✅ Underline below image */
-        .na-underline {
-          height: 1px;
-          background: #e0e0e0;
-          margin-top: 14px;
-          width: 100%;
-          transition: background 0.3s ease;
+        .na-colors {
+          display: flex;
+          gap: 3px;
+          margin-top: 2px;
+        }
+        .na-color-dot {
+          width: 7px;
+          height: 7px;
+          border-radius: 50%;
+          border: 1px solid rgba(0, 0, 0, 0.08);
         }
 
         @media (hover: hover) {
           .na-card-link:hover .na-image {
             transform: scale(1.04);
           }
-          .na-card-link:hover .na-underline {
-            background: #1a1a1a;
-          }
-        }
-
-        @media (min-width: 640px) {
-          .na-card-link { flex: 0 0 45vw; max-width: 320px; }
         }
 
         @media (min-width: 768px) {
-          .na-card-link { flex: 0 0 260px; max-width: none; }
-        }
-
-        @media (min-width: 1024px) {
-          .na-card-link { flex: 0 0 300px; }
-        }
-
-        @media (min-width: 1280px) {
-          .na-card-link { flex: 0 0 340px; }
-        }
-
-        @media (min-width: 768px) {
-          .na-title-on-image {
-            padding: 24px 18px 18px;
-          }
+          .na-info { padding: 12px 2px 4px; gap: 5px; }
           .na-title {
-            font-size: 12px;
-            letter-spacing: 0.18em;
+            font-size: 11px;
+            letter-spacing: 0.16em;
           }
-          .na-underline {
-            margin-top: 16px;
+          .na-price {
+            font-size: 12px;
+          }
+          .na-color-dot {
+            width: 8px;
+            height: 8px;
           }
         }
       `}</style>
     </Link>
   );
 }
+
+ 
