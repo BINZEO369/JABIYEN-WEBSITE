@@ -62,9 +62,9 @@ export default function NewArrivals({ products = [] }) {
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.na-card');
-    const cardW = card ? card.offsetWidth : 300;
+    const cardW = card ? card.offsetWidth : 340;
     const gap = 16;
-    el.scrollBy({ left: (cardW + gap) * 1 * direction, behavior: 'smooth' });
+    el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
   };
 
   const getImageUrl = (product) => {
@@ -84,11 +84,11 @@ export default function NewArrivals({ products = [] }) {
           <Image src="/newarrivalicon.png" alt="New Arrivals" width={180} height={40} style={{ objectFit: 'contain' }} priority />
         </div>
         <div className="na-scroll" ref={scrollRef}>
-          {[...Array(3)].map((_, i) => (
+          {[...Array(4)].map((_, i) => (
             <div key={i} className="na-card">
               <div className="na-image-wrap na-shimmer" />
-              <div style={{ padding: '16px 0' }}>
-                <div className="na-shimmer" style={{ height: 12, width: '60%', borderRadius: 2, margin: '0 auto' }} />
+              <div style={{ padding: '14px 2px 0', textAlign: 'center' }}>
+                <div className="na-shimmer" style={{ height: 12, width: '60%', margin: '0 auto', borderRadius: 2 }} />
               </div>
             </div>
           ))}
@@ -136,42 +136,41 @@ export default function NewArrivals({ products = [] }) {
 
       <style jsx>{`
         .na-section {
-          padding: 40px 0 24px;
+          padding: 50px 0 30px;
           background: #fff;
           overflow: hidden;
         }
         .na-header {
           text-align: center;
-          margin-bottom: 28px;
-          padding: 0 16px;
+          margin-bottom: 35px;
+          padding: 0 20px;
         }
         .na-scroll-wrap {
           position: relative;
         }
-        
         .na-scroll {
           display: flex;
           gap: 16px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 16px;
-          padding: 0 16px 8px;
+          scroll-padding-left: 20px;
+          padding: 0 20px 12px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
         
-        /* মোবাইলে একদম ১টি ছবি পুরো স্ক্রিনে দেখাবে */
+        /* বড় সাইজ কার্ড — প্রাদার মতো বড় ইমেজ */
         .na-card {
-          flex: 0 0 calc(100vw - 32px); /* পুরো স্ক্রিন মাইনাস প্যাডিং */
-          max-width: 100%;
+          flex: 0 0 82vw;
+          max-width: 460px;
           scroll-snap-align: start;
         }
 
-        /* Arrows — desktop only */
+        /* Arrows */
         .na-arrow {
           position: absolute;
-          top: 40%;
+          top: 42%;
           transform: translateY(-50%);
           z-index: 10;
           width: 44px;
@@ -185,15 +184,15 @@ export default function NewArrivals({ products = [] }) {
           cursor: pointer;
           color: #1a1a1a;
           transition: all 0.2s ease;
-          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
         .na-arrow:hover {
           background: #1a1a1a;
           color: #fff;
           border-color: #1a1a1a;
         }
-        .na-arrow-left { left: 20px; }
-        .na-arrow-right { right: 20px; }
+        .na-arrow-left { left: 24px; }
+        .na-arrow-right { right: 24px; }
 
         .na-shimmer {
           background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
@@ -205,23 +204,20 @@ export default function NewArrivals({ products = [] }) {
           100% { background-position: 400px 0; }
         }
 
-        /* ট্যাবলেট ও পিসিতে একাধিক ছবি দেখাবে */
         @media (min-width: 640px) {
-          .na-scroll { gap: 20px; scroll-padding-left: 24px; padding: 0 24px 8px; }
-          .na-card { flex: 0 0 45vw; max-width: 400px; }
+          .na-card { flex: 0 0 50vw; max-width: 420px; }
         }
 
         @media (min-width: 768px) {
-          .na-section { padding: 56px 0 32px; }
-          .na-header { margin-bottom: 36px; }
-          .na-scroll { gap: 24px; scroll-padding-left: 32px; padding: 0 32px 12px; }
-          .na-card { flex: 0 0 35vw; max-width: 400px; }
+          .na-section { padding: 64px 0 40px; }
+          .na-header { margin-bottom: 45px; }
+          .na-scroll { gap: 20px; scroll-padding-left: 40px; padding: 0 40px 16px; }
+          .na-card { flex: 0 0 42vw; max-width: 480px; }
           .na-arrow { display: flex; }
         }
 
         @media (min-width: 1024px) {
-          .na-scroll { gap: 32px; scroll-padding-left: 48px; padding: 0 48px 16px; }
-          .na-card { flex: 0 0 28vw; max-width: 450px; }
+          .na-card { flex: 0 0 35vw; max-width: 520px; }
         }
       `}</style>
     </section>
@@ -235,8 +231,6 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
 
   return (
     <Link href={`/product/${encodeURIComponent(slug)}`} className="na-card-link">
-      
-      {/* ছবির বক্স - সব ছবি একই সাইজের হবে */}
       <div className="na-image-wrap">
         <img src={imageUrl} alt={product.title || 'Product'} className="na-image" loading="lazy" />
 
@@ -247,7 +241,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         )}
       </div>
 
-      {/* শুধুমাত্র টাইটেল - দাম নেই */}
+      {/* শুধু টাইটেল থাকবে নিচে, দাম বা অন্য কিছু নয় */}
       <div className="na-info">
         <h3 className="na-title">{product.title}</h3>
       </div>
@@ -257,26 +251,17 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           display: block;
           text-decoration: none;
           color: inherit;
-          width: 100%;
         }
-        
-        /* 1:1 স্কয়ার বক্স - যাতে ছোট বড় না লাগে */
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 1 / 1; 
-          background: #f4f4f4; /* হালকা গ্রে ব্যাকগ্রাউন্ড (Prada-র মতো) */
+          aspect-ratio: 4/5; /* ছবি আরও বড় ও প্রিমিয়াম দেখানোর জন্য */
+          background: #f4f4f4;
           overflow: hidden;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
-        
-        /* object-fit: contain দেওয়া হয়েছে যাতে ছবি কাটা না পড়ে এবং পুরো ব্যাগ সুন্দরভাবে দেখা যায় */
         .na-image {
           width: 100%;
           height: 100%;
-          object-fit: contain; 
-          padding: 10px; /* ইমেজ চারপাশে একটু স্পেস */
+          object-fit: cover;
           display: block;
           transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
@@ -284,7 +269,7 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         .na-soldout-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(255, 255, 255, 0.55);
+          background: rgba(255, 255, 255, 0.6);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -297,44 +282,43 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           font-weight: 500;
           font-size: 10px;
           text-transform: uppercase;
-          padding: 6px 16px;
+          padding: 6px 14px;
           letter-spacing: 0.14em;
         }
 
+        /* শুধু টাইটেল নিচে এবং সেন্টারে বা সুন্দর এলাইনমেন্টে */
         .na-info {
-          padding: 16px 10px 12px;
-          display: flex;
-          justify-content: center;
-          align-items: center;
+          padding: 16px 4px 4px;
           text-align: center;
         }
-        
         .na-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
-          font-weight: 500;
-          font-size: 15px; /* টাইটেল ফন্ট সাইজ বড় করা হয়েছে */
-          letter-spacing: 0.05em;
+          font-weight: 400;
+          font-size: 13px;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
           color: #1a1a1a;
           margin: 0;
           line-height: 1.4;
-          text-transform: capitalize;
           display: -webkit-box;
-          -webkit-line-clamp: 2;
+          -webkit-line-clamp: 1;
           -webkit-box-orient: vertical;
           overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
         }
 
         @media (hover: hover) {
           .na-card-link:hover .na-image {
-            transform: scale(1.05);
+            transform: scale(1.03);
           }
         }
 
         @media (min-width: 768px) {
-          .na-info { padding: 20px 10px 12px; }
+          .na-info { padding: 18px 4px 4px; }
           .na-title {
-            font-size: 16px;
-            letter-spacing: 0.08em;
+            font-size: 14px;
+            letter-spacing: 0.16em;
           }
         }
       `}</style>
