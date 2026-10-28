@@ -62,8 +62,8 @@ export default function NewArrivals({ products = [] }) {
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.na-card');
-    const cardW = card ? card.offsetWidth : 340;
-    const gap = 16;
+    const cardW = card ? card.offsetWidth : 400;
+    const gap = 20;
     el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
   };
 
@@ -87,8 +87,9 @@ export default function NewArrivals({ products = [] }) {
           {[...Array(4)].map((_, i) => (
             <div key={i} className="na-card">
               <div className="na-image-wrap na-shimmer" />
-              <div style={{ padding: '14px 2px 0', textAlign: 'center' }}>
-                <div className="na-shimmer" style={{ height: 12, width: '60%', margin: '0 auto', borderRadius: 2 }} />
+              <div style={{ padding: '16px 2px 0', textAlign: 'center' }}>
+                <div className="na-shimmer" style={{ height: 12, width: '60%', margin: '0 auto 12px', borderRadius: 2 }} />
+                <div className="na-shimmer" style={{ height: 1, width: '40px', margin: '0 auto' }} />
               </div>
             </div>
           ))}
@@ -136,13 +137,13 @@ export default function NewArrivals({ products = [] }) {
 
       <style jsx>{`
         .na-section {
-          padding: 50px 0 30px;
+          padding: 60px 0 40px;
           background: #fff;
           overflow: hidden;
         }
         .na-header {
           text-align: center;
-          margin-bottom: 35px;
+          margin-bottom: 40px;
           padding: 0 20px;
         }
         .na-scroll-wrap {
@@ -150,27 +151,27 @@ export default function NewArrivals({ products = [] }) {
         }
         .na-scroll {
           display: flex;
-          gap: 16px;
+          gap: 20px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 20px;
-          padding: 0 20px 12px;
+          scroll-padding-left: 24px;
+          padding: 0 24px 16px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
         
-        /* বড় সাইজ কার্ড — প্রাদার মতো বড় ইমেজ */
+        /* আরও বড় ইমেজ কার্ড (Prada Style) */
         .na-card {
-          flex: 0 0 82vw;
-          max-width: 460px;
+          flex: 0 0 88vw;
+          max-width: 560px;
           scroll-snap-align: start;
         }
 
         /* Arrows */
         .na-arrow {
           position: absolute;
-          top: 42%;
+          top: 45%;
           transform: translateY(-50%);
           z-index: 10;
           width: 44px;
@@ -205,19 +206,19 @@ export default function NewArrivals({ products = [] }) {
         }
 
         @media (min-width: 640px) {
-          .na-card { flex: 0 0 50vw; max-width: 420px; }
+          .na-card { flex: 0 0 55vw; max-width: 480px; }
         }
 
         @media (min-width: 768px) {
-          .na-section { padding: 64px 0 40px; }
-          .na-header { margin-bottom: 45px; }
-          .na-scroll { gap: 20px; scroll-padding-left: 40px; padding: 0 40px 16px; }
-          .na-card { flex: 0 0 42vw; max-width: 480px; }
+          .na-section { padding: 70px 0 50px; }
+          .na-header { margin-bottom: 50px; }
+          .na-scroll { gap: 24px; scroll-padding-left: 48px; padding: 0 48px 20px; }
+          .na-card { flex: 0 0 46vw; max-width: 540px; }
           .na-arrow { display: flex; }
         }
 
         @media (min-width: 1024px) {
-          .na-card { flex: 0 0 35vw; max-width: 520px; }
+          .na-card { flex: 0 0 38vw; max-width: 580px; }
         }
       `}</style>
     </section>
@@ -241,9 +242,10 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         )}
       </div>
 
-      {/* শুধু টাইটেল থাকবে নিচে, দাম বা অন্য কিছু নয় */}
+      {/* টাইটেল এবং স্ক্রিনশটের মতো নিচে কালো চিকন লাইন */}
       <div className="na-info">
         <h3 className="na-title">{product.title}</h3>
+        <div className="na-divider"></div>
       </div>
 
       <style jsx>{`
@@ -254,8 +256,8 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         }
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 4/5; /* ছবি আরও বড় ও প্রিমিয়াম দেখানোর জন্য */
-          background: #f4f4f4;
+          aspect-ratio: 1/1; /* ইমেজগুলোকে আরও বড় ও বর্গাকার বা প্রিমিয়াম লুক দিতে পারেন (দরকার হলে 4/5 করতে পারেন) */
+          background: #f7f7f7;
           overflow: hidden;
         }
         .na-image {
@@ -286,19 +288,22 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           letter-spacing: 0.14em;
         }
 
-        /* শুধু টাইটেল নিচে এবং সেন্টারে বা সুন্দর এলাইনমেন্টে */
+        /* ইনফো ও কালো লাইন স্টাইল */
         .na-info {
-          padding: 16px 4px 4px;
+          padding: 18px 4px 4px;
           text-align: center;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
         }
         .na-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
           font-weight: 400;
           font-size: 13px;
-          letter-spacing: 0.14em;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
           color: #1a1a1a;
-          margin: 0;
+          margin: 0 0 12px 0;
           line-height: 1.4;
           display: -webkit-box;
           -webkit-line-clamp: 1;
@@ -308,6 +313,14 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           text-overflow: ellipsis;
         }
 
+        /* আপনার দেওয়া স্ক্রিনশটের মতো নিচের কালো চিকন লাইন */
+        .na-divider {
+          width: 45px;
+          height: 1.5px;
+          background-color: #1a1a1a;
+          margin: 0 auto;
+        }
+
         @media (hover: hover) {
           .na-card-link:hover .na-image {
             transform: scale(1.03);
@@ -315,10 +328,13 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
         }
 
         @media (min-width: 768px) {
-          .na-info { padding: 18px 4px 4px; }
+          .na-info { padding: 22px 4px 4px; }
           .na-title {
             font-size: 14px;
-            letter-spacing: 0.16em;
+            margin-bottom: 14px;
+          }
+          .na-divider {
+            width: 55px;
           }
         }
       `}</style>
