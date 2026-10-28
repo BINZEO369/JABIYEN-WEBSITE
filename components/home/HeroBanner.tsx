@@ -1,62 +1,22 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 export default function HeroBanner({ slides = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [loadedImages, setLoadedImages] = useState(new Set());
-  const [fontsLoaded, setFontsLoaded] = useState(false);
   const slideIntervalRef = useRef(null);
   const containerRef = useRef(null);
   const touchStartX = useRef(0);
 
   const totalSlides = slides.length;
 
-  // Load fonts from window.JABIYEN_FONTS
-  useEffect(() => {
-    const loadFonts = () => {
-      if (window.JABIYEN_FONTS) {
-        const { families } = window.JABIYEN_FONTS;
-        const root = document.documentElement;
-        
-        root.style.setProperty('--font-heading', families.heading);
-        root.style.setProperty('--font-subtitle', families.subtitle);
-        root.style.setProperty('--font-body', families.body);
-        
-        setFontsLoaded(true);
-      } else {
-        setTimeout(loadFonts, 100);
-      }
-    };
-    
-    loadFonts();
-  }, []);
-
-  // Get font families from global config
-  const getFont = (type) => {
-    if (typeof window !== 'undefined' && window.JABIYEN_FONTS?.families) {
-      return window.JABIYEN_FONTS.families[type] || getFallbackFont(type);
-    }
-    return getFallbackFont(type);
-  };
-
-  const getFallbackFont = (type) => {
-    const fallbacks = {
-      heading: "'Manrope', sans-serif",
-      subtitle: "'Sora', sans-serif",
-      body: "'Inter', sans-serif"
-    };
-    return fallbacks[type] || fallbacks.body;
-  };
-
-  // Preload all images
+  // Preload images
   useEffect(() => {
     if (!slides.length) return;
-    slides.forEach((slide, index) => {
+    slides.forEach((slide) => {
       const img = new Image();
-      img.onload = () => setLoadedImages(prev => new Set([...prev, index]));
       img.src = slide.img;
     });
   }, [slides]);
@@ -90,7 +50,6 @@ export default function HeroBanner({ slides = [] }) {
   const nextSlide = () => goToSlide((currentSlide + 1) % totalSlides);
   const prevSlide = () => goToSlide((currentSlide - 1 + totalSlides) % totalSlides);
 
-  // Touch events
   const handleTouchStart = (e) => { touchStartX.current = e.changedTouches[0].screenX; };
   const handleTouchEnd = (e) => {
     const diff = touchStartX.current - e.changedTouches[0].screenX;
@@ -101,7 +60,6 @@ export default function HeroBanner({ slides = [] }) {
     }
   };
 
-  // Keyboard events
   useEffect(() => {
     const handleKey = (e) => {
       if (e.key === 'ArrowLeft') { prevSlide(); pauseAutoSlide(); setTimeout(resumeAutoSlide, 5000); }
@@ -124,189 +82,74 @@ export default function HeroBanner({ slides = [] }) {
         onMouseLeave={resumeAutoSlide}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
-        style={{
-          position: 'relative', width: '100%', overflow: 'hidden', background: '#000',
-          height: typeof window !== 'undefined' && window.innerWidth <= 480 ? 750 :
-                 typeof window !== 'undefined' && window.innerWidth <= 768 ? 850 :
-                 typeof window !== 'undefined' && window.innerWidth <= 1024 ? 700 : 900
-        }}
       >
-        {/* Slides */}
+        {/* Slides — full bleed image with subtle fade */}
         {slides.map((slide, index) => (
           <div
             key={index}
-            style={{
-              position: 'absolute', inset: 0,
-              opacity: index === currentSlide ? 1 : 0,
-              transition: 'opacity 1.5s cubic-bezier(0.4, 0, 0.2, 1)',
-              visibility: 'visible',
-              pointerEvents: index === currentSlide ? 'auto' : 'none'
-            }}
+            className={`hero-slide ${index === currentSlide ? 'active' : ''}`}
           >
             <img
               src={slide.img}
-              alt={slide.title || 'JAYENWARE Hero'}
-              style={{
-                width: '100%', height: '100%', objectFit: 'cover',
-                animation: index === currentSlide ? 'heroZoom 20s ease-in-out infinite alternate' : 'none',
-                background: '#0a0a0a'
-              }}
+              alt={slide.title || 'JABIYEN'}
+              className="hero-image"
             />
           </div>
         ))}
 
-        {/* Gradient Overlay */}
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 1,
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 30%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.7) 90%, rgba(0,0,0,0.85) 100%)'
-        }} />
+        {/* Gradient overlay — subtle, bottom-anchored */}
+        <div className="hero-overlay" />
 
-        {/* Content - Center Position for Title & Subtitle */}
-        <div style={{
-          position: 'absolute', top: '45%', left: '50%',
-          transform: 'translate(-50%, -50%)', zIndex: 2, textAlign: 'center',
-          width: '88%', maxWidth: 800, padding: '0 16px',
-          display: 'flex', flexDirection: 'column', alignItems: 'center'
-        }}>
-          {/* Title */}
-          <h1 style={{
-            fontFamily: getFont('heading'),
-            fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 700,
-            lineHeight: 1.1, color: '#fff', margin: 0,
-            letterSpacing: '-0.5px'
-          }}>
-            {current?.title}
-          </h1>
-
-          {/* Subtitle */}
+        {/* Content — bottom center, editorial */}
+        <div className="hero-content">
           {current?.subtitle && (
-            <p style={{
-              fontFamily: getFont('body'),
-              fontSize: 'clamp(10px, 1.2vw, 14px)', fontWeight: 400,
-              letterSpacing: '0.3em', textTransform: 'uppercase',
-              color: 'rgba(255,255,255,0.6)',
-              marginTop: 'clamp(10px, 1.5vh, 16px)', marginBottom: 0,
-              lineHeight: 1.2
-            }}>
-              {current.subtitle}
-            </p>
+            <span className="hero-eyebrow">{current.subtitle}</span>
+          )}
+
+          <h1 className="hero-title">{current?.title}</h1>
+
+          {current?.cta_text && current?.cta_link && (
+            <Link href={current.cta_link} className="hero-cta">
+              {current.cta_text}
+            </Link>
           )}
         </div>
 
-        {/* CTA - Bottom Position, Smaller */}
-        {current?.cta_text && current?.cta_link && (
-          <div style={{
-            position: 'absolute', bottom: 'clamp(80px, 12vh, 120px)', left: '50%',
-            transform: 'translateX(-50%)', zIndex: 2
-          }}>
-            <Link
-              href={current.cta_link}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontSize: 'clamp(9px, 1vw, 11px)',
-                fontWeight: 600,
-                letterSpacing: '0.12em',
-                textTransform: 'uppercase',
-                textDecoration: 'none',
-                padding: 'clamp(8px, 1.2vw, 10px) clamp(22px, 3vw, 28px)',
-                borderRadius: '100px',
-                background: 'rgba(255, 255, 255, 0.08)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
-                transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
-                position: 'relative',
-                overflow: 'hidden',
-                fontFamily: getFont('body'),
-                transform: 'translateY(0)'
-              }}
-              className="hero-cta-liquid"
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.18)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.35)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = 'none';
-              }}
-            >
-              {/* Liquid shine effect */}
-              <span style={{
-                position: 'absolute',
-                top: 0,
-                left: '-100%',
-                width: '100%',
-                height: '100%',
-                background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
-                transition: 'left 0.6s ease'
-              }}
-              className="liquid-shine"
-              />
-              {current.cta_text}
-            </Link>
-          </div>
-        )}
-
-        {/* Navigation Arrows */}
+        {/* Arrows */}
         {totalSlides > 1 && (
           <>
             <button
               onClick={() => { prevSlide(); pauseAutoSlide(); setTimeout(resumeAutoSlide, 5000); }}
-              style={{
-                position: 'absolute', top: '50%', left: 20, transform: 'translateY(-50%)',
-                zIndex: 3, width: 44, height: 44, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                color: '#fff', fontSize: 14, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: 0, transition: 'opacity 0.4s ease'
-              }}
-              className="hero-arrow"
+              className="hero-arrow hero-arrow-left"
+              aria-label="Previous slide"
             >
-              <i className="fa-solid fa-chevron-left"></i>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
             </button>
             <button
               onClick={() => { nextSlide(); pauseAutoSlide(); setTimeout(resumeAutoSlide, 5000); }}
-              style={{
-                position: 'absolute', top: '50%', right: 20, transform: 'translateY(-50%)',
-                zIndex: 3, width: 44, height: 44, borderRadius: '50%',
-                background: 'rgba(255,255,255,0.06)', backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                color: '#fff', fontSize: 14, cursor: 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: 0, transition: 'opacity 0.4s ease'
-              }}
-              className="hero-arrow"
+              className="hero-arrow hero-arrow-right"
+              aria-label="Next slide"
             >
-              <i className="fa-solid fa-chevron-right"></i>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </button>
           </>
         )}
 
-        {/* Indicators */}
+        {/* Indicators — thin bars */}
         {totalSlides > 1 && (
-          <div style={{
-            position: 'absolute', bottom: 'clamp(18px, 3vh, 30px)', left: '50%',
-            transform: 'translateX(-50%)', zIndex: 3,
-            display: 'flex', gap: 5, alignItems: 'center'
-          }}>
+          <div className="hero-indicators" role="tablist">
             {slides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => { goToSlide(index); pauseAutoSlide(); setTimeout(resumeAutoSlide, 5000); }}
-                style={{
-                  width: index === currentSlide ? 50 : 35, height: 1.5,
-                  background: index === currentSlide ? '#fff' : 'rgba(255,255,255,0.2)',
-                  cursor: 'pointer', border: 'none', outline: 'none',
-                  borderRadius: 1, transition: 'all 0.4s ease'
-                }}
+                className={`hero-indicator ${index === currentSlide ? 'active' : ''}`}
+                aria-label={`Go to slide ${index + 1}`}
+                aria-selected={index === currentSlide}
+                role="tab"
               />
             ))}
           </div>
@@ -314,25 +157,232 @@ export default function HeroBanner({ slides = [] }) {
       </div>
 
       <style jsx>{`
-        .hero-container:hover .hero-arrow {
-          opacity: 1 !important;
+        /* ============================================
+           HERO CONTAINER — Full bleed, luxury
+           ============================================ */
+        .hero-container {
+          position: relative;
+          width: 100%;
+          height: 88vh;
+          min-height: 560px;
+          max-height: 900px;
+          overflow: hidden;
+          background: #000;
+          user-select: none;
         }
-        .hero-cta-liquid:hover .liquid-shine {
-          left: 100% !important;
+
+        .hero-slide {
+          position: absolute;
+          inset: 0;
+          opacity: 0;
+          transition: opacity 1.4s cubic-bezier(0.4, 0, 0.2, 1);
+          pointer-events: none;
         }
+        .hero-slide.active {
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .hero-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+        }
+        .hero-slide.active .hero-image {
+          animation: heroZoom 24s ease-in-out infinite alternate;
+        }
+
         @keyframes heroZoom {
           from { transform: scale(1); }
-          to { transform: scale(1.05); }
+          to { transform: scale(1.04); }
         }
-        @media (max-width: 640px) {
-          .hero-arrow {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 12px !important;
+
+        /* ============================================
+           OVERLAY — Subtle bottom gradient only
+           ============================================ */
+        .hero-overlay {
+          position: absolute;
+          inset: 0;
+          z-index: 1;
+          background: linear-gradient(
+            to bottom,
+            rgba(0, 0, 0, 0) 0%,
+            rgba(0, 0, 0, 0) 40%,
+            rgba(0, 0, 0, 0.22) 68%,
+            rgba(0, 0, 0, 0.55) 100%
+          );
+          pointer-events: none;
+        }
+
+        /* ============================================
+           CONTENT — Bottom center, editorial
+           ============================================ */
+        .hero-content {
+          position: absolute;
+          left: 50%;
+          bottom: clamp(80px, 12vh, 140px);
+          transform: translateX(-50%);
+          z-index: 2;
+          text-align: center;
+          width: 100%;
+          max-width: 780px;
+          padding: 0 24px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
+        /* Eyebrow — small uppercase, wide tracking */
+        .hero-eyebrow {
+          font-family: var(--font-body, "Helvetica Neue", Helvetica, Arial, sans-serif);
+          font-size: clamp(9px, 1vw, 11px);
+          font-weight: 500;
+          letter-spacing: 0.32em;
+          text-transform: uppercase;
+          color: rgba(255, 255, 255, 0.78);
+          display: block;
+          line-height: 1;
+          margin-bottom: clamp(12px, 2vh, 18px);
+        }
+
+        /* Title — large but refined weight 300 */
+        .hero-title {
+          font-family: var(--font-heading, "Helvetica Neue", Helvetica, Arial, sans-serif);
+          font-size: clamp(34px, 5.5vw, 72px);
+          font-weight: 300;
+          letter-spacing: -0.02em;
+          line-height: 1.05;
+          color: #ffffff;
+          margin: 0;
+          padding: 0;
+          max-width: 100%;
+          word-wrap: break-word;
+        }
+
+        /* CTA — thin border, sharp corners, no blur */
+        .hero-cta {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          margin-top: clamp(20px, 3vh, 32px);
+          padding: 14px 40px;
+          background: transparent;
+          color: #ffffff;
+          font-family: var(--font-body, "Helvetica Neue", Helvetica, Arial, sans-serif);
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.22em;
+          text-transform: uppercase;
+          text-decoration: none;
+          border: 1px solid rgba(255, 255, 255, 0.85);
+          border-radius: 0;
+          transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        .hero-cta:hover {
+          background: #ffffff;
+          color: #000000;
+          border-color: #ffffff;
+        }
+
+        /* ============================================
+           ARROWS — Minimal, hidden until hover
+           ============================================ */
+        .hero-arrow {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          z-index: 3;
+          width: 44px;
+          height: 44px;
+          border-radius: 50%;
+          background: transparent;
+          border: 1px solid rgba(255, 255, 255, 0.32);
+          color: #ffffff;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+        }
+        .hero-container:hover .hero-arrow {
+          opacity: 1;
+        }
+        .hero-arrow:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(255, 255, 255, 0.65);
+        }
+        .hero-arrow-left { left: 24px; }
+        .hero-arrow-right { right: 24px; }
+
+        /* ============================================
+           INDICATORS — Thin bars at bottom
+           ============================================ */
+        .hero-indicators {
+          position: absolute;
+          bottom: clamp(24px, 4vh, 40px);
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 3;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .hero-indicator {
+          width: 24px;
+          height: 1px;
+          background: rgba(255, 255, 255, 0.32);
+          border: none;
+          cursor: pointer;
+          padding: 0;
+          border-radius: 0;
+          transition: width 0.4s ease, background 0.4s ease;
+        }
+        .hero-indicator.active {
+          width: 44px;
+          background: #ffffff;
+        }
+
+        /* ============================================
+           MOBILE
+           ============================================ */
+        @media (max-width: 768px) {
+          .hero-container {
+            height: 82vh;
+            min-height: 500px;
+            max-height: 720px;
           }
+          .hero-arrow {
+            width: 36px;
+            height: 36px;
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.04);
+            border-color: rgba(255, 255, 255, 0.25);
+          }
+          .hero-arrow-left { left: 12px; }
+          .hero-arrow-right { right: 12px; }
+          .hero-cta {
+            padding: 12px 30px;
+            font-size: 10px;
+            letter-spacing: 0.2em;
+          }
+          .hero-eyebrow {
+            letter-spacing: 0.28em;
+          }
+          .hero-content {
+            bottom: clamp(72px, 11vh, 110px);
+            padding: 0 20px;
+          }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .hero-slide.active .hero-image { animation: none; }
+          .hero-slide { transition: none; }
+          .hero-cta, .hero-arrow, .hero-indicator { transition: none; }
         }
       `}</style>
     </>
   );
 }
-
