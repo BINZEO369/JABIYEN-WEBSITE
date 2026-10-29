@@ -182,19 +182,19 @@ export default function NewArrivals({ products = [] }) {
           overflow: hidden;
         }
 
-        /* ✅ ফিক্স করা হেডার: কোনো প্যাডিং বা ফ্লেক্স ছাড়া */
+        /* ✅ ব্যানার হেডার: উচ্চতা বাড়ানো হয়েছে */
         .na-header {
           width: 100%;
-          height: 64px;
+          height: 120px; /* মোবাইলে উচ্চতা বাড়ানো হলো (আগে ছিল ৬৪) */
           margin: 40px 0 45px;
           overflow: hidden;
           background: #fff;
-          display: block; /* ফ্লেক্স সরানো হয়েছে */
+          display: block;
         }
         .na-header-img {
           width: 100%;
           height: 100%;
-          object-fit: cover; /* ✅ contain এর বদলে cover */
+          object-fit: cover; /* ফুল উইডথ ও ফুল হাইট কভার করবে */
           object-position: center;
           display: block;
         }
@@ -284,7 +284,7 @@ export default function NewArrivals({ products = [] }) {
         @media (min-width: 768px) {
           .na-section { padding: 0 0 60px; }
           .na-header {
-            height: 80px;
+            height: 180px; /* ট্যাবে উচ্চতা বাড়ানো হলো */
             margin: 55px 0 55px;
           }
           .na-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
@@ -295,7 +295,7 @@ export default function NewArrivals({ products = [] }) {
 
         @media (min-width: 1024px) {
           .na-header {
-            height: 100px;
+            height: 250px; /* ডেক্সটপে আরও বড় */
             margin: 60px 0 60px;
           }
           .na-card { flex: 0 0 45vw; max-width: 700px; }
