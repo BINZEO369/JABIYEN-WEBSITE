@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-type FooterContent = { [key: string]: string | undefined; logo_url?: string; title?: string; description?: string; address?: string; phone?: string; email?: string; working_hours?: string; copyright_text?: string };
+type FooterContent = { [key: string]: any; logo_url?: string; title?: string; description?: string; address?: string; phone?: string; email?: string; working_hours?: string; copyright_text?: string };
 type FooterSocial = { id?: number | string; platform_name: string; link_url: string; platform_icon?: string; sort_order?: number };
 type FooterLink = { id?: number | string; title?: string; url?: string; link_url?: string; parent_id?: number | string | null; sort_order?: number };
 type FooterData = { content?: FooterContent[]; socialLinks?: FooterSocial[]; menus?: { id?: number | string; title?: string; sort_order?: number; links?: FooterLink[] }[]; paymentMethods?: FooterContent[]; shippingPartners?: FooterContent[]; certifications?: FooterContent[]; appLinks?: FooterContent[]; trustBadges?: FooterContent[]; settings?: FooterContent };
@@ -10,7 +10,7 @@ import { useCurrency } from '../currency/CurrencyProvider';
 export default function Footer() {
   const { countries: availableCountries, selectedCountryCode, selectCountry, setAvailableCurrencies } = useCurrency();
   const [footerData, setFooterData] = useState<FooterData | null>(null);
-  const [openMenus, setOpenMenus] = useState({});
+  const [openMenus, setOpenMenus] = useState<{ [key: string]: boolean }>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,8 +33,8 @@ export default function Footer() {
     fetchFooter();
   }, [setAvailableCurrencies]);
 
-  const toggleMenu = (id) => {
-    setOpenMenus(prev => ({ ...prev, [id]: !prev[id] }));
+  const toggleMenu = (id: string) => {
+    setOpenMenus((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
   if (loading || !footerData) {
@@ -58,7 +58,7 @@ export default function Footer() {
 
   let mergedContent: FooterContent = {};
   if (Array.isArray(content)) {
-    content.forEach(item => { mergedContent = { ...mergedContent, ...item }; });
+    content.forEach((item) => { mergedContent = { ...mergedContent, ...item }; });
   }
 
   const logoUrl = mergedContent.logo_url || '';
@@ -70,11 +70,42 @@ export default function Footer() {
   const workingHours = mergedContent.working_hours || '';
   const copyright = settings.copyright_text || mergedContent.copyright_text || '© JayenWare. All Rights Reserved.';
 
-  const localIconPath = (folder, name) => {
+  const localIconPath = (folder: string, name: string) => {
     const slug = String(name || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '');
     const available = folder === 'social' ? ['facebook', 'instagram', 'youtube', 'x', 'tiktok', 'whatsapp', 'telegram', 'pinterest', 'snapchat'] : [];
     return available.includes(slug) ? `/icons/${folder}/${slug}.svg` : '';
   };
+
+  // App badge builder — সব সম্ভাব্য ইমেজ ফিল্ড চেক করে, শুধু আইকন রেন্ডার করে
+  type AppBadge = { id: string; icon: string; href: string; label: string };
+  const appBadges: AppBadge[] = [];
+  appLinks.forEach((app, i) => {
+    const sharedIcon =
+      app.icon_url ||
+      app.badge_url ||
+      app.image_url ||
+      app.logo_url ||
+      app.app_icon_url ||
+      app.icon ||
+      app.image ||
+      '';
+
+    if (app.app_store_url || app.play_store_url) {
+      if (app.app_store_url) {
+        const icon = app.app_store_icon || sharedIcon;
+        if (icon) appBadges.push({ id: `${app.id || i}-ios`, icon, href: app.app_store_url, label: 'App Store' });
+      }
+      if (app.play_store_url) {
+        const icon = app.play_store_icon || sharedIcon;
+        if (icon) appBadges.push({ id: `${app.id || i}-android`, icon, href: app.play_store_url, label: 'Google Play' });
+      }
+    } else {
+      const href = app.url || app.link_url || app.store_url || app.href || '';
+      if (sharedIcon && href) {
+        appBadges.push({ id: String(app.id || href), icon: sharedIcon, href, label: app.title || 'Download App' });
+      }
+    }
+  });
 
   return (
     <>
@@ -103,7 +134,7 @@ export default function Footer() {
                 <div>
                   <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Connect</h5>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {socialLinks.sort((a, b) => a.sort_order - b.sort_order).map(link => (
+                    {[...socialLinks].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((link) => (
                       <a key={link.id || link.platform_name} href={link.link_url} target="_blank" rel="noopener noreferrer"
                         style={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
@@ -112,6 +143,7 @@ export default function Footer() {
                           color: '#fff', transition: 'all 0.3s ease'
                         }}
                         className="social-icon"
+                        aria-label={link.platform_name}
                         dangerouslySetInnerHTML={{ __html: `<img src="${localIconPath('social', link.platform_name) || link.platform_icon || ''}" alt="${link.platform_name}" style="width:20px;height:20px;object-fit:contain"/>` }}
                       />
                     ))}
@@ -119,16 +151,38 @@ export default function Footer() {
                 </div>
               )}
 
-              {/* App Links */}
-              {appLinks?.length > 0 && (
+              {/* App Links — শুধু আইকন, কোন নাম নেই */}
+              {appBadges.length > 0 && (
                 <div>
                   <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Download App</h5>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-                    {appLinks.map(app => (
-                      <div key={app.id}>
-                        {app.app_store_url && <a href={app.app_store_url} target="_blank" style={{ color: '#b0b0b0', fontSize: '0.7rem', textDecoration: 'none' }}>App Store</a>}
-                        {app.play_store_url && <a href={app.play_store_url} target="_blank" style={{ color: '#b0b0b0', fontSize: '0.7rem', textDecoration: 'none', marginLeft: 8 }}>Play Store</a>}
-                      </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
+                    {appBadges.map((badge) => (
+                      <a
+                        key={badge.id}
+                        href={badge.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={badge.label}
+                        className="app-badge"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: '#141414',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          textDecoration: 'none',
+                          transition: 'all 0.3s ease',
+                          minHeight: 44,
+                        }}
+                      >
+                        <img
+                          src={badge.icon}
+                          alt={badge.label}
+                          style={{ height: 28, width: 'auto', maxWidth: 110, objectFit: 'contain', display: 'block' }}
+                        />
+                      </a>
                     ))}
                   </div>
                 </div>
@@ -143,7 +197,7 @@ export default function Footer() {
                     padding: '7px 0', fontSize: '0.7rem', outline: 'none', cursor: 'pointer',
                     fontFamily: "'Inter', sans-serif"
                   }}>
-                    {[...availableCountries].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map(c => (
+                    {[...availableCountries].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((c) => (
                       <option key={c.id} value={c.country_code} style={{ background: '#1a1a1a', color: '#ccc' }}>
                         {c.country_name} / {c.currency_code}
                       </option>
@@ -167,11 +221,11 @@ export default function Footer() {
               </div>
 
               {/* Menus */}
-              {menus?.sort((a, b) => a.sort_order - b.sort_order).map((menu, idx) => {
+              {[...menus].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)).map((menu, idx) => {
                 const menuId = `menu-${idx}`;
-                const isOpen = openMenus[menuId];
+                const isOpen = !!openMenus[menuId];
                 const links = menu.links || [];
-                const parents = links.filter(l => !l.parent_id).sort((a, b) => a.sort_order - b.sort_order);
+                const parents = links.filter((l) => !l.parent_id).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
 
                 return (
                   <div key={menuId}>
@@ -195,14 +249,14 @@ export default function Footer() {
                       marginTop: isOpen ? 10 : 0
                     }}>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                        {parents.map(parent => {
-                          const children = links.filter(l => l.parent_id === parent.id).sort((a, b) => a.sort_order - b.sort_order);
+                        {parents.map((parent) => {
+                          const children = links.filter((l) => l.parent_id === parent.id).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
                           return (
                             <li key={parent.id} style={{ marginBottom: 8, fontSize: '0.75rem', opacity: 0.75 }}>
                               <a href={parent.link_url || '#'} style={{ color: 'inherit', textDecoration: 'none' }}>{parent.title}</a>
                               {children.length > 0 && (
                                 <ul style={{ listStyle: 'none', paddingLeft: 12, marginTop: 6, borderLeft: '1px solid rgba(255,255,255,0.06)' }}>
-                                  {children.map(child => (
+                                  {children.map((child) => (
                                     <li key={child.id} style={{ marginBottom: 5, fontSize: '0.7rem', opacity: 0.65 }}>
                                       <a href={child.link_url || '#'} style={{ color: 'inherit', textDecoration: 'none' }}>{child.title}</a>
                                     </li>
@@ -218,12 +272,12 @@ export default function Footer() {
                 );
               })}
 
-              {/* Payment Options (Huyen style clean grid without text names) */}
+              {/* Payment Options */}
               {paymentMethods?.length > 0 && (
                 <div>
                   <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Payment Options</h5>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-                    {paymentMethods.map(pm => (
+                    {paymentMethods.map((pm) => (
                       pm.icon_url ? (
                         <div key={pm.id} style={{ background: '#141414', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <img src={pm.icon_url} alt="Payment" style={{ height: 22, objectFit: 'contain', display: 'block' }} />
@@ -234,19 +288,19 @@ export default function Footer() {
                 </div>
               )}
 
-              {/* Certified By (Clean badge layout) */}
+              {/* Certified By */}
               {(trustBadges?.length > 0 || certifications?.length > 0) && (
                 <div>
                   <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Certified By</h5>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                    {trustBadges.map(badge => (
+                    {trustBadges.map((badge) => (
                       badge.badge_url ? (
                         <div key={badge.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#141414', padding: '10px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', width: 'fit-content' }}>
                           <img src={badge.badge_url} alt="Trust Badge" style={{ height: 32, objectFit: 'contain', display: 'block' }} />
                         </div>
                       ) : null
                     ))}
-                    {certifications.map(cert => (
+                    {certifications.map((cert) => (
                       cert.badge_url ? (
                         <div key={cert.id} style={{ display: 'flex', alignItems: 'center', gap: 12, background: '#141414', padding: '10px 14px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', width: 'fit-content' }}>
                           <img src={cert.badge_url} alt="Certification" style={{ height: 32, objectFit: 'contain', display: 'block' }} />
@@ -262,7 +316,7 @@ export default function Footer() {
                 <div>
                   <h5 style={{ fontFamily: "'Manrope', sans-serif", fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#8a8a8a', marginBottom: 12 }}>Shipping Partners</h5>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
-                    {shippingPartners.map(ship => (
+                    {shippingPartners.map((ship) => (
                       ship.icon_url ? (
                         <div key={ship.id} style={{ background: '#141414', padding: '8px 12px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                           <img src={ship.icon_url} alt="Shipping" style={{ height: 24, objectFit: 'contain', display: 'block' }} />
@@ -276,14 +330,14 @@ export default function Footer() {
           </div>
 
           {/* Bottom Bar */}
-          <div style={{
+          <div className="footer-bottom" style={{
             borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20, marginTop: 8,
-            display: 'flex', flexDirection: window.innerWidth < 768 ? 'column' : 'row',
+            display: 'flex',
             justifyContent: 'space-between', alignItems: 'center', gap: 8,
             fontSize: '0.7rem', opacity: 0.5
           }}>
-            <p>Infrastructure by <a href="https://binzeo.vercel.app" target="_blank" style={{ color: '#ccc', fontWeight: 500 }}>BINZEO</a> v{settings.version || '2.8'}</p>
-            <p>{copyright}</p>
+            <p style={{ margin: 0 }}>Infrastructure by <a href="https://binzeo.vercel.app" target="_blank" rel="noopener noreferrer" style={{ color: '#ccc', fontWeight: 500 }}>BINZEO</a> v{settings.version || '2.8'}</p>
+            <p style={{ margin: 0 }}>{copyright}</p>
           </div>
         </div>
       </footer>
@@ -294,8 +348,19 @@ export default function Footer() {
         }
         @media (max-width: 767px) {
           .footer-logo { max-width: 125px !important; }
+          .footer-bottom { flex-direction: column !important; text-align: center; }
         }
-        .social-icon:hover { background: rgba(255,255,255,0.12) !important; transform: translateY(-2px); border-color: rgba(255,255,255,0.25) !important; color: #fff !important; }
+        .social-icon:hover {
+          background: rgba(255,255,255,0.12) !important;
+          transform: translateY(-2px);
+          border-color: rgba(255,255,255,0.25) !important;
+          color: #fff !important;
+        }
+        .app-badge:hover {
+          background: rgba(255,255,255,0.06) !important;
+          border-color: rgba(255,255,255,0.2) !important;
+          transform: translateY(-1px);
+        }
       `}</style>
     </>
   );
