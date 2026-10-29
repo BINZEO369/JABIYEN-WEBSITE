@@ -6,7 +6,6 @@ import Link from 'next/link';
 export default function HeroBanner({ slides = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [loadedImages, setLoadedImages] = useState(new Set());
   const slideIntervalRef = useRef(null);
   const containerRef = useRef(null);
   const touchStartX = useRef(0);
@@ -75,7 +74,7 @@ export default function HeroBanner({ slides = [] }) {
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         style={{
-          position: 'relative', width: '100%', overflow: 'hidden', background: '#fff', // ✅ ব্যাকগ্রাউন্ড সাদা করা হলো যাতে শ্যাডো মেশে
+          position: 'relative', width: '100%', overflow: 'hidden', background: '#fff',
           height: typeof window !== 'undefined' && window.innerWidth <= 480 ? 750 :
                  typeof window !== 'undefined' && window.innerWidth <= 768 ? 850 :
                  typeof window !== 'undefined' && window.innerWidth <= 1024 ? 700 : 900
@@ -110,13 +109,14 @@ export default function HeroBanner({ slides = [] }) {
           background: 'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.02) 30%, rgba(0,0,0,0.15) 55%, rgba(0,0,0,0.4) 75%, rgba(0,0,0,0.7) 90%, rgba(0,0,0,0.85) 100%)'
         }} />
 
-        {/* Content (z-index বাড়ানো হয়েছে) */}
+        {/* Content */}
         <div style={{
           position: 'absolute', top: '45%', left: '50%',
           transform: 'translate(-50%, -50%)', zIndex: 10, textAlign: 'center',
           width: '88%', maxWidth: 800, padding: '0 16px',
           display: 'flex', flexDirection: 'column', alignItems: 'center'
         }}>
+          {/* Title from Database */}
           <h1 style={{
             fontFamily: "'Manrope', sans-serif",
             fontSize: 'clamp(28px, 5vw, 64px)', fontWeight: 300,
@@ -126,6 +126,7 @@ export default function HeroBanner({ slides = [] }) {
             {current?.title}
           </h1>
 
+          {/* Subtitle from Database */}
           {current?.subtitle && (
             <p style={{
               fontFamily: "'Inter', sans-serif",
@@ -140,7 +141,7 @@ export default function HeroBanner({ slides = [] }) {
           )}
         </div>
 
-        {/* CTA */}
+        {/* CTA - Button Text & Link from Database */}
         {current?.cta_text && current?.cta_link && (
           <div style={{
             position: 'absolute', bottom: 'clamp(80px, 12vh, 120px)', left: '50%',
@@ -171,39 +172,7 @@ export default function HeroBanner({ slides = [] }) {
           </div>
         )}
 
-        {/* Navigation Arrows (z-index বাড়ানো) */}
-        {totalSlides > 1 && (
-          <>
-            <button
-              onClick={() => { prevSlide(); pauseAutoSlide(); setTimeout(resumeAutoSlide, 5000); }}
-              style={{
-                position: 'absolute', top: '50%', left: 20, transform: 'translateY(-50%)',
-                zIndex: 11, width: 44, height: 44, borderRadius: '0',
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.4)',
-                color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: 0, transition: 'all 0.3s ease'
-              }}
-              className="hero-arrow"
-            >
-              <i className="fa-solid fa-chevron-left"></i>
-            </button>
-            <button
-              onClick={() => { nextSlide(); pauseAutoSlide(); setTimeout(resumeAutoSlide, 5000); }}
-              style={{
-                position: 'absolute', top: '50%', right: 20, transform: 'translateY(-50%)',
-                zIndex: 11, width: 44, height: 44, borderRadius: '0',
-                background: 'transparent', border: '1px solid rgba(255,255,255,0.4)',
-                color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                opacity: 0, transition: 'all 0.3s ease'
-              }}
-              className="hero-arrow"
-            >
-              <i className="fa-solid fa-chevron-right"></i>
-            </button>
-          </>
-        )}
-
-        {/* Indicators (z-index বাড়ানো) */}
+        {/* Indicators */}
         {totalSlides > 1 && (
           <div style={{
             position: 'absolute', bottom: 'clamp(18px, 3vh, 30px)', left: '50%',
@@ -259,23 +228,12 @@ export default function HeroBanner({ slides = [] }) {
           pointer-events: none;
         }
 
-        .hero-container:hover .hero-arrow {
-          opacity: 1 !important;
-        }
-        .hero-arrow:hover {
-          background: rgba(255, 255, 255, 0.1) !important;
-          border-color: #fff !important;
-        }
         @keyframes heroZoom {
           from { transform: scale(1); }
           to { transform: scale(1.05); }
         }
+        
         @media (max-width: 640px) {
-          .hero-arrow {
-            width: 36px !important;
-            height: 36px !important;
-            font-size: 12px !important;
-          }
           .hero-container::before, .hero-container::after {
             height: 15%; /* মোবাইলে একটু কম জায়গা নেবে */
           }
