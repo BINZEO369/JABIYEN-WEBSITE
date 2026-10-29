@@ -122,7 +122,7 @@ export default function NewArrivals({ products = [] }) {
 
   return (
     <section className="na-section">
-      {/* Full-width edge-to-edge header image */}
+      {/* ✅ Full-width edge-to-edge header image */}
       <div className="na-header">
         <img
           src="/homesection/Newarrival.png"
@@ -182,21 +182,20 @@ export default function NewArrivals({ products = [] }) {
           overflow: hidden;
         }
 
-        /* Full-width edge-to-edge header banner */
+        /* ✅ ফিক্স করা হেডার: কোনো প্যাডিং বা ফ্লেক্স ছাড়া */
         .na-header {
           width: 100%;
           height: 64px;
           margin: 40px 0 45px;
           overflow: hidden;
           background: #fff;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          display: block; /* ফ্লেক্স সরানো হয়েছে */
         }
         .na-header-img {
           width: 100%;
           height: 100%;
-          object-fit: contain;
+          object-fit: cover; /* ✅ contain এর বদলে cover */
+          object-position: center;
           display: block;
         }
 
