@@ -33,13 +33,11 @@ export default function HeroVideo({ videos = [] }) {
           setIsInViewport(entry.isIntersecting);
           
           if (!entry.isIntersecting && playerRef.current) {
-            // Auto mute when scrolling away from video
             playerRef.current.muted = true;
             setIsMuted(true);
             isMutedRef.current = true;
             setWasManuallyUnmuted(false);
           } else if (entry.isIntersecting && wasManuallyUnmuted && playerRef.current) {
-            // Restore unmuted state if user had manually unmuted
             playerRef.current.muted = false;
             setIsMuted(false);
             isMutedRef.current = false;
@@ -66,10 +64,8 @@ export default function HeroVideo({ videos = [] }) {
     if (!playerRef.current || !isLoaded) return;
 
     if (!isInViewport && !isPaused) {
-      // Pause video when not in viewport (saves resources)
       playerRef.current.pause();
     } else if (isInViewport && !isPaused && isLoaded) {
-      // Resume playback when back in viewport
       playerRef.current.play().catch(() => {});
     }
   }, [isInViewport, isPaused, isLoaded]);
@@ -86,7 +82,6 @@ export default function HeroVideo({ videos = [] }) {
         link.href = video.video_url;
         document.head.appendChild(link);
         
-        // Preload video element
         const preloadVideo = document.createElement('video');
         preloadVideo.preload = 'auto';
         preloadVideo.src = video.video_url;
@@ -104,7 +99,6 @@ export default function HeroVideo({ videos = [] }) {
     setIsTransitioning(true);
     setTextPhase('exiting');
 
-    // Faster text transition
     const textOutTimer = setTimeout(() => {
       setTextPhase('entering');
       
@@ -114,7 +108,7 @@ export default function HeroVideo({ videos = [] }) {
         playerRef.current.preload = 'auto';
         playerRef.current.load();
       }
-    }, 200); // Reduced from 400ms
+    }, 200);
 
     return () => clearTimeout(textOutTimer);
   }, [currentIndex, videos]);
@@ -186,7 +180,6 @@ export default function HeroVideo({ videos = [] }) {
       setIsMuted(newMutedState);
       isMutedRef.current = newMutedState;
       
-      // Track if user manually unmuted
       if (!newMutedState) {
         setWasManuallyUnmuted(true);
       } else {
@@ -215,7 +208,7 @@ export default function HeroVideo({ videos = [] }) {
     setProgress(100);
     clearInterval(autoplayIntervalRef.current);
     clearInterval(progressIntervalRef.current);
-    setTimeout(() => setCurrentIndex(index), 200); // Faster switch
+    setTimeout(() => setCurrentIndex(index), 200);
   };
 
   if (!videos.length) return null;
@@ -230,11 +223,11 @@ export default function HeroVideo({ videos = [] }) {
       style={{
         position: 'relative',
         width: '100%',
-        background: '#000',
+        background: '#fff', // ✅ সাদা ব্যাকগ্রাউন্ড
         overflow: 'hidden'
       }}
     >
-      {/* Video */}
+      {/* Video Container */}
       <div style={{
         position: 'relative', width: '100%',
         height: '850px', display: 'flex',
@@ -256,7 +249,7 @@ export default function HeroVideo({ videos = [] }) {
           }}
         />
 
-        {/* Gradient Overlay */}
+        {/* Dark Gradient Overlay */}
         <div style={{
           position: 'absolute', inset: 0, zIndex: 1,
           background: 'linear-gradient(to bottom, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0) 30%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.6) 100%)'
@@ -264,13 +257,13 @@ export default function HeroVideo({ videos = [] }) {
 
         {/* Text Content */}
         <div style={{
-          position: 'relative', zIndex: 2, textAlign: 'center',
-          padding: '0 24px', maxWidth: 700, width: '100%', marginBottom: 60
+          position: 'relative', zIndex: 10, textAlign: 'center',
+          padding: '0 24px', maxWidth: 800, width: '100%', marginBottom: 80
         }}>
           {currentVideo?.label && (
             <span style={{
-              display: 'inline-block', color: 'rgba(255,255,255,0.55)',
-              fontSize: 11, fontWeight: 600, letterSpacing: '0.3em',
+              display: 'inline-block', color: 'rgba(255,255,255,0.75)',
+              fontSize: '11px', fontWeight: 500, letterSpacing: '0.3em',
               textTransform: 'uppercase', marginBottom: 16,
               opacity: textPhase === 'visible' ? 1 : 0,
               transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(14px)',
@@ -283,8 +276,13 @@ export default function HeroVideo({ videos = [] }) {
 
           {currentVideo?.title && (
             <h2 style={{
-              color: '#fff', fontSize: 48, fontWeight: 800,
-              lineHeight: 1.1, margin: '0 0 16px', letterSpacing: '-0.02em',
+              color: '#fff', 
+              fontSize: 'clamp(28px, 5vw, 64px)', 
+              fontWeight: 300, 
+              lineHeight: 1.1, 
+              margin: '0 0 16px', 
+              letterSpacing: '2px',
+              textTransform: 'uppercase',
               opacity: textPhase === 'visible' ? 1 : 0,
               transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(18px)',
               filter: textPhase === 'visible' ? 'blur(0)' : 'blur(6px)',
@@ -296,8 +294,11 @@ export default function HeroVideo({ videos = [] }) {
 
           {currentVideo?.description && (
             <p style={{
-              color: 'rgba(255,255,255,0.7)', fontSize: 14,
-              maxWidth: 480, margin: '0 auto 24px', lineHeight: 1.5,
+              color: 'rgba(255,255,255,0.75)', 
+              fontSize: 'clamp(10px, 1.2vw, 14px)', 
+              maxWidth: 480, 
+              margin: '0 auto 24px', 
+              lineHeight: 1.5,
               opacity: textPhase === 'visible' ? 1 : 0,
               transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-20px)' : 'translateY(12px)',
               filter: textPhase === 'visible' ? 'blur(0)' : 'blur(3px)',
@@ -315,28 +316,26 @@ export default function HeroVideo({ videos = [] }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
-                fontSize: 12,
-                fontWeight: 600,
-                letterSpacing: '0.15em',
+                fontSize: '11px',
+                fontWeight: 500,
+                letterSpacing: '2px',
                 textTransform: 'uppercase',
                 textDecoration: 'none',
-                padding: '14px 36px',
-                borderRadius: '100px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
+                padding: '14px 32px',
+                borderRadius: '0', // ✅ শার্প কর্নার
+                background: 'transparent', // ✅ ট্রান্সপারেন্ট
+                border: '1px solid #fff', // ✅ সলিড হোয়াইট বর্ডার
                 transition: 'all 0.3s ease',
                 opacity: textPhase === 'visible' ? 1 : 0,
                 transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-10px)' : 'translateY(10px)',
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                e.currentTarget.style.background = '#fff';
+                e.currentTarget.style.color = '#000';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.color = '#fff';
               }}
             >
               {currentVideo.cta_title}
@@ -344,136 +343,72 @@ export default function HeroVideo({ videos = [] }) {
           )}
         </div>
 
-        {/* Controls - Same size buttons with image icons */}
+        {/* Controls - Play/Pause & Sound */}
         <div style={{ 
           position: 'absolute', 
-          bottom: 20, 
-          right: 20, 
-          zIndex: 10, 
+          bottom: 30, 
+          right: 30, 
+          zIndex: 11, 
           display: 'flex', 
-          gap: 6,
+          gap: 12,
           alignItems: 'center'
         }}>
-          {/* Play/Pause Button */}
           <button 
             onClick={togglePlay}
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              background: 'transparent',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              padding: 0,
-              transition: 'all 0.3s ease',
-              outline: 'none',
-              opacity: 0.8
+              width: 28, height: 28, borderRadius: '50%',
+              background: 'transparent', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0, outline: 'none',
+              opacity: isPaused ? 0.5 : 0.9, transition: 'all 0.3s'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.8';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = isPaused ? '0.5' : '0.9'; e.currentTarget.style.transform = 'scale(1)'; }}
           >
             <img 
               src="/videoicon.png" 
               alt={isPaused ? "Play" : "Pause"}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                filter: 'brightness(0) invert(1)',
-                opacity: isPaused ? 0.5 : 0.8
-              }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
             />
           </button>
 
-          {/* Sound Button */}
           <button 
             onClick={toggleSound}
             style={{
-              width: 24,
-              height: 24,
-              borderRadius: '50%',
-              background: 'transparent',
-              border: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              padding: 0,
-              transition: 'all 0.3s ease',
-              outline: 'none',
-              opacity: 0.8
+              width: 28, height: 28, borderRadius: '50%',
+              background: 'transparent', border: 'none',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', padding: 0, outline: 'none',
+              opacity: isMuted ? 0.5 : 0.9, transition: 'all 0.3s'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = '1';
-              e.currentTarget.style.transform = 'scale(1.1)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = '0.8';
-              e.currentTarget.style.transform = 'scale(1)';
-            }}
+            onMouseEnter={(e) => { e.currentTarget.style.opacity = '1'; e.currentTarget.style.transform = 'scale(1.1)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.opacity = isMuted ? '0.5' : '0.9'; e.currentTarget.style.transform = 'scale(1)'; }}
           >
             <img 
               src="/soundicon.png" 
               alt={isMuted ? "Unmute" : "Mute"}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                filter: 'brightness(0) invert(1)',
-                opacity: isMuted ? 0.5 : 0.8
-              }}
+              style={{ width: '100%', height: '100%', objectFit: 'contain', filter: 'brightness(0) invert(1)' }}
             />
           </button>
         </div>
 
-        {/* Line-style Navigation Indicators (like world-class websites) */}
+        {/* Line Indicators */}
         {videos.length > 1 && (
           <div style={{
-            position: 'absolute',
-            bottom: 24,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 3,
-            display: 'flex',
-            gap: 4,
-            alignItems: 'center'
+            position: 'absolute', bottom: 30, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 11, display: 'flex', gap: 6, alignItems: 'center'
           }}>
             {videos.map((_, i) => (
               <button
                 key={i}
                 onClick={() => switchToVideo(i)}
                 style={{
-                  width: i === currentIndex ? 32 : 16,
-                  height: 3,
-                  borderRadius: 2,
+                  width: i === currentIndex ? 60 : 32,
+                  height: 1.5, // ✅ সরু লাইন
+                  borderRadius: 0,
                   background: i === currentIndex ? '#fff' : 'rgba(255,255,255,0.3)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                  outline: 'none',
-                  padding: 0,
-                  transform: i === currentIndex ? 'scaleY(1.5)' : 'scaleY(1)',
-                }}
-                onMouseEnter={(e) => {
-                  if (i !== currentIndex) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.6)';
-                    e.currentTarget.style.width = '24px';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (i !== currentIndex) {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.3)';
-                    e.currentTarget.style.width = '16px';
-                  }
+                  border: 'none', cursor: 'pointer',
+                  transition: 'all 0.4s ease', outline: 'none', padding: 0,
                 }}
               />
             ))}
@@ -483,36 +418,54 @@ export default function HeroVideo({ videos = [] }) {
         {/* Bottom Progress Bar */}
         {videos.length > 1 && (
           <div style={{
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: 2,
-            background: 'rgba(255,255,255,0.1)',
-            zIndex: 3
+            position: 'absolute', bottom: 0, left: 0, right: 0, height: 2,
+            background: 'rgba(255,255,255,0.1)', zIndex: 11
           }}>
             <div style={{
-              height: '100%',
-              background: 'rgba(255,255,255,0.5)',
-              width: `${progress}%`,
-              transition: 'width 0.1s linear'
+              height: '100%', background: 'rgba(255,255,255,0.5)',
+              width: `${progress}%`, transition: 'width 0.1s linear'
             }} />
           </div>
         )}
       </div>
 
       <style jsx>{`
-        @media (max-width: 1024px) {
-          h2 { font-size: 40px !important; }
+        /* ✅ উপরের দিকের সাদা শ্যাডো (Top Fade) */
+        .hero-video-section::before {
+          content: '';
+          position: absolute;
+          top: 0; left: 0; right: 0;
+          height: 15%; /* ভিডিওর জন্য একটু কম রাখা হলো */
+          background: linear-gradient(
+            to bottom, 
+            rgba(255, 255, 255, 1) 0%, 
+            rgba(255, 255, 255, 0.8) 30%, 
+            rgba(255, 255, 255, 0) 100%
+          );
+          z-index: 2;
+          pointer-events: none;
         }
+
+        /* ✅ নিচের দিকের সাদা শ্যাডো (Bottom Fade) */
+        .hero-video-section::after {
+          content: '';
+          position: absolute;
+          bottom: 0; left: 0; right: 0;
+          height: 15%; 
+          background: linear-gradient(
+            to top, 
+            rgba(255, 255, 255, 1) 0%, 
+            rgba(255, 255, 255, 0.8) 30%, 
+            rgba(255, 255, 255, 0) 100%
+          );
+          z-index: 2;
+          pointer-events: none;
+        }
+        
         @media (max-width: 768px) {
-          h2 { font-size: 32px !important; margin-bottom: 12px !important; }
-          p { font-size: 12px !important; }
-          span { font-size: 10px !important; }
-        }
-        @media (max-width: 480px) {
-          h2 { font-size: 26px !important; }
-          p { font-size: 11px !important; }
+          .hero-video-section::before, .hero-video-section::after {
+            height: 10%; /* মোবাইলে আরও কম */
+          }
         }
       `}</style>
     </section>
