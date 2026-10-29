@@ -122,7 +122,7 @@ export default function NewArrivals({ products = [] }) {
 
   return (
     <section className="na-section">
-      {/* ✅ Full-width edge-to-edge header image */}
+      {/* ✅ Full-width edge-to-edge header image with ADVANCED smooth white edges */}
       <div className="na-header">
         <img
           src="/homesection/Newarrival.png"
@@ -182,19 +182,63 @@ export default function NewArrivals({ products = [] }) {
           overflow: hidden;
         }
 
-        /* ✅ ব্যানার হেডার: উচ্চতা বাড়ানো হয়েছে */
+        /* ✅ ব্যানার হেডার */
         .na-header {
           width: 100%;
-          height: 120px; /* মোবাইলে উচ্চতা বাড়ানো হলো (আগে ছিল ৬৪) */
+          height: 140px;
           margin: 40px 0 45px;
-          overflow: hidden;
           background: #fff;
           display: block;
+          position: relative;
+          /* নিশ্চিত করা হচ্ছে যেন ছবি ব্যাকগ্রাউন্ডের সাথে মেশে */
+          -webkit-mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
+          mask-image: linear-gradient(to right, transparent, black 5%, black 95%, transparent);
         }
+
+        /* ✅ বাম পাশের অ্যাডভান্সড মাল্টি-স্টপ শ্যাডো */
+        .na-header::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          width: 25%; /* আরও চওড়া করা হলো যাতে স্মুথলি মেশে */
+          background: linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 255, 255, 0.95) 15%,
+            rgba(255, 255, 255, 0.7) 40%,
+            rgba(255, 255, 255, 0.2) 70%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        /* ✅ ডান পাশের অ্যাডভান্সড মাল্টি-স্টপ শ্যাডো */
+        .na-header::after {
+          content: '';
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          right: 0;
+          width: 25%;
+          background: linear-gradient(
+            270deg,
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 255, 255, 0.95) 15%,
+            rgba(255, 255, 255, 0.7) 40%,
+            rgba(255, 255, 255, 0.2) 70%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          z-index: 2;
+          pointer-events: none;
+        }
+
         .na-header-img {
           width: 100%;
           height: 100%;
-          object-fit: cover; /* ফুল উইডথ ও ফুল হাইট কভার করবে */
+          object-fit: cover;
           object-position: center;
           display: block;
         }
@@ -284,8 +328,11 @@ export default function NewArrivals({ products = [] }) {
         @media (min-width: 768px) {
           .na-section { padding: 0 0 60px; }
           .na-header {
-            height: 180px; /* ট্যাবে উচ্চতা বাড়ানো হলো */
+            height: 200px;
             margin: 55px 0 55px;
+          }
+          .na-header::before, .na-header::after {
+            width: 30%; /* ট্যাবে আরও স্মুথ */
           }
           .na-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
           .na-card { flex: 0 0 54vw; max-width: 640px; }
@@ -295,8 +342,11 @@ export default function NewArrivals({ products = [] }) {
 
         @media (min-width: 1024px) {
           .na-header {
-            height: 250px; /* ডেক্সটপে আরও বড় */
+            height: 280px;
             margin: 60px 0 60px;
+          }
+          .na-header::before, .na-header::after {
+            width: 35%; /* ডেক্সটপে আরও ন্যাচারাল ফেড */
           }
           .na-card { flex: 0 0 45vw; max-width: 700px; }
         }
