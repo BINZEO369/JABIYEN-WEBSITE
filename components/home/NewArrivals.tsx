@@ -93,21 +93,17 @@ export default function NewArrivals({ products = [] }) {
   const getSlug = (product) => (product.slug || product.title || 'product')
     .toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
 
-  // ✅ Shared header — full width edge-to-edge, short height
-  const HeaderBanner = () => (
-    <div className="na-header-banner">
-      <img
-        src="/homesection/Newarrival.png"
-        alt="New Arrivals"
-        className="na-header-image"
-      />
-    </div>
-  );
-
   if (loading) {
     return (
       <section className="na-section">
-        <HeaderBanner />
+        <div className="na-header">
+          <img
+            src="/homesection/Newarrival.png"
+            alt="New Arrivals"
+            className="na-header-img"
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          />
+        </div>
         <div className="na-scroll" ref={scrollRef}>
           {[...Array(4)].map((_, i) => (
             <div key={i} className="na-card">
@@ -126,7 +122,15 @@ export default function NewArrivals({ products = [] }) {
 
   return (
     <section className="na-section">
-      <HeaderBanner />
+      {/* Full-width edge-to-edge header image */}
+      <div className="na-header">
+        <img
+          src="/homesection/Newarrival.png"
+          alt="New Arrivals"
+          className="na-header-img"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
+      </div>
 
       <div className="na-scroll-wrap">
         {canScrollLeft && (
@@ -178,21 +182,21 @@ export default function NewArrivals({ products = [] }) {
           overflow: hidden;
         }
 
-        /* ✅ Full-width edge-to-edge header — short height */
-        .na-header-banner {
-          width: 100vw;
-          margin-left: calc(-50vw + 50%);
-          margin-right: calc(-50vw + 50%);
-          height: 80px;
+        /* Full-width edge-to-edge header banner */
+        .na-header {
+          width: 100%;
+          height: 64px;
+          margin: 40px 0 45px;
           overflow: hidden;
           background: #fff;
-          margin-bottom: 45px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
-        .na-header-image {
+        .na-header-img {
           width: 100%;
           height: 100%;
-          object-fit: cover;
-          object-position: center;
+          object-fit: contain;
           display: block;
         }
 
@@ -276,12 +280,14 @@ export default function NewArrivals({ products = [] }) {
 
         @media (min-width: 640px) {
           .na-card { flex: 0 0 65vw; max-width: 580px; }
-          .na-header-banner { height: 100px; margin-bottom: 50px; }
         }
 
         @media (min-width: 768px) {
           .na-section { padding: 0 0 60px; }
-          .na-header-banner { height: 120px; margin-bottom: 55px; }
+          .na-header {
+            height: 80px;
+            margin: 55px 0 55px;
+          }
           .na-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
           .na-card { flex: 0 0 54vw; max-width: 640px; }
           .na-arrow { display: flex; }
@@ -289,8 +295,11 @@ export default function NewArrivals({ products = [] }) {
         }
 
         @media (min-width: 1024px) {
+          .na-header {
+            height: 100px;
+            margin: 60px 0 60px;
+          }
           .na-card { flex: 0 0 45vw; max-width: 700px; }
-          .na-header-banner { height: 140px; }
         }
       `}</style>
     </section>
