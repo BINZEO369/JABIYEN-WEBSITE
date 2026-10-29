@@ -223,7 +223,7 @@ export default function HeroVideo({ videos = [] }) {
       style={{
         position: 'relative',
         width: '100%',
-        background: '#fff', // ✅ সাদা ব্যাকগ্রাউন্ড
+        background: '#fff',
         overflow: 'hidden'
       }}
     >
@@ -322,9 +322,9 @@ export default function HeroVideo({ videos = [] }) {
                 textTransform: 'uppercase',
                 textDecoration: 'none',
                 padding: '14px 32px',
-                borderRadius: '0', // ✅ শার্প কর্নার
-                background: 'transparent', // ✅ ট্রান্সপারেন্ট
-                border: '1px solid #fff', // ✅ সলিড হোয়াইট বর্ডার
+                borderRadius: '0',
+                background: 'transparent',
+                border: '1px solid #fff',
                 transition: 'all 0.3s ease',
                 opacity: textPhase === 'visible' ? 1 : 0,
                 transform: textPhase === 'visible' ? 'translateY(0)' : textPhase === 'exiting' ? 'translateY(-10px)' : 'translateY(10px)',
@@ -343,7 +343,7 @@ export default function HeroVideo({ videos = [] }) {
           )}
         </div>
 
-        {/* Controls - Play/Pause & Sound */}
+        {/* Controls */}
         <div style={{ 
           position: 'absolute', 
           bottom: 30, 
@@ -404,7 +404,7 @@ export default function HeroVideo({ videos = [] }) {
                 onClick={() => switchToVideo(i)}
                 style={{
                   width: i === currentIndex ? 60 : 32,
-                  height: 1.5, // ✅ সরু লাইন
+                  height: 1.5,
                   borderRadius: 0,
                   background: i === currentIndex ? '#fff' : 'rgba(255,255,255,0.3)',
                   border: 'none', cursor: 'pointer',
@@ -430,32 +430,16 @@ export default function HeroVideo({ videos = [] }) {
       </div>
 
       <style jsx>{`
-        /* ✅ উপরের দিকের সাদা শ্যাডো (Top Fade) */
-        .hero-video-section::before {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 15%; /* ভিডিওর জন্য একটু কম রাখা হলো */
-          background: linear-gradient(
-            to bottom, 
-            rgba(255, 255, 255, 1) 0%, 
-            rgba(255, 255, 255, 0.8) 30%, 
-            rgba(255, 255, 255, 0) 100%
-          );
-          z-index: 2;
-          pointer-events: none;
-        }
-
-        /* ✅ নিচের দিকের সাদা শ্যাডো (Bottom Fade) */
+        /* ✅ শুধুমাত্র নিচের দিকের সাদা শ্যাডো (Bottom Fade) */
         .hero-video-section::after {
           content: '';
           position: absolute;
           bottom: 0; left: 0; right: 0;
-          height: 15%; 
+          height: 12%; /* ✅ উচ্চতা কমানো হয়েছে ১৫% থেকে ১২% */
           background: linear-gradient(
             to top, 
             rgba(255, 255, 255, 1) 0%, 
-            rgba(255, 255, 255, 0.8) 30%, 
+            rgba(255, 255, 255, 0.6) 40%, /* ✅ ওপাসিটি কমানো হয়েছে যাতে খুব বেশি সাদা না লাগে */
             rgba(255, 255, 255, 0) 100%
           );
           z-index: 2;
@@ -463,8 +447,8 @@ export default function HeroVideo({ videos = [] }) {
         }
         
         @media (max-width: 768px) {
-          .hero-video-section::before, .hero-video-section::after {
-            height: 10%; /* মোবাইলে আরও কম */
+          .hero-video-section::after {
+            height: 8%; /* মোবাইলে আরও কম */
           }
         }
       `}</style>
