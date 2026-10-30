@@ -1,44 +1,54 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 
 export default function NewArrivals({ products = [] }) {
-  const [arrivals, setArrivals] = useState([]);
+  const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrollable, setIsScrollable] = useState(false);
+  const [colorCache, setColorCache] = useState({});
+  
   const scrollRef = useRef(null);
+  const autoScrollRef = useRef(null);
+  const userInteractedRef = useRef(false);
 
   const maxProducts = 12;
 
+  // Fetch Data
   useEffect(() => {
-    async function fetchArrivals() {
+    async function fetchItems() {
       try {
         const res = await fetch('/api/products?filter=new_arrival&limit=12');
         if (!res.ok) throw new Error();
         const data = await res.json();
-        const filtered = (Array.isArray(data) ? data : data?.data || data?.products || [])
-          .filter(p => p.is_new_arrival === true || p.is_new_arrival === 1 || p.is_new_arrival === 'true');
-        setArrivals(filtered.slice(0, maxProducts));
+        const all = Array.isArray(data) ? data : data?.data || data?.products || [];
+        const filtered = all.filter(p => 
+          p.is_new_arrival === true || p.is_new_arrival === 1 || p.is_new_arrival === 'true'
+        );
+        filtered.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+        setItems(filtered.slice(0, maxProducts));
       } catch (e) {
-        const filtered = products.filter(p => p.is_new_arrival === true || p.is_new_arrival === 1);
-        setArrivals(filtered.slice(0, maxProducts));
+        const filtered = products.filter(p => 
+          p.is_new_arrival === true || p.is_new_arrival === 1
+        );
+        setItems(filtered.slice(0, maxProducts));
       }
       setLoading(false);
     }
-
     if (products.length > 0) {
-      const filtered = products.filter(p => p.is_new_arrival === true || p.is_new_arrival === 1);
-      setArrivals(filtered.slice(0, maxProducts));
+      const filtered = products.filter(p => 
+        p.is_new_arrival === true || p.is_new_arrival === 1
+      );
+      setItems(filtered.slice(0, maxProducts));
       setLoading(false);
-    } else {
-      fetchArrivals();
-    }
+    } else fetchItems();
   }, [products]);
 
+  // Scroll Tracking Logic
   useEffect(() => {
     const el = scrollRef.current;
     if (!el) return;
@@ -46,10 +56,8 @@ export default function NewArrivals({ products = [] }) {
     const update = () => {
       setCanScrollLeft(el.scrollLeft > 2);
       setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
-
       const maxScroll = el.scrollWidth - el.clientWidth;
       setIsScrollable(maxScroll > 2);
-
       if (maxScroll > 0) {
         const raw = el.scrollLeft / maxScroll;
         setScrollProgress(Math.min(1, Math.max(0, raw)));
@@ -61,7 +69,6 @@ export default function NewArrivals({ products = [] }) {
     update();
     el.addEventListener('scroll', update, { passive: true });
     window.addEventListener('resize', update);
-
     const raf = requestAnimationFrame(update);
     const ro = new ResizeObserver(update);
     ro.observe(el);
@@ -72,57 +79,56 @@ export default function NewArrivals({ products = [] }) {
       cancelAnimationFrame(raf);
       ro.disconnect();
     };
-  }, [arrivals]);
+  }, [items]);
+
+  // ✅ অটোমেটিক স্ক্রলিং লজিক (ডান থেকে বামে)
+  useEffect(() => {
+    if (loading || items.length === 0 || userInteractedRef.current) return;
+    
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) return; 
+
+    autoScrollRef.current = setInterval(() => {
+      if (el.scrollLeft >= maxScroll - 1) {
+        clearInterval(autoScrollRef.current);
+        return;
+      }
+      el.scrollLeft += 1.5; 
+    }, 20);
+
+    return () => {
+      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
+    };
+  }, [loading, items]);
+
+  // ✅ ইউজার ইন্টারঅ্যাক্ট করলে অটো-স্ক্রল বন্ধ করার ফাংশন
+  const stopAutoScroll = () => {
+    userInteractedRef.current = true;
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current);
+      autoScrollRef.current = null;
+    }
+  };
 
   const scrollByCards = (direction) => {
+    stopAutoScroll(); 
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.na-card');
     const cardW = card ? card.offsetWidth : 500;
-    const gap = 24;
+    const gap = 16; 
     el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
   };
 
-  const getImageUrl = (product) => {
-    if (product.img?.trim()) return product.img;
-    if (product.image?.trim()) return product.image;
-    if (product.image_url?.trim()) return product.image_url;
-    return '/placeholder.png';
-  };
-
-  const getSlug = (product) => (product.slug || product.title || 'product')
-    .toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
-
-  if (loading) {
-    return (
-      <section className="na-section">
-        <div className="na-header">
-          <img
-            src="/homesection/Newarrival.png"
-            alt="New Arrivals"
-            className="na-header-img"
-            onError={(e) => { e.currentTarget.style.display = 'none'; }}
-          />
-        </div>
-        <div className="na-scroll" ref={scrollRef}>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="na-card">
-              <div className="na-image-wrap na-shimmer" />
-              <div style={{ padding: '18px 2px 0', textAlign: 'center' }}>
-                <div className="na-shimmer" style={{ height: 12, width: '60%', margin: '0 auto', borderRadius: 2 }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-    );
-  }
-
-  if (!arrivals.length) return null;
+  if (loading) return <Skeleton />;
+  if (!items.length) return null;
 
   return (
     <section className="na-section">
-      {/* ✅ Full-width edge-to-edge header image with TOP & BOTTOM shadows */}
+      {/* ✅ Full-width edge-to-edge header image */}
       <div className="na-header">
         <img
           src="/homesection/Newarrival.png"
@@ -149,13 +155,20 @@ export default function NewArrivals({ products = [] }) {
           </button>
         )}
 
-        <div className="na-scroll" ref={scrollRef}>
-          {arrivals.map(product => (
-            <NewArrivalCard
-              key={product.id}
-              product={product}
-              getImageUrl={getImageUrl}
-              getSlug={getSlug}
+        {/* ✅ স্লাইডার কন্টেইনার */}
+        <div 
+          className="na-scroll" 
+          ref={scrollRef}
+          onTouchStart={stopAutoScroll}
+          onMouseDown={stopAutoScroll}
+          onWheel={stopAutoScroll}
+        >
+          {items.map((product) => (
+            <NewArrivalCard 
+              key={product.id} 
+              product={product} 
+              colorCache={colorCache} 
+              setColorCache={setColorCache} 
             />
           ))}
         </div>
@@ -182,46 +195,26 @@ export default function NewArrivals({ products = [] }) {
           overflow: hidden;
         }
 
-        /* ✅ ব্যানার হেডার: ডান-বামে ফুল স্প্যান */
+        /* ✅ হেডার ইমেজ */
         .na-header {
           width: 100%;
-          height: 140px;
+          height: 120px;
           margin: 20px 0 30px;
           background: #fff;
           display: block;
           position: relative;
         }
 
-        /* ✅ উপরের দিকের সাদা শ্যাডো (Top Fade) */
-        .na-header::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 40%; /* উপরের ৪০% জুড়ে ফেড হবে */
-          background: linear-gradient(
-            to bottom,
-            rgba(255, 255, 255, 1) 0%,
-            rgba(255, 255, 255, 0.8) 40%,
-            rgba(255, 255, 255, 0) 100%
-          );
-          z-index: 2;
-          pointer-events: none;
-        }
-
         /* ✅ নিচের দিকের সাদা শ্যাডো (Bottom Fade) */
         .na-header::after {
           content: '';
           position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          height: 40%; /* নিচের ৪০% জুড়ে ফেড হবে */
+          bottom: 0; left: 0; right: 0;
+          height: 40%;
           background: linear-gradient(
-            to top,
-            rgba(255, 255, 255, 1) 0%,
-            rgba(255, 255, 255, 0.8) 40%,
+            to top, 
+            rgba(255, 255, 255, 1) 0%, 
+            rgba(255, 255, 255, 0.6) 40%,
             rgba(255, 255, 255, 0) 100%
           );
           z-index: 2;
@@ -231,7 +224,7 @@ export default function NewArrivals({ products = [] }) {
         .na-header-img {
           width: 100%;
           height: 100%;
-          object-fit: cover; /* ছবি পুরো স্ক্রিনে ছড়িয়ে যাবে */
+          object-fit: cover;
           object-position: center;
           display: block;
         }
@@ -239,22 +232,27 @@ export default function NewArrivals({ products = [] }) {
         .na-scroll-wrap {
           position: relative;
         }
+
         .na-scroll {
           display: flex;
-          gap: 24px;
+          gap: 16px;
           overflow-x: auto;
-          scroll-snap-type: x mandatory;
-          scroll-padding-left: 32px;
-          padding: 0 32px 20px;
+          scroll-snap-type: none; 
+          scroll-padding-left: 24px;
+          padding: 0 24px 20px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
+          align-items: stretch;
         }
         .na-scroll::-webkit-scrollbar { display: none; }
 
         .na-card {
-          flex: 0 0 92vw;
-          max-width: 680px;
+          flex: 0 0 72vw; 
+          max-width: 360px;
           scroll-snap-align: start;
+          display: flex; 
+          flex-direction: column;
+          flex-shrink: 0;
         }
 
         .na-track-container {
@@ -301,86 +299,242 @@ export default function NewArrivals({ products = [] }) {
           color: #fff;
           border-color: #1a1a1a;
         }
-        .na-arrow-left { left: 32px; }
-        .na-arrow-right { right: 32px; }
-
-        .na-shimmer {
-          background: linear-gradient(90deg, #f0f0f0 0%, #e0e0e0 50%, #f0f0f0 100%);
-          background-size: 800px 100%;
-          animation: naShimmer 1.8s infinite linear;
-        }
-        @keyframes naShimmer {
-          0% { background-position: -400px 0; }
-          100% { background-position: 400px 0; }
-        }
+        .na-arrow-left { left: 24px; }
+        .na-arrow-right { right: 24px; }
 
         @media (min-width: 640px) {
-          .na-card { flex: 0 0 65vw; max-width: 580px; }
+          .na-scroll { gap: 20px; scroll-padding-left: 32px; padding: 0 32px 20px; }
+          .na-card { flex: 0 0 45vw; max-width: 320px; }
         }
 
         @media (min-width: 768px) {
           .na-section { padding: 0 0 60px; }
-          .na-header {
-            height: 200px;
-            margin: 30px 0 40px;
-          }
-          .na-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
-          .na-card { flex: 0 0 54vw; max-width: 640px; }
+          .na-header { height: 180px; margin: 30px 0 40px; }
+          .na-scroll { gap: 24px; scroll-padding-left: 48px; padding: 0 48px 24px; }
+          .na-card { flex: 0 0 320px; max-width: none; }
           .na-arrow { display: flex; }
-          .na-track-container { padding: 35px 60px 0; }
+          .na-arrow-left { left: 32px; }
+          .na-arrow-right { right: 32px; }
+          .na-track-container { padding: 35px 48px 0; }
         }
 
         @media (min-width: 1024px) {
-          .na-header {
-            height: 280px;
-            margin: 40px 0 50px;
-          }
-          .na-card { flex: 0 0 45vw; max-width: 700px; }
+          .na-header { height: 240px; }
+          .na-card { flex: 0 0 360px; }
         }
       `}</style>
     </section>
   );
 }
 
-function NewArrivalCard({ product, getImageUrl, getSlug }) {
+function Skeleton() {
+  return (
+    <section className="na-section" style={{ padding: '40px 0' }}>
+      <div className="na-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
+      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px', alignItems: 'stretch' }}>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ position: 'relative', width: '100%', paddingBottom: '133.3333%', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
+            <div style={{ padding: '16px 4px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ height: 14, background: '#e5e5ea', width: '60%', borderRadius: 4 }} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ height: 10, background: '#e5e5ea', width: 10, borderRadius: 0 }} />
+                <div style={{ height: 10, background: '#e5e5ea', width: 10, borderRadius: 0 }} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <style>{`@keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }`}</style>
+    </section>
+  );
+}
+
+function NewArrivalCard({ product, colorCache, setColorCache }) {
+  const [colors, setColors] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef(null);
+  
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
-  const slug = getSlug(product);
-  const imageUrl = getImageUrl(product);
+  const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
+
+  // ✅ কালার ফেচ করার লজিক
+  useEffect(() => {
+    if (colorCache[slug]) {
+      setColors(colorCache[slug]);
+      return;
+    }
+    fetch(`/api/product-colors?slug=${slug}`)
+      .then(r => r.json())
+      .then(d => {
+        setColors(d || []);
+        setColorCache(prev => ({ ...prev, [slug]: d || [] }));
+      })
+      .catch(() => {});
+  }, [slug, colorCache, setColorCache]);
+
+  // ✅ সব ইমেজ একসাথে করা (মেইন ইমেজ + কালার ইমেজ)
+  const allImages = useMemo(() => {
+    const imgs = [];
+    const main = product.img || product.image || product.image_url;
+    if (main) imgs.push(main);
+    
+    colors.forEach(c => {
+      if (c.color_image && !imgs.includes(c.color_image)) {
+        imgs.push(c.color_image);
+      }
+    });
+    
+    return imgs.length > 0 ? imgs : ['/placeholder.png'];
+  }, [product, colors]);
+
+  // ✅ স্ক্রিনে দৃশ্যমান কিনা তা চেক করা
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    
+    if (cardRef.current) observer.observe(cardRef.current);
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // ✅ অটোমেটিক ইমেজ স্লাইডিং লজিক (প্রতি ২ সেকেন্ড পর পর)
+  useEffect(() => {
+    let interval;
+    
+    if (isInView && allImages.length > 1) {
+      interval = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
+      }, 2000); // ২ সেকেন্ড
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isInView, allImages.length]);
 
   return (
-    <Link href={`/product/${encodeURIComponent(slug)}`} className="na-card-link na-card">
-      <div className="na-image-wrap">
-        <img src={imageUrl} alt={product.title || 'Product'} className="na-image" loading="lazy" />
-
-        {isOut && (
-          <div className="na-soldout-overlay">
-            <span className="na-soldout-label">Sold Out</span>
+    <div className="na-card" ref={cardRef}>
+      <Link href={`/product/${slug}`} className="na-card-link">
+        
+        {/* ✅ ইমেজ বক্স: সমান সাইজ */}
+        <div className="na-image-wrap">
+          {allImages.map((img, idx) => (
+            <img 
+              key={idx}
+              src={img} 
+              alt={`${product.title || 'Product'} - Image ${idx + 1}`} 
+              className="na-image"
+              style={{ opacity: idx === currentImageIndex ? 1 : 0 }}
+            />
+          ))}
+          
+          <div className="hover-overlay">
+            <span className="explore-text">Explore</span>
           </div>
-        )}
-      </div>
 
-      <div className="na-info">
-        <h3 className="na-title">{product.title}</h3>
-      </div>
+          {isOut && (
+            <div className="na-soldout-overlay">
+              <span className="na-soldout-label">Sold Out</span>
+            </div>
+          )}
+        </div>
+
+        {/* ✅ ইনফো (টাইটেল + কালার বক্স) */}
+        <div className="na-info">
+          <h3 className="na-title">{product.title}</h3>
+          
+          {colors.length > 1 && (
+            <div className="color-swatches">
+              {colors.map((c, i) => (
+                <span 
+                  key={i} 
+                  className="color-swatch-box" 
+                  style={{ backgroundColor: c.color_code || '#ccc' }}
+                  title={c.color_name}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </Link>
 
       <style jsx>{`
+        .na-card {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          flex-shrink: 0;
+        }
+        
         .na-card-link {
-          display: block;
+          display: flex;
+          flex-direction: column;
           text-decoration: none;
           color: inherit;
+          width: 100%;
         }
+
+        /* ✅ ইমেজ বক্স: padding-bottom ট্রিক (সব ইমেজ সমান) */
         .na-image-wrap {
           position: relative;
-          aspect-ratio: 4/5;
+          width: 100%;
+          padding-bottom: 133.3333%;
           background: #f7f7f7;
           overflow: hidden;
+          border: 1px solid #f0f0f0; 
+          flex-shrink: 0;
+          box-sizing: border-box;
         }
+
         .na-image {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
           object-fit: cover;
+          object-position: center top; 
           display: block;
-          transition: transform 0.7s cubic-bezier(0.25, 0.1, 0.25, 1);
+          transition: opacity 0.8s ease-in-out, transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        @media (hover: hover) {
+          .na-card-link:hover .na-image {
+            transform: scale(1.03);
+          }
+          .na-card-link:hover .hover-overlay {
+            opacity: 1;
+          }
+          .na-card-link:hover .explore-text {
+            transform: translateY(0);
+          }
+        }
+
+        .hover-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.25);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          z-index: 3; 
+        }
+
+        .explore-text {
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          transform: translateY(10px);
+          transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
         .na-soldout-overlay {
@@ -390,53 +544,69 @@ function NewArrivalCard({ product, getImageUrl, getSlug }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 3;
+          z-index: 4;
         }
+
         .na-soldout-label {
           background: #1a1a1a;
           color: #fff;
-          font-family: 'Sora', 'Inter', sans-serif;
+          font-family: 'Sora', sans-serif;
+          font-size: 10px;
           font-weight: 500;
-          font-size: 11px;
+          letter-spacing: 0.15em;
           text-transform: uppercase;
           padding: 8px 16px;
-          letter-spacing: 0.14em;
         }
 
+        /* ✅ ইনফো স্টাইল */
         .na-info {
-          padding: 20px 4px 4px;
-          text-align: center;
+          padding: 16px 4px 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          gap: 8px; 
         }
+
         .na-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
-          font-weight: 400;
-          font-size: 14px;
-          letter-spacing: 0.16em;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           color: #1a1a1a;
           margin: 0;
-          line-height: 1.4;
-          display: -webkit-box;
-          -webkit-line-clamp: 1;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
           white-space: nowrap;
+          overflow: hidden;
           text-overflow: ellipsis;
+          text-align: center;
+          width: 100%;
         }
 
-        @media (hover: hover) {
-          .na-card-link:hover .na-image {
-            transform: scale(1.03);
-          }
+        /* ✅ কালার বক্স */
+        .color-swatches {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 5px;
+        }
+
+        .color-swatch-box {
+          width: 10px;
+          height: 10px;
+          border-radius: 0; 
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          display: block;
         }
 
         @media (min-width: 768px) {
-          .na-info { padding: 24px 4px 4px; }
-          .na-title {
-            font-size: 15px;
-          }
+          .na-info { padding: 20px 4px 24px; }
+          .na-title { font-size: 12px; }
+          .color-swatch-box { width: 12px; height: 12px; }
         }
       `}</style>
-    </Link>
+    </div>
   );
 }
