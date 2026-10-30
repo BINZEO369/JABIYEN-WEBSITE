@@ -7,8 +7,15 @@ export default function TrendingNow({ products = [] }) {
   const [items, setItems] = useState([]);
   const [colorCache, setColorCache] = useState({});
   const [loading, setLoading] = useState(true);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrollable, setIsScrollable] = useState(false);
+  const scrollRef = useRef(null);
+
   const maxProducts = 8;
 
+  // Fetch Data
   useEffect(() => {
     async function fetchItems() {
       try {
@@ -39,36 +46,251 @@ export default function TrendingNow({ products = [] }) {
     } else fetchItems();
   }, [products]);
 
-  if (loading) return <Skeleton title="Trending Now" />;
-  if (!items.length) return <Empty title="Trending Now" message="Hot picks coming soon — stay tuned" />;
+  // Scroll Tracking Logic
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const update = () => {
+      setCanScrollLeft(el.scrollLeft > 2);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      setIsScrollable(maxScroll > 2);
+      if (maxScroll > 0) {
+        const raw = el.scrollLeft / maxScroll;
+        setScrollProgress(Math.min(1, Math.max(0, raw)));
+      } else {
+        setScrollProgress(0);
+      }
+    };
+
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    const raf = requestAnimationFrame(update);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+
+    return () => {
+      el.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [items]);
+
+  const scrollByCards = (direction) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector('.trending-card');
+    const cardW = card ? card.offsetWidth : 500;
+    const gap = 24;
+    el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
+  };
+
+  if (loading) return <Skeleton />;
+  if (!items.length) return <Empty />;
 
   return (
-    <section style={{ padding: '32px 0', maxWidth: 1400, margin: '0 auto', background: '#fff' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20, padding: '0 8px' }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f', letterSpacing: '-0.3px' }}>Trending Now</h2>
+    <section className="tn-section">
+      {/* ✅ Full-width edge-to-edge header image */}
+      <div className="tn-header">
+        <img
+          src="/homesection/TrendingNow.png"
+          alt="Trending Now"
+          className="tn-header-img"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }} className="tn-grid">
-        {items.map(p => <Card key={p.id} product={p} colorCache={colorCache} setColorCache={setColorCache} />)}
+
+      <div className="tn-scroll-wrap">
+        {canScrollLeft && (
+          <button className="tn-arrow tn-arrow-left" onClick={() => scrollByCards(-1)} aria-label="Previous">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        )}
+
+        {canScrollRight && (
+          <button className="tn-arrow tn-arrow-right" onClick={() => scrollByCards(1)} aria-label="Next">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        )}
+
+        <div className="tn-scroll" ref={scrollRef}>
+          {items.map(product => (
+            <Card
+              key={product.id}
+              product={product}
+              colorCache={colorCache}
+              setColorCache={setColorCache}
+            />
+          ))}
+        </div>
+
+        {isScrollable && (
+          <div className="tn-track-container">
+            <div className="tn-track-line">
+              <div
+                className="tn-train-thumb"
+                style={{
+                  left: `${scrollProgress * 100}%`,
+                  transform: `translateX(-${scrollProgress * 100}%)`,
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
+
       <style jsx>{`
-        @media (min-width: 768px) { .tn-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-        @media (min-width: 1024px) { .tn-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+        .tn-section {
+          padding: 0 0 50px;
+          background: #fff;
+          overflow: hidden;
+        }
+
+        /* ✅ হেডার ইমেজ */
+        .tn-header {
+          width: 100%;
+          height: 140px;
+          margin: 20px 0 30px;
+          background: #fff;
+          display: block;
+          position: relative;
+        }
+
+        /* ✅ শুধুমাত্র নিচের দিকের সাদা শ্যাডো (Bottom Fade) - পাওয়ার কম */
+        .tn-header::after {
+          content: '';
+          position: absolute;
+          bottom: 0; left: 0; right: 0;
+          height: 40%;
+          background: linear-gradient(
+            to top, 
+            rgba(255, 255, 255, 1) 0%, 
+            rgba(255, 255, 255, 0.6) 40%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        .tn-header-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
+        }
+
+        /* ✅ স্লাইডার কন্টেইনার */
+        .tn-scroll-wrap {
+          position: relative;
+        }
+        .tn-scroll {
+          display: flex;
+          gap: 24px;
+          overflow-x: auto;
+          scroll-snap-type: x mandatory;
+          scroll-padding-left: 32px;
+          padding: 0 32px 20px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+        }
+        .tn-scroll::-webkit-scrollbar { display: none; }
+
+        .trending-card {
+          flex: 0 0 92vw;
+          max-width: 680px;
+          scroll-snap-align: start;
+        }
+
+        /* ✅ ট্রেন লাইন প্রগ্রেস বার */
+        .tn-track-container {
+          width: 100%;
+          padding: 30px 20px 0;
+        }
+        .tn-track-line {
+          width: 100%;
+          height: 1.5px;
+          background-color: #e0e0e0;
+          position: relative;
+          overflow: hidden;
+        }
+        .tn-train-thumb {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 80px;
+          background-color: #1a1a1a;
+          will-change: transform;
+        }
+
+        /* ✅ ডেস্কটপ অ্যারো */
+        .tn-arrow {
+          position: absolute;
+          top: 45%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1px solid #e5e5e5;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #1a1a1a;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .tn-arrow:hover {
+          background: #1a1a1a;
+          color: #fff;
+          border-color: #1a1a1a;
+        }
+        .tn-arrow-left { left: 32px; }
+        .tn-arrow-right { right: 32px; }
+
+        @media (min-width: 640px) {
+          .trending-card { flex: 0 0 65vw; max-width: 580px; }
+        }
+
+        @media (min-width: 768px) {
+          .tn-section { padding: 0 0 60px; }
+          .tn-header { height: 200px; margin: 30px 0 40px; }
+          .tn-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
+          .trending-card { flex: 0 0 54vw; max-width: 640px; }
+          .tn-arrow { display: flex; }
+          .tn-track-container { padding: 35px 60px 0; }
+        }
+
+        @media (min-width: 1024px) {
+          .tn-header { height: 280px; margin: 40px 0 50px; }
+          .trending-card { flex: 0 0 45vw; max-width: 700px; }
+        }
       `}</style>
     </section>
   );
 }
 
-function Skeleton({ title }) {
+function Skeleton() {
   return (
-    <section style={{ padding: '32px 0', background: '#fff' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>{title}</h2>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-        {[...Array(4)].map((_, i) => (
-          <div key={i} style={{ background: '#fff' }}>
+    <section className="tn-section" style={{ padding: '40px 0' }}>
+      <div className="tn-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
+      <div style={{ display: 'flex', gap: 24, overflow: 'hidden', padding: '0 32px' }}>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} style={{ flex: '0 0 92vw', maxWidth: 680 }}>
             <div style={{ aspectRatio: '4/5', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-            <div style={{ padding: '4px 6px' }}><div style={{ height: 13, background: '#e5e5ea', width: '85%', margin: '0 auto', borderRadius: 4 }} /></div>
+            <div style={{ padding: '20px 0', textAlign: 'center' }}>
+              <div style={{ height: 14, background: '#e5e5ea', width: '60%', margin: '0 auto', borderRadius: 4 }} />
+            </div>
           </div>
         ))}
       </div>
@@ -77,18 +299,11 @@ function Skeleton({ title }) {
   );
 }
 
-function Empty({ title, message }) {
+function Empty() {
   return (
-    <section style={{ padding: '32px 0', background: '#fff' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>{title}</h2>
-      </div>
-      <div style={{ textAlign: 'center', padding: '60px 20px', maxWidth: 400, margin: '0 auto' }}>
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.4 }}>
-          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-        </svg>
-        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#86868b' }}>No trending products right now</p>
-        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#b0b0b5', marginTop: 6 }}>{message}</p>
+    <section className="tn-section" style={{ padding: '60px 0' }}>
+      <div style={{ textAlign: 'center', maxWidth: 400, margin: '0 auto' }}>
+        <p style={{ fontFamily: "'Sora', sans-serif", fontSize: 14, color: '#86868b', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No trending products</p>
       </div>
     </section>
   );
@@ -138,14 +353,15 @@ function Card({ product, colorCache, setColorCache }) {
   };
 
   return (
-    <div style={{ position: 'relative', background: '#fff', cursor: 'pointer', overflow: 'hidden', transition: 'transform 0.3s', touchAction: 'pan-y', userSelect: 'none' }}
-      className="tn-card"
+    <div className="trending-card" style={{ position: 'relative', background: '#fff', cursor: 'pointer', overflow: 'hidden', touchAction: 'pan-y', userSelect: 'none' }}
       onTouchStart={total > 1 ? onTS : undefined}
       onTouchMove={total > 1 ? onTM : undefined}
       onTouchEnd={total > 1 ? onTE : undefined}
     >
       <Link href={`/product/${slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={(e) => { if (didSwipe.current) { e.preventDefault(); e.stopPropagation(); didSwipe.current = false; } }}>
-        <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f5f5f7', overflow: 'hidden', marginBottom: 6 }}>
+        
+        {/* ✅ বড় এবং একই সাইজের ইমেজ */}
+        <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f7f7f7', overflow: 'hidden' }}>
           {allImages.map((img, i) => (
             <img key={i} src={img} alt={product.title || ''} style={{
               position: 'absolute', top: 0,
@@ -155,7 +371,13 @@ function Card({ product, colorCache, setColorCache }) {
               zIndex: i === currentImage ? 2 : 1
             }} />
           ))}
-          {isOut && <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}><span style={{ background: '#1d1d1f', color: '#fff', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 9, textTransform: 'uppercase', padding: '5px 14px' }}>Sold Out</span></div>}
+          
+          {isOut && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
+              <span style={{ background: '#1a1a1a', color: '#fff', fontFamily: "'Sora', 'Inter', sans-serif", fontWeight: 500, fontSize: 11, textTransform: 'uppercase', padding: '8px 16px', letterSpacing: '0.14em' }}>Sold Out</span>
+            </div>
+          )}
+          
           {total > 1 && (
             <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
               {allImages.map((_, i) => (
@@ -164,18 +386,36 @@ function Card({ product, colorCache, setColorCache }) {
             </div>
           )}
         </div>
-        <div style={{ padding: '4px 6px 6px' }}>
-          <h3 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 12, color: '#1d1d1f', lineHeight: 1.35, textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{product.title}</h3>
-          {colors.length > 0 && (
-            <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 6, flexWrap: 'wrap' }}>
-              {colors.map((c, i) => <span key={i} title={c.color_name} style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: c.color_code || '#ccc', border: '1px solid rgba(0,0,0,0.08)', cursor: 'pointer' }} />)}
-            </div>
-          )}
+
+        {/* ✅ বিশ্ব বিখ্যাত ফ্যাশন ব্র্যান্ডের মতো মিনিমাল টাইটেল */}
+        <div style={{ padding: '20px 4px 4px', textAlign: 'center' }}>
+          <h3 style={{ 
+            fontFamily: "'Sora', 'Manrope', 'Inter', sans-serif", 
+            fontWeight: 400, 
+            fontSize: 14, 
+            letterSpacing: '0.16em', 
+            textTransform: 'uppercase', 
+            color: '#1a1a1a', 
+            margin: 0, 
+            lineHeight: 1.4, 
+            whiteSpace: 'nowrap', 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis' 
+          }}>
+            {product.title}
+          </h3>
         </div>
       </Link>
+
       <style jsx>{`
-        .tn-card:active { transform: scale(0.98); }
-        @media (hover: hover) { .tn-card:hover { transform: translateY(-2px); z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.12); } }
+        .trending-card:active { transform: scale(0.98); }
+        @media (hover: hover) { 
+          .trending-card:hover { transform: translateY(-2px); z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.12); } 
+        }
+        @media (min-width: 768px) {
+          .trending-card div[style*="padding: '20px 4px 4px'"] { padding: 24px 4px 4px !important; }
+          .trending-card h3 { font-size: 15px !important; }
+        }
       `}</style>
     </div>
   );
