@@ -121,8 +121,8 @@ export default function TrendingNow({ products = [] }) {
 
         {/* ✅ স্লাইডার কন্টেইনার */}
         <div className="tn-scroll" ref={scrollRef}>
-          {items.map((product, index) => (
-            <Card key={product.id} product={product} index={index} />
+          {items.map((product) => (
+            <Card key={product.id} product={product} />
           ))}
         </div>
 
@@ -194,18 +194,18 @@ export default function TrendingNow({ products = [] }) {
           padding: 0 24px 20px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
-          align-items: stretch; /* ✅ ফিক্স: সব কার্ড সমান উচ্চতার হবে */
+          align-items: stretch;
         }
         .tn-scroll::-webkit-scrollbar { display: none; }
 
-        /* ✅ কার্ডের সাইজ (ফ্যাশন ব্র্যান্ডের মতো সরু ও লম্বা) */
+        /* ✅ কার্ডের সাইজ */
         .trending-card {
           flex: 0 0 72vw; 
           max-width: 360px;
           scroll-snap-align: start;
           display: flex; 
           flex-direction: column;
-          flex-shrink: 0; /* ✅ ফিক্স: কখনো ছোট হবে না */
+          flex-shrink: 0;
         }
 
         /* ✅ ট্রেন লাইন প্রগ্রেস বার */
@@ -290,9 +290,8 @@ function Skeleton() {
         {[...Array(3)].map((_, i) => (
           <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360, display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'relative', width: '100%', paddingBottom: '133.3333%', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-            <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
-              <div style={{ height: 14, background: '#e5e5ea', width: '20%', borderRadius: 4 }} />
-              <div style={{ height: 14, background: '#e5e5ea', width: '50%', borderRadius: 4 }} />
+            <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+              <div style={{ height: 14, background: '#e5e5ea', width: '60%', borderRadius: 4 }} />
             </div>
           </div>
         ))}
@@ -312,12 +311,10 @@ function Empty() {
   );
 }
 
-function Card({ product, index }) {
+function Card({ product }) {
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
   const mainImg = product.img || product.image || product.image_url || '/placeholder.png';
-  
-  const displayNumber = String(index + 1).padStart(2, '0');
 
   return (
     <div className="trending-card">
@@ -342,16 +339,9 @@ function Card({ product, index }) {
           )}
         </div>
 
-        {/* ✅ এডিটোরিয়াল ইনফো */}
+        {/* ✅ ইনফো (শুধুমাত্র টাইটেল) */}
         <div className="info-wrap">
-          <span className="index-num">{displayNumber}</span>
           <h3 className="product-title">{product.title}</h3>
-          <span className="arrow-icon">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <line x1="5" y1="12" x2="19" y2="12"></line>
-              <polyline points="12 5 19 12 12 19"></polyline>
-            </svg>
-          </span>
         </div>
       </Link>
 
@@ -375,7 +365,7 @@ function Card({ product, index }) {
         .image-wrap {
           position: relative;
           width: 100%;
-          padding-bottom: 133.3333%; /* ✅ 3:4 Aspect Ratio (Height = Width × 1.333) */
+          padding-bottom: 133.3333%; /* ✅ 3:4 Aspect Ratio */
           background: #f7f7f7;
           overflow: hidden;
           border: 1px solid #f0f0f0; 
@@ -453,24 +443,15 @@ function Card({ product, index }) {
           padding: 8px 16px;
         }
 
-        /* ✅ ইনফো স্টাইল (Fixed Height) */
+        /* ✅ ইনফো স্টাইল (Fixed Height, Centered) */
         .info-wrap {
           height: 56px;
           padding: 0 4px;
           display: flex;
           align-items: center;
-          justify-content: space-between;
-          gap: 8px;
+          justify-content: center;
           flex-shrink: 0;
           box-sizing: border-box;
-        }
-
-        .index-num {
-          font-family: 'Inter', sans-serif;
-          font-size: 10px;
-          font-weight: 500;
-          color: #999;
-          letter-spacing: 0.05em;
         }
 
         .product-title {
@@ -485,27 +466,12 @@ function Card({ product, index }) {
           overflow: hidden;
           text-overflow: ellipsis;
           text-align: center;
-          flex: 1;
-        }
-
-        .arrow-icon {
-          color: #1a1a1a;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          transition: transform 0.3s ease;
-        }
-
-        @media (hover: hover) {
-          .card-link:hover .arrow-icon {
-            transform: translateX(4px);
-          }
+          width: 100%;
         }
 
         @media (min-width: 768px) {
           .info-wrap { height: 64px; }
           .product-title { font-size: 12px; }
-          .index-num { font-size: 11px; }
         }
       `}</style>
     </div>
