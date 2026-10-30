@@ -5,7 +5,6 @@ import Link from 'next/link';
 
 export default function TrendingNow({ products = [] }) {
   const [items, setItems] = useState([]);
-  const [colorCache, setColorCache] = useState({});
   const [loading, setLoading] = useState(true);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -84,7 +83,7 @@ export default function TrendingNow({ products = [] }) {
     if (!el) return;
     const card = el.querySelector('.trending-card');
     const cardW = card ? card.offsetWidth : 500;
-    const gap = 24;
+    const gap = 16; // Reduced gap for mobile
     el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
   };
 
@@ -120,14 +119,10 @@ export default function TrendingNow({ products = [] }) {
           </button>
         )}
 
+        {/* ✅ স্লাইডার কন্টেইনার */}
         <div className="tn-scroll" ref={scrollRef}>
           {items.map(product => (
-            <Card
-              key={product.id}
-              product={product}
-              colorCache={colorCache}
-              setColorCache={setColorCache}
-            />
+            <Card key={product.id} product={product} />
           ))}
         </div>
 
@@ -205,8 +200,8 @@ export default function TrendingNow({ products = [] }) {
 
         /* ✅ কার্ডের সাইজ (ফ্যাশন ব্র্যান্ডের মতো সরু ও লম্বা) */
         .trending-card {
-          flex: 0 0 75vw;
-          max-width: 480px;
+          flex: 0 0 72vw; 
+          max-width: 360px;
           scroll-snap-align: start;
         }
 
@@ -261,7 +256,7 @@ export default function TrendingNow({ products = [] }) {
 
         @media (min-width: 640px) {
           .tn-scroll { gap: 20px; scroll-padding-left: 32px; padding: 0 32px 20px; }
-          .trending-card { flex: 0 0 50vw; max-width: 420px; }
+          .trending-card { flex: 0 0 45vw; max-width: 320px; }
         }
 
         @media (min-width: 768px) {
@@ -290,9 +285,9 @@ function Skeleton() {
       <div className="tn-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
       <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px' }}>
         {[...Array(3)].map((_, i) => (
-          <div key={i} style={{ flex: '0 0 75vw', maxWidth: 480 }}>
+          <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360 }}>
             <div style={{ aspectRatio: '3/4', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-            <div style={{ padding: '20px 0', textAlign: 'center' }}>
+            <div style={{ padding: '16px 0', textAlign: 'center' }}>
               <div style={{ height: 14, background: '#e5e5ea', width: '60%', margin: '0 auto', borderRadius: 4 }} />
             </div>
           </div>
@@ -313,114 +308,113 @@ function Empty() {
   );
 }
 
-function Card({ product, colorCache, setColorCache }) {
-  const [colors, setColors] = useState([]);
-  const [currentImage, setCurrentImage] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const startX = useRef(0);
-  const didSwipe = useRef(false);
-
+function Card({ product }) {
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
   const mainImg = product.img || product.image || product.image_url || '/placeholder.png';
 
-  const getAll = () => {
-    const imgs = [];
-    if (mainImg !== '/placeholder.png') imgs.push(mainImg);
-    colors.forEach(c => { if (c.color_image?.trim() && !imgs.includes(c.color_image)) imgs.push(c.color_image); });
-    return imgs;
-  };
-  const allImages = getAll();
-  const total = allImages.length;
-
-  useEffect(() => {
-    if (colorCache[slug]) { setColors(colorCache[slug]); return; }
-    fetch(`/api/product-colors?slug=${slug}`).then(r => r.json()).then(d => {
-      setColors(d || []);
-      setColorCache(prev => ({ ...prev, [slug]: d || [] }));
-    }).catch(() => {});
-  }, [slug]);
-
-  const navigate = (i) => { if (i >= 0 && i < total) { setCurrentImage(i); setDragOffset(0); } };
-  const onTS = (e) => { startX.current = e.touches[0].clientX; didSwipe.current = false; setIsDragging(true); };
-  const onTM = (e) => {
-    if (!isDragging) return;
-    const diff = e.touches[0].clientX - startX.current;
-    if (Math.abs(diff) > 8) { e.preventDefault(); didSwipe.current = true; }
-    setDragOffset(diff);
-  };
-  const onTE = () => {
-    setIsDragging(false);
-    if (Math.abs(dragOffset) > 60) dragOffset < 0 && currentImage < total - 1 ? navigate(currentImage + 1) : dragOffset > 0 && currentImage > 0 ? navigate(currentImage - 1) : null;
-    setDragOffset(0);
-  };
-
   return (
-    <div className="trending-card" style={{ position: 'relative', background: '#fff', cursor: 'pointer', overflow: 'hidden', touchAction: 'pan-y', userSelect: 'none' }}
-      onTouchStart={total > 1 ? onTS : undefined}
-      onTouchMove={total > 1 ? onTM : undefined}
-      onTouchEnd={total > 1 ? onTE : undefined}
-    >
-      <Link href={`/product/${slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={(e) => { if (didSwipe.current) { e.preventDefault(); e.stopPropagation(); didSwipe.current = false; } }}>
+    <div className="trending-card">
+      <Link href={`/product/${slug}`} className="card-link">
         
-        {/* ✅ বড় এবং ফ্যাশন ব্র্যান্ডের মতো ইমেজ */}
-        <div style={{ position: 'relative', aspectRatio: '3/4', background: '#f7f7f7', overflow: 'hidden' }}>
-          {allImages.map((img, i) => (
-            <img key={i} src={img} alt={product.title || ''} style={{
-              position: 'absolute', top: 0,
-              left: isDragging ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)` : `${(i - currentImage) * 100}%`,
-              width: '100%', height: '100%', 
-              objectFit: 'cover',
-              objectPosition: 'center top', // ✅ ছবির উপরের অংশ (মাথা/পোশাক) কাটা যাবে না
-              transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)', willChange: 'left',
-              zIndex: i === currentImage ? 2 : 1
-            }} />
-          ))}
-          
+        {/* ✅ নিখুঁত সাইজের ইমেজ (অপশন পজিশন ঠিক করা হয়েছে) */}
+        <div className="image-wrap">
+          <img 
+            src={mainImg} 
+            alt={product.title || 'Product'} 
+            className="product-image" 
+            loading="lazy" 
+          />
           {isOut && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
-              <span style={{ background: '#1a1a1a', color: '#fff', fontFamily: "'Sora', 'Inter', sans-serif", fontWeight: 500, fontSize: 11, textTransform: 'uppercase', padding: '8px 16px', letterSpacing: '0.14em' }}>Sold Out</span>
-            </div>
-          )}
-          
-          {total > 1 && (
-            <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
-              {allImages.map((_, i) => (
-                <span key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(i); }} style={{ width: i === currentImage ? 8 : 6, height: i === currentImage ? 8 : 6, borderRadius: '50%', background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)', cursor: 'pointer', transition: 'all 0.35s ease', boxShadow: '0 0 4px rgba(0,0,0,0.1)' }} />
-              ))}
+            <div className="soldout-overlay">
+              <span className="soldout-badge">Sold Out</span>
             </div>
           )}
         </div>
 
-        {/* ✅ বিশ্ব বিখ্যাত ফ্যাশন ব্র্যান্ডের মতো মিনিমাল টাইটেল */}
-        <div style={{ padding: '16px 4px 4px', textAlign: 'center' }}>
-          <h3 style={{ 
-            fontFamily: "'Sora', 'Manrope', 'Inter', sans-serif", 
-            fontWeight: 400, 
-            fontSize: 13, 
-            letterSpacing: '0.16em', 
-            textTransform: 'uppercase', 
-            color: '#1a1a1a', 
-            margin: 0, 
-            lineHeight: 1.4, 
-            whiteSpace: 'nowrap', 
-            overflow: 'hidden', 
-            textOverflow: 'ellipsis' 
-          }}>
-            {product.title}
-          </h3>
+        {/* ✅ বিশ্ব বিখ্যাত ব্র্যান্ডের মতো মিনিমাল টাইটেল */}
+        <div className="info-wrap">
+          <h3 className="product-title">{product.title}</h3>
         </div>
       </Link>
 
       <style jsx>{`
-        .trending-card:active { transform: scale(0.98); }
-        @media (hover: hover) { 
-          .trending-card:hover { transform: translateY(-4px); z-index: 2; box-shadow: 0 12px 30px rgba(0,0,0,0.1); } 
+        .trending-card {
+          width: 100%;
         }
+        
+        .card-link {
+          display: flex;
+          flex-direction: column;
+          text-decoration: none;
+          color: inherit;
+          width: 100%;
+        }
+
+        .image-wrap {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 3/4; /* ✅ ৩:৪ রেশিও (ফ্যাশন ব্র্যান্ড স্ট্যান্ডার্ড) */
+          background: #f7f7f7;
+          overflow: hidden;
+        }
+
+        .product-image {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center top; /* ✅ ছবির উপরের অংশ ফোকাসে থাকবে */
+          display: block;
+          transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        /* হোভার করলে সুন্দর জুম ইফেক্ট */
+        .card-link:hover .product-image {
+          transform: scale(1.04);
+        }
+
+        .soldout-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(255, 255, 255, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 2;
+        }
+
+        .soldout-badge {
+          background: #1a1a1a;
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          padding: 8px 16px;
+        }
+
+        .info-wrap {
+          padding: 16px 8px 4px;
+          text-align: center;
+        }
+
+        .product-title {
+          font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
+          font-size: 12px;
+          font-weight: 500;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          color: #1a1a1a;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
         @media (min-width: 768px) {
-          .trending-card div { padding-top: 20px !important; }
-          .trending-card h3 { font-size: 14px !important; }
+          .info-wrap { padding: 20px 8px 4px; }
+          .product-title { font-size: 13px; }
         }
       `}</style>
     </div>
