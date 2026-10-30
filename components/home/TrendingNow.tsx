@@ -12,6 +12,10 @@ export default function TrendingNow({ products = [] }) {
   const [isScrollable, setIsScrollable] = useState(false);
   const [colorCache, setColorCache] = useState({}); 
   const scrollRef = useRef(null);
+  
+  // ✅ অটো-স্ক্রল কন্ট্রোল করার জন্য নতুন রেফ
+  const autoScrollRef = useRef(null);
+  const userInteractedRef = useRef(false);
 
   const maxProducts = 8;
 
@@ -79,7 +83,43 @@ export default function TrendingNow({ products = [] }) {
     };
   }, [items]);
 
+  // ✅ অটোমেটিক স্ক্রলিং লজিক (শুধুমাত্র প্রথমবার)
+  useEffect(() => {
+    // যদি লোডিং শেষ হয়, প্রোডাক্ট থাকে এবং ইউজার আগে টাচ না করে থাকে
+    if (loading || items.length === 0 || userInteractedRef.current) return;
+    
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) return; // যদি স্ক্রল করার মতো জায়গা না থাকে
+
+    autoScrollRef.current = setInterval(() => {
+      // যখন একদম শেষে পৌঁছে যাবে, তখন বন্ধ হয়ে যাবে
+      if (el.scrollLeft >= maxScroll - 1) {
+        clearInterval(autoScrollRef.current);
+        return;
+      }
+      // আস্তে আস্তে ডান থেকে বামে স্ক্রল হবে (1.5 পিক্সেল প্রতি 20ms)
+      el.scrollLeft += 1.5; 
+    }, 20);
+
+    return () => {
+      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
+    };
+  }, [loading, items]);
+
+  // ✅ ইউজার ইন্টারঅ্যাক্ট করলে অটো-স্ক্রল বন্ধ করার ফাংশন
+  const stopAutoScroll = () => {
+    userInteractedRef.current = true;
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current);
+      autoScrollRef.current = null;
+    }
+  };
+
   const scrollByCards = (direction) => {
+    stopAutoScroll(); // অ্যারো ক্লিক করলেও অটো স্ক্রল বন্ধ হবে
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.trending-card');
@@ -120,8 +160,14 @@ export default function TrendingNow({ products = [] }) {
           </button>
         )}
 
-        {/* ✅ স্লাইডার কন্টেইনার */}
-        <div className="tn-scroll" ref={scrollRef}>
+        {/* ✅ স্লাইডার কন্টেইনার (এখানে ইউজার ইন্টারঅ্যাকশন লিসেনার যুক্ত করা হয়েছে) */}
+        <div 
+          className="tn-scroll" 
+          ref={scrollRef}
+          onTouchStart={stopAutoScroll}
+          onMouseDown={stopAutoScroll}
+          onWheel={stopAutoScroll}
+        >
           {items.map((product) => (
             <Card 
               key={product.id} 
@@ -154,7 +200,6 @@ export default function TrendingNow({ products = [] }) {
           overflow: hidden;
         }
 
-        /* ✅ হেডার ইমেজ */
         .tn-header {
           width: 100%;
           height: 120px;
@@ -187,15 +232,17 @@ export default function TrendingNow({ products = [] }) {
           display: block;
         }
 
-        /* ✅ স্লাইডার কন্টেইনার */
         .tn-scroll-wrap {
           position: relative;
         }
+
+        /* ✅ অটো স্ক্রল ঠিকভাবে কাজ করার জন্য scroll-snap-type: none দেওয়া হলো। 
+           ইউজার টাচ করার পর আমরা চাইলে এটা চেঞ্জ করতে পারি, কিন্তু স্মুথ ফিলের জন্য none ভালো কাজ করে। */
         .tn-scroll {
           display: flex;
           gap: 16px;
           overflow-x: auto;
-          scroll-snap-type: x mandatory;
+          scroll-snap-type: none; 
           scroll-padding-left: 24px;
           padding: 0 24px 20px;
           -webkit-overflow-scrolling: touch;
@@ -204,7 +251,6 @@ export default function TrendingNow({ products = [] }) {
         }
         .tn-scroll::-webkit-scrollbar { display: none; }
 
-        /* ✅ কার্ডের সাইজ */
         .trending-card {
           flex: 0 0 72vw; 
           max-width: 360px;
@@ -214,7 +260,6 @@ export default function TrendingNow({ products = [] }) {
           flex-shrink: 0;
         }
 
-        /* ✅ ট্রেন লাইন প্রগ্রেস বার */
         .tn-track-container {
           width: 100%;
           padding: 30px 20px 0;
@@ -236,7 +281,6 @@ export default function TrendingNow({ products = [] }) {
           will-change: transform;
         }
 
-        /* ✅ ডেস্কটপ অ্যারো */
         .tn-arrow {
           position: absolute;
           top: 45%;
@@ -288,6 +332,7 @@ export default function TrendingNow({ products = [] }) {
   );
 }
 
+// Skeleton, Empty, এবং Card কম্পোনেন্ট আগের মতোই থাকবে...
 function Skeleton() {
   return (
     <section className="tn-section" style={{ padding: '40px 0' }}>
@@ -330,7 +375,6 @@ function Card({ product, colorCache, setColorCache }) {
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
 
-  // ✅ কালার ফেচ করার লজিক
   useEffect(() => {
     if (colorCache[slug]) {
       setColors(colorCache[slug]);
@@ -345,7 +389,6 @@ function Card({ product, colorCache, setColorCache }) {
       .catch(() => {});
   }, [slug, colorCache, setColorCache]);
 
-  // ✅ সব ইমেজ একসাথে করা (মেইন ইমেজ + কালার ইমেজ)
   const allImages = useMemo(() => {
     const imgs = [];
     const main = product.img || product.image || product.image_url;
@@ -360,11 +403,10 @@ function Card({ product, colorCache, setColorCache }) {
     return imgs.length > 0 ? imgs : ['/placeholder.png'];
   }, [product, colors]);
 
-  // ✅ স্ক্রিনে দৃশ্যমান কিনা তা চেক করা (Intersection Observer)
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setIsInView(entry.isIntersecting),
-      { threshold: 0.5 } // ৫০% দৃশ্যমান হলে ট্রিগার হবে
+      { threshold: 0.5 } 
     );
     
     if (cardRef.current) observer.observe(cardRef.current);
@@ -372,15 +414,13 @@ function Card({ product, colorCache, setColorCache }) {
     return () => observer.disconnect();
   }, []);
 
-  // ✅ অটোমেটিক ইমেজ স্লাইডিং লজিক (প্রতি ৩ সেকেন্ড পর পর)
   useEffect(() => {
     let interval;
     
-    // যদি স্ক্রিনে থাকে এবং একাধিক ছবি থাকে, তবেই স্লাইড শুরু হবে
     if (isInView && allImages.length > 1) {
       interval = setInterval(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
-      }, 3000); // ৩০০০ মিলি সেকেন্ড = ৩ সেকেন্ড
+      }, 3000);
     }
     
     return () => {
@@ -391,11 +431,7 @@ function Card({ product, colorCache, setColorCache }) {
   return (
     <div className="trending-card" ref={cardRef}>
       <Link href={`/product/${slug}`} className="card-link">
-        
-        {/* ✅ ইমেজ বক্স */}
         <div className="image-wrap">
-          
-          {/* ✅ মাল্টিপল ইমেজ স্লাইডার (Crossfade Effect) */}
           {allImages.map((img, idx) => (
             <img 
               key={idx}
@@ -417,7 +453,6 @@ function Card({ product, colorCache, setColorCache }) {
           )}
         </div>
 
-        {/* ✅ ইনফো (টাইটেল + কালার বক্স) */}
         <div className="info-wrap">
           <h3 className="product-title">{product.title}</h3>
           
@@ -463,7 +498,6 @@ function Card({ product, colorCache, setColorCache }) {
           box-sizing: border-box;
         }
 
-        /* ✅ মাল্টিপল ইমেজের জন্য CSS */
         .product-image {
           position: absolute;
           top: 0;
@@ -497,7 +531,7 @@ function Card({ product, colorCache, setColorCache }) {
           justify-content: center;
           opacity: 0;
           transition: opacity 0.4s ease;
-          z-index: 3; /* Overlay ইমেজের উপরে থাকবে */
+          z-index: 3; 
         }
 
         .explore-text {
