@@ -222,7 +222,7 @@ export default function NewArrivals({ products = [] }) {
 
         .na-header {
           width: 100%;
-          height: 180px;
+          height: 260px;
           margin: 30px 0 40px;
           background: #fff;
           display: block;
@@ -356,8 +356,8 @@ export default function NewArrivals({ products = [] }) {
             padding: 0 0 60px;
           }
           .na-header {
-            height: 280px;
-            margin: 40px 0 50px;
+            height: 420px;
+            margin: 40px 0 60px;
           }
           .na-scroll {
             gap: 24px;
@@ -384,7 +384,8 @@ export default function NewArrivals({ products = [] }) {
 
         @media (min-width: 1024px) {
           .na-header {
-            height: 380px;
+            height: 560px;
+            margin: 50px 0 70px;
           }
           .na-card {
             flex: 0 0 360px;
