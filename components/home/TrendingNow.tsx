@@ -10,6 +10,7 @@ export default function TrendingNow({ products = [] }) {
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrollable, setIsScrollable] = useState(false);
+  const [colorCache, setColorCache] = useState({}); // ✅ কালার ক্যাশ করার জন্য নতুন স্টেট
   const scrollRef = useRef(null);
 
   const maxProducts = 8;
@@ -122,7 +123,12 @@ export default function TrendingNow({ products = [] }) {
         {/* ✅ স্লাইডার কন্টেইনার */}
         <div className="tn-scroll" ref={scrollRef}>
           {items.map((product) => (
-            <Card key={product.id} product={product} />
+            <Card 
+              key={product.id} 
+              product={product} 
+              colorCache={colorCache} 
+              setColorCache={setColorCache} 
+            />
           ))}
         </div>
 
@@ -290,8 +296,12 @@ function Skeleton() {
         {[...Array(3)].map((_, i) => (
           <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360, display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'relative', width: '100%', paddingBottom: '133.3333%', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-            <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 4px' }}>
+            <div style={{ padding: '16px 4px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
               <div style={{ height: 14, background: '#e5e5ea', width: '60%', borderRadius: 4 }} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ height: 10, background: '#e5e5ea', width: 10, borderRadius: 0 }} />
+                <div style={{ height: 10, background: '#e5e5ea', width: 10, borderRadius: 0 }} />
+              </div>
             </div>
           </div>
         ))}
@@ -311,16 +321,33 @@ function Empty() {
   );
 }
 
-function Card({ product }) {
+function Card({ product, colorCache, setColorCache }) {
+  const [colors, setColors] = useState([]);
+  
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
   const mainImg = product.img || product.image || product.image_url || '/placeholder.png';
+
+  // ✅ কালার ফেচ করার লজিক
+  useEffect(() => {
+    if (colorCache[slug]) {
+      setColors(colorCache[slug]);
+      return;
+    }
+    fetch(`/api/product-colors?slug=${slug}`)
+      .then(r => r.json())
+      .then(d => {
+        setColors(d || []);
+        setColorCache(prev => ({ ...prev, [slug]: d || [] }));
+      })
+      .catch(() => {});
+  }, [slug, colorCache, setColorCache]);
 
   return (
     <div className="trending-card">
       <Link href={`/product/${slug}`} className="card-link">
         
-        {/* ✅ ইমেজ বক্স: padding-bottom ট্রিক দিয়ে সাইজ ১০০% লক করা হয়েছে */}
+        {/* ✅ ইমেজ বক্স */}
         <div className="image-wrap">
           <img 
             src={mainImg} 
@@ -339,9 +366,23 @@ function Card({ product }) {
           )}
         </div>
 
-        {/* ✅ ইনফো (শুধুমাত্র টাইটেল) */}
+        {/* ✅ ইনফো (টাইটেল + কালার বক্স) */}
         <div className="info-wrap">
           <h3 className="product-title">{product.title}</h3>
+          
+          {/* ✅ একাধিক কালার থাকলে ছোট বর্গাকার বক্স দেখাবে */}
+          {colors.length > 1 && (
+            <div className="color-swatches">
+              {colors.map((c, i) => (
+                <span 
+                  key={i} 
+                  className="color-swatch-box" 
+                  style={{ backgroundColor: c.color_code || '#ccc' }}
+                  title={c.color_name}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </Link>
 
@@ -361,11 +402,11 @@ function Card({ product }) {
           width: 100%;
         }
 
-        /* ✅ ইমেজ বক্স: padding-bottom ট্রিক (100% নির্ভুল সাইজ) */
+        /* ✅ ইমেজ বক্স: ১০০% নির্ভুল সাইজ */
         .image-wrap {
           position: relative;
           width: 100%;
-          padding-bottom: 133.3333%; /* ✅ 3:4 Aspect Ratio */
+          padding-bottom: 133.3333%;
           background: #f7f7f7;
           overflow: hidden;
           border: 1px solid #f0f0f0; 
@@ -373,7 +414,6 @@ function Card({ product }) {
           box-sizing: border-box;
         }
 
-        /* ✅ ইমেজ: একদম নিখুঁত ফিট */
         .product-image {
           position: absolute;
           top: 0;
@@ -443,15 +483,16 @@ function Card({ product }) {
           padding: 8px 16px;
         }
 
-        /* ✅ ইনফো স্টাইল (Fixed Height, Centered) */
+        /* ✅ ইনফো স্টাইল (টাইটেল + কালার বক্স) */
         .info-wrap {
-          height: 56px;
-          padding: 0 4px;
+          padding: 16px 4px 20px;
           display: flex;
+          flex-direction: column;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
           box-sizing: border-box;
+          gap: 8px; /* টাইটেল এবং কালার বক্সের মাঝে গ্যাপ */
         }
 
         .product-title {
@@ -469,9 +510,26 @@ function Card({ product }) {
           width: 100%;
         }
 
+        /* ✅ কালার বক্সের স্টাইল (বর্গাকার) */
+        .color-swatches {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 5px;
+        }
+
+        .color-swatch-box {
+          width: 10px;
+          height: 10px;
+          border-radius: 0; /* বর্গাকার (Square) */
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          display: block;
+        }
+
         @media (min-width: 768px) {
-          .info-wrap { height: 64px; }
+          .info-wrap { padding: 20px 4px 24px; }
           .product-title { font-size: 12px; }
+          .color-swatch-box { width: 12px; height: 12px; }
         }
       `}</style>
     </div>
