@@ -384,11 +384,18 @@ export default function NewArrivals({ products = [] }) {
 
         @media (min-width: 1024px) {
           .na-header {
-            height: 560px;
-            margin: 50px 0 70px;
+            height: 720px;
+            margin: 60px 0 80px;
           }
           .na-card {
             flex: 0 0 360px;
+          }
+        }
+
+        @media (min-width: 1440px) {
+          .na-header {
+            height: 850px;
+            margin: 70px 0 90px;
           }
         }
       `}</style>
