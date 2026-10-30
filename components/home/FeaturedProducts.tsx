@@ -6,16 +6,6 @@ import Link from 'next/link';
 export default function FeaturedProducts({ products = [] }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [canScrollLeft, setCanScrollLeft] = useState(false);
-  const [canScrollRight, setCanScrollRight] = useState(false);
-  const [scrollProgress, setScrollProgress] = useState(0);
-  const [isScrollable, setIsScrollable] = useState(false);
-  const [colorCache, setColorCache] = useState({});
-  
-  const scrollRef = useRef(null);
-  const autoScrollRef = useRef(null);
-  const userInteractedRef = useRef(false);
-
   const maxProducts = 8;
 
   useEffect(() => {
@@ -41,81 +31,8 @@ export default function FeaturedProducts({ products = [] }) {
     } else fetchItems();
   }, [products]);
 
-  // Scroll Tracking Logic
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const update = () => {
-      setCanScrollLeft(el.scrollLeft > 2);
-      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
-      const maxScroll = el.scrollWidth - el.clientWidth;
-      setIsScrollable(maxScroll > 2);
-      if (maxScroll > 0) {
-        const raw = el.scrollLeft / maxScroll;
-        setScrollProgress(Math.min(1, Math.max(0, raw)));
-      } else {
-        setScrollProgress(0);
-      }
-    };
-
-    update();
-    el.addEventListener('scroll', update, { passive: true });
-    window.addEventListener('resize', update);
-    const raf = requestAnimationFrame(update);
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-
-    return () => {
-      el.removeEventListener('scroll', update);
-      window.removeEventListener('resize', update);
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-    };
-  }, [items]);
-
-  // ✅ অটোমেটিক স্ক্রলিং লজিক
-  useEffect(() => {
-    if (loading || items.length === 0 || userInteractedRef.current) return;
-    const el = scrollRef.current;
-    if (!el) return;
-
-    const maxScroll = el.scrollWidth - el.clientWidth;
-    if (maxScroll <= 0) return; 
-
-    autoScrollRef.current = setInterval(() => {
-      if (el.scrollLeft >= maxScroll - 1) {
-        clearInterval(autoScrollRef.current);
-        return;
-      }
-      el.scrollLeft += 1.5; 
-    }, 20);
-
-    return () => {
-      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
-    };
-  }, [loading, items]);
-
-  const stopAutoScroll = () => {
-    userInteractedRef.current = true;
-    if (autoScrollRef.current) {
-      clearInterval(autoScrollRef.current);
-      autoScrollRef.current = null;
-    }
-  };
-
-  const scrollByCards = (direction) => {
-    stopAutoScroll(); 
-    const el = scrollRef.current;
-    if (!el) return;
-    const card = el.querySelector('.fp-card');
-    const cardW = card ? card.offsetWidth : 500;
-    const gap = 16; 
-    el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
-  };
-
-  if (loading) return <Skeleton />;
-  if (!items.length) return <Empty />;
+  if (loading) return <SectionSkeleton />;
+  if (!items.length) return <EmptyState />;
 
   return (
     <section className="fp-section">
@@ -129,53 +46,12 @@ export default function FeaturedProducts({ products = [] }) {
         />
       </div>
 
-      <div className="fp-scroll-wrap">
-        {canScrollLeft && (
-          <button className="fp-arrow fp-arrow-left" onClick={() => scrollByCards(-1)} aria-label="Previous">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-        )}
-
-        {canScrollRight && (
-          <button className="fp-arrow fp-arrow-right" onClick={() => scrollByCards(1)} aria-label="Next">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        )}
-
-        <div 
-          className="fp-scroll" 
-          ref={scrollRef}
-          onTouchStart={stopAutoScroll}
-          onMouseDown={stopAutoScroll}
-          onWheel={stopAutoScroll}
-        >
-          {items.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              colorCache={colorCache} 
-              setColorCache={setColorCache} 
-            />
+      <div className="fp-grid-wrap">
+        <div className="fp-grid">
+          {items.map(p => (
+            <ProductCard key={p.id} product={p} />
           ))}
         </div>
-
-        {isScrollable && (
-          <div className="fp-track-container">
-            <div className="fp-track-line">
-              <div
-                className="fp-train-thumb"
-                style={{
-                  left: `${scrollProgress * 100}%`,
-                  transform: `translateX(-${scrollProgress * 100}%)`,
-                }}
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       <style jsx>{`
@@ -185,6 +61,7 @@ export default function FeaturedProducts({ products = [] }) {
           overflow: hidden;
         }
 
+        /* ✅ হেডার ইমেজ */
         .fp-header {
           width: 100%;
           height: 120px;
@@ -217,111 +94,53 @@ export default function FeaturedProducts({ products = [] }) {
           display: block;
         }
 
-        .fp-scroll-wrap {
-          position: relative;
+        /* ✅ গ্রিড কন্টেইনার */
+        .fp-grid-wrap {
+          padding: 0 24px;
+          max-width: 1400px;
+          margin: 0 auto;
         }
 
-        .fp-scroll {
-          display: flex;
+        .fp-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr); /* মোবাইলে ২টি */
           gap: 16px;
-          overflow-x: auto;
-          scroll-snap-type: none; 
-          scroll-padding-left: 24px;
-          padding: 0 24px 20px;
-          -webkit-overflow-scrolling: touch;
-          scrollbar-width: none;
-          align-items: stretch;
         }
-        .fp-scroll::-webkit-scrollbar { display: none; }
-
-        .fp-card {
-          flex: 0 0 72vw; 
-          max-width: 360px;
-          scroll-snap-align: start;
-          display: flex; 
-          flex-direction: column;
-          flex-shrink: 0;
-        }
-
-        .fp-track-container {
-          width: 100%;
-          padding: 30px 20px 0;
-        }
-        .fp-track-line {
-          width: 100%;
-          height: 1.5px;
-          background-color: #e0e0e0;
-          position: relative;
-          overflow: hidden;
-        }
-        .fp-train-thumb {
-          position: absolute;
-          top: 0;
-          left: 0;
-          height: 100%;
-          width: 80px;
-          background-color: #1a1a1a;
-          will-change: transform;
-        }
-
-        .fp-arrow {
-          position: absolute;
-          top: 45%;
-          transform: translateY(-50%);
-          z-index: 10;
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background: #ffffff;
-          border: 1px solid #e5e5e5;
-          display: none;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          color: #1a1a1a;
-          transition: all 0.2s ease;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-        .fp-arrow:hover {
-          background: #1a1a1a;
-          color: #fff;
-          border-color: #1a1a1a;
-        }
-        .fp-arrow-left { left: 24px; }
-        .fp-arrow-right { right: 24px; }
 
         @media (min-width: 640px) {
-          .fp-scroll { gap: 20px; scroll-padding-left: 32px; padding: 0 32px 20px; }
-          .fp-card { flex: 0 0 45vw; max-width: 320px; }
+          .fp-grid { gap: 20px; }
+          .fp-grid-wrap { padding: 0 32px; }
         }
 
         @media (min-width: 768px) {
           .fp-section { padding: 0 0 60px; }
           .fp-header { height: 180px; margin: 30px 0 40px; }
-          .fp-scroll { gap: 24px; scroll-padding-left: 48px; padding: 0 48px 24px; }
-          .fp-card { flex: 0 0 320px; max-width: none; }
-          .fp-arrow { display: flex; }
-          .fp-arrow-left { left: 32px; }
-          .fp-arrow-right { right: 32px; }
-          .fp-track-container { padding: 35px 48px 0; }
+          .fp-grid-wrap { padding: 0 48px; }
+          .fp-grid {
+            grid-template-columns: repeat(3, 1fr); /* ট্যাবে ৩টি */
+            gap: 24px;
+          }
         }
 
         @media (min-width: 1024px) {
           .fp-header { height: 240px; }
-          .fp-card { flex: 0 0 360px; }
+          .fp-grid {
+            grid-template-columns: repeat(4, 1fr); /* ডেক্সটপে ৪টি */
+            gap: 24px;
+          }
         }
       `}</style>
     </section>
   );
 }
 
-function Skeleton() {
+function SectionSkeleton() {
   return (
     <section className="fp-section" style={{ padding: '40px 0' }}>
       <div className="fp-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
-      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px', alignItems: 'stretch' }}>
-        {[...Array(3)].map((_, i) => (
-          <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, padding: '0 24px' }}>
+        {[...Array(4)].map((_, i) => (
+          <div key={i} style={{ display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'relative', width: '100%', paddingBottom: '133.3333%', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
             <div style={{ padding: '16px 4px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
               <div style={{ height: 14, background: '#e5e5ea', width: '60%', borderRadius: 4 }} />
@@ -338,7 +157,7 @@ function Skeleton() {
   );
 }
 
-function Empty() {
+function EmptyState() {
   return (
     <section className="fp-section" style={{ padding: '60px 0' }}>
       <div style={{ textAlign: 'center', maxWidth: 400, margin: '0 auto' }}>
@@ -348,7 +167,7 @@ function Empty() {
   );
 }
 
-function ProductCard({ product, colorCache, setColorCache }) {
+function ProductCard({ product }) {
   const [colors, setColors] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isInView, setIsInView] = useState(false);
@@ -357,22 +176,26 @@ function ProductCard({ product, colorCache, setColorCache }) {
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
 
+  // ✅ কালার ফেচ
   useEffect(() => {
-    if (colorCache[slug]) { setColors(colorCache[slug]); return; }
-    fetch(`/api/product-colors?slug=${slug}`).then(r => r.json()).then(d => {
-      setColors(d || []);
-      setColorCache(prev => ({ ...prev, [slug]: d || [] }));
-    }).catch(() => {});
-  }, [slug, colorCache, setColorCache]);
+    fetch(`/api/product-colors?slug=${slug}`)
+      .then(r => r.json())
+      .then(d => setColors(d || []))
+      .catch(() => {});
+  }, [slug]);
 
+  // ✅ সব ইমেজ
   const allImages = useMemo(() => {
     const imgs = [];
     const main = product.img || product.image || product.image_url;
     if (main) imgs.push(main);
-    colors.forEach(c => { if (c.color_image && !imgs.includes(c.color_image)) imgs.push(c.color_image); });
+    colors.forEach(c => {
+      if (c.color_image && !imgs.includes(c.color_image)) imgs.push(c.color_image);
+    });
     return imgs.length > 0 ? imgs : ['/placeholder.png'];
   }, [product, colors]);
 
+  // ✅ স্ক্রিনে দৃশ্যমান কিনা
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => setIsInView(entry.isIntersecting),
@@ -382,17 +205,15 @@ function ProductCard({ product, colorCache, setColorCache }) {
     return () => observer.disconnect();
   }, []);
 
-  // ✅ ইমেজ পরিবর্তনের সময় ২ সেকেন্ড
+  // ✅ অটো ইমেজ চেঞ্জ (প্রতি ২ সেকেন্ড)
   useEffect(() => {
     let interval;
     if (isInView && allImages.length > 1) {
       interval = setInterval(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
-      }, 2000); 
+      }, 2000);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
+    return () => { if (interval) clearInterval(interval); };
   }, [isInView, allImages.length]);
 
   return (
@@ -424,6 +245,7 @@ function ProductCard({ product, colorCache, setColorCache }) {
         <div className="fp-info">
           <h3 className="fp-title">{product.title}</h3>
           
+          {/* ✅ কালার বক্স (বর্গাকার) */}
           {colors.length > 1 && (
             <div className="color-swatches">
               {colors.map((c, i) => (
@@ -560,7 +382,6 @@ function ProductCard({ product, colorCache, setColorCache }) {
           width: 100%;
         }
 
-        /* ✅ কালার বক্স (বর্গাকার) */
         .color-swatches {
           display: flex;
           flex-wrap: wrap;
