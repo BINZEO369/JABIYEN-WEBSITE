@@ -1,12 +1,21 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 
 export default function FeaturedProducts({ products = [] }) {
   const [items, setItems] = useState([]);
-  const [colorCache, setColorCache] = useState({});
   const [loading, setLoading] = useState(true);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isScrollable, setIsScrollable] = useState(false);
+  const [colorCache, setColorCache] = useState({});
+  
+  const scrollRef = useRef(null);
+  const autoScrollRef = useRef(null);
+  const userInteractedRef = useRef(false);
+
   const maxProducts = 8;
 
   useEffect(() => {
@@ -32,44 +41,295 @@ export default function FeaturedProducts({ products = [] }) {
     } else fetchItems();
   }, [products]);
 
-  if (loading) return <SectionSkeleton title="Featured Products" />;
-  if (!items.length) return <EmptyState title="Featured Products" message="Curated picks coming soon — stay tuned" />;
+  // Scroll Tracking Logic
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const update = () => {
+      setCanScrollLeft(el.scrollLeft > 2);
+      setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+      const maxScroll = el.scrollWidth - el.clientWidth;
+      setIsScrollable(maxScroll > 2);
+      if (maxScroll > 0) {
+        const raw = el.scrollLeft / maxScroll;
+        setScrollProgress(Math.min(1, Math.max(0, raw)));
+      } else {
+        setScrollProgress(0);
+      }
+    };
+
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    const raf = requestAnimationFrame(update);
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+
+    return () => {
+      el.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [items]);
+
+  // ✅ অটোমেটিক স্ক্রলিং লজিক
+  useEffect(() => {
+    if (loading || items.length === 0 || userInteractedRef.current) return;
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const maxScroll = el.scrollWidth - el.clientWidth;
+    if (maxScroll <= 0) return; 
+
+    autoScrollRef.current = setInterval(() => {
+      if (el.scrollLeft >= maxScroll - 1) {
+        clearInterval(autoScrollRef.current);
+        return;
+      }
+      el.scrollLeft += 1.5; 
+    }, 20);
+
+    return () => {
+      if (autoScrollRef.current) clearInterval(autoScrollRef.current);
+    };
+  }, [loading, items]);
+
+  const stopAutoScroll = () => {
+    userInteractedRef.current = true;
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current);
+      autoScrollRef.current = null;
+    }
+  };
+
+  const scrollByCards = (direction) => {
+    stopAutoScroll(); 
+    const el = scrollRef.current;
+    if (!el) return;
+    const card = el.querySelector('.fp-card');
+    const cardW = card ? card.offsetWidth : 500;
+    const gap = 16; 
+    el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
+  };
+
+  if (loading) return <Skeleton />;
+  if (!items.length) return <Empty />;
 
   return (
-    <SectionWrapper title="Featured Products" bg="#fafafa">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }} className="fp-grid">
-        {items.map(p => <ProductCard key={p.id} product={p} colorCache={colorCache} setColorCache={setColorCache} />)}
+    <section className="fp-section">
+      {/* ✅ Full-width edge-to-edge header image */}
+      <div className="fp-header">
+        <img
+          src="/homesection/Featured.png"
+          alt="Featured Products"
+          className="fp-header-img"
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+        />
       </div>
-    </SectionWrapper>
-  );
-}
 
-function SectionWrapper({ title, bg = '#fff', children }) {
-  return (
-    <section style={{ padding: '32px 0', maxWidth: 1400, margin: '0 auto', background: bg }}>
-      <div style={{ textAlign: 'center', marginBottom: 20, padding: '0 8px' }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f', letterSpacing: '-0.3px' }}>{title}</h2>
+      <div className="fp-scroll-wrap">
+        {canScrollLeft && (
+          <button className="fp-arrow fp-arrow-left" onClick={() => scrollByCards(-1)} aria-label="Previous">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+          </button>
+        )}
+
+        {canScrollRight && (
+          <button className="fp-arrow fp-arrow-right" onClick={() => scrollByCards(1)} aria-label="Next">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        )}
+
+        <div 
+          className="fp-scroll" 
+          ref={scrollRef}
+          onTouchStart={stopAutoScroll}
+          onMouseDown={stopAutoScroll}
+          onWheel={stopAutoScroll}
+        >
+          {items.map((product) => (
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              colorCache={colorCache} 
+              setColorCache={setColorCache} 
+            />
+          ))}
+        </div>
+
+        {isScrollable && (
+          <div className="fp-track-container">
+            <div className="fp-track-line">
+              <div
+                className="fp-train-thumb"
+                style={{
+                  left: `${scrollProgress * 100}%`,
+                  transform: `translateX(-${scrollProgress * 100}%)`,
+                }}
+              />
+            </div>
+          </div>
+        )}
       </div>
-      {children}
+
       <style jsx>{`
-        @media (min-width: 768px) { .fp-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-        @media (min-width: 1024px) { .fp-grid { grid-template-columns: repeat(4, 1fr) !important; } }
+        .fp-section {
+          padding: 0 0 50px;
+          background: #fff;
+          overflow: hidden;
+        }
+
+        .fp-header {
+          width: 100%;
+          height: 120px;
+          margin: 20px 0 30px;
+          background: #fff;
+          display: block;
+          position: relative;
+        }
+
+        .fp-header::after {
+          content: '';
+          position: absolute;
+          bottom: 0; left: 0; right: 0;
+          height: 40%;
+          background: linear-gradient(
+            to top, 
+            rgba(255, 255, 255, 1) 0%, 
+            rgba(255, 255, 255, 0.6) 40%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          z-index: 2;
+          pointer-events: none;
+        }
+
+        .fp-header-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
+        }
+
+        .fp-scroll-wrap {
+          position: relative;
+        }
+
+        .fp-scroll {
+          display: flex;
+          gap: 16px;
+          overflow-x: auto;
+          scroll-snap-type: none; 
+          scroll-padding-left: 24px;
+          padding: 0 24px 20px;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none;
+          align-items: stretch;
+        }
+        .fp-scroll::-webkit-scrollbar { display: none; }
+
+        .fp-card {
+          flex: 0 0 72vw; 
+          max-width: 360px;
+          scroll-snap-align: start;
+          display: flex; 
+          flex-direction: column;
+          flex-shrink: 0;
+        }
+
+        .fp-track-container {
+          width: 100%;
+          padding: 30px 20px 0;
+        }
+        .fp-track-line {
+          width: 100%;
+          height: 1.5px;
+          background-color: #e0e0e0;
+          position: relative;
+          overflow: hidden;
+        }
+        .fp-train-thumb {
+          position: absolute;
+          top: 0;
+          left: 0;
+          height: 100%;
+          width: 80px;
+          background-color: #1a1a1a;
+          will-change: transform;
+        }
+
+        .fp-arrow {
+          position: absolute;
+          top: 45%;
+          transform: translateY(-50%);
+          z-index: 10;
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          background: #ffffff;
+          border: 1px solid #e5e5e5;
+          display: none;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          color: #1a1a1a;
+          transition: all 0.2s ease;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        .fp-arrow:hover {
+          background: #1a1a1a;
+          color: #fff;
+          border-color: #1a1a1a;
+        }
+        .fp-arrow-left { left: 24px; }
+        .fp-arrow-right { right: 24px; }
+
+        @media (min-width: 640px) {
+          .fp-scroll { gap: 20px; scroll-padding-left: 32px; padding: 0 32px 20px; }
+          .fp-card { flex: 0 0 45vw; max-width: 320px; }
+        }
+
+        @media (min-width: 768px) {
+          .fp-section { padding: 0 0 60px; }
+          .fp-header { height: 180px; margin: 30px 0 40px; }
+          .fp-scroll { gap: 24px; scroll-padding-left: 48px; padding: 0 48px 24px; }
+          .fp-card { flex: 0 0 320px; max-width: none; }
+          .fp-arrow { display: flex; }
+          .fp-arrow-left { left: 32px; }
+          .fp-arrow-right { right: 32px; }
+          .fp-track-container { padding: 35px 48px 0; }
+        }
+
+        @media (min-width: 1024px) {
+          .fp-header { height: 240px; }
+          .fp-card { flex: 0 0 360px; }
+        }
       `}</style>
     </section>
   );
 }
 
-function SectionSkeleton({ title }) {
+function Skeleton() {
   return (
-    <section style={{ padding: '32px 0', background: '#fafafa' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>{title}</h2>
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-        {[...Array(4)].map((_, i) => (
-          <div key={i} style={{ background: '#fff' }}>
-            <div style={{ aspectRatio: '4/5', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-            <div style={{ padding: '4px 6px' }}><div style={{ height: 13, background: '#e5e5ea', width: '85%', margin: '0 auto', borderRadius: 4 }} /></div>
+    <section className="fp-section" style={{ padding: '40px 0' }}>
+      <div className="fp-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
+      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px', alignItems: 'stretch' }}>
+        {[...Array(3)].map((_, i) => (
+          <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ position: 'relative', width: '100%', paddingBottom: '133.3333%', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
+            <div style={{ padding: '16px 4px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+              <div style={{ height: 14, background: '#e5e5ea', width: '60%', borderRadius: 4 }} />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ height: 10, background: '#e5e5ea', width: 10, borderRadius: 0 }} />
+                <div style={{ height: 10, background: '#e5e5ea', width: 10, borderRadius: 0 }} />
+              </div>
+            </div>
           </div>
         ))}
       </div>
@@ -78,18 +338,11 @@ function SectionSkeleton({ title }) {
   );
 }
 
-function EmptyState({ title, message }) {
+function Empty() {
   return (
-    <section style={{ padding: '32px 0', background: '#fafafa' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>{title}</h2>
-      </div>
-      <div style={{ textAlign: 'center', padding: '60px 20px', maxWidth: 400, margin: '0 auto' }}>
-        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.4 }}>
-          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-        </svg>
-        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#86868b' }}>No featured products right now</p>
-        <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#b0b0b5', marginTop: 6 }}>{message}</p>
+    <section className="fp-section" style={{ padding: '60px 0' }}>
+      <div style={{ textAlign: 'center', maxWidth: 400, margin: '0 auto' }}>
+        <p style={{ fontFamily: "'Sora', sans-serif", fontSize: 14, color: '#86868b', letterSpacing: '0.1em', textTransform: 'uppercase' }}>No featured products</p>
       </div>
     </section>
   );
@@ -97,24 +350,12 @@ function EmptyState({ title, message }) {
 
 function ProductCard({ product, colorCache, setColorCache }) {
   const [colors, setColors] = useState([]);
-  const [currentImage, setCurrentImage] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const startX = useRef(0);
-  const didSwipe = useRef(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef(null);
 
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
-  const mainImg = product.img || product.image || product.image_url || '/placeholder.png';
-
-  const getAllImages = () => {
-    const imgs = [];
-    if (mainImg !== '/placeholder.png') imgs.push(mainImg);
-    colors.forEach(c => { if (c.color_image?.trim() && !imgs.includes(c.color_image)) imgs.push(c.color_image); });
-    return imgs;
-  };
-  const allImages = getAllImages();
-  const totalImages = allImages.length;
 
   useEffect(() => {
     if (colorCache[slug]) { setColors(colorCache[slug]); return; }
@@ -122,69 +363,224 @@ function ProductCard({ product, colorCache, setColorCache }) {
       setColors(d || []);
       setColorCache(prev => ({ ...prev, [slug]: d || [] }));
     }).catch(() => {});
-  }, [slug]);
+  }, [slug, colorCache, setColorCache]);
 
-  const navigate = (i) => { if (i >= 0 && i < totalImages) { setCurrentImage(i); setDragOffset(0); } };
-  const onTouchStart = (e) => { startX.current = e.touches[0].clientX; didSwipe.current = false; setIsDragging(true); };
-  const onTouchMove = (e) => {
-    if (!isDragging) return;
-    const diff = e.touches[0].clientX - startX.current;
-    if (Math.abs(diff) > 8) { e.preventDefault(); didSwipe.current = true; }
-    setDragOffset(diff);
-  };
-  const onTouchEnd = () => {
-    setIsDragging(false);
-    if (Math.abs(dragOffset) > 60) dragOffset < 0 && currentImage < totalImages - 1 ? navigate(currentImage + 1) : dragOffset > 0 && currentImage > 0 ? navigate(currentImage - 1) : null;
-    setDragOffset(0);
-  };
+  const allImages = useMemo(() => {
+    const imgs = [];
+    const main = product.img || product.image || product.image_url;
+    if (main) imgs.push(main);
+    colors.forEach(c => { if (c.color_image && !imgs.includes(c.color_image)) imgs.push(c.color_image); });
+    return imgs.length > 0 ? imgs : ['/placeholder.png'];
+  }, [product, colors]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0.5 }
+    );
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, []);
+
+  // ✅ ইমেজ পরিবর্তনের সময় ২ সেকেন্ড
+  useEffect(() => {
+    let interval;
+    if (isInView && allImages.length > 1) {
+      interval = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
+      }, 2000); 
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isInView, allImages.length]);
 
   return (
-    <div style={{ position: 'relative', background: '#fff', cursor: 'pointer', overflow: 'hidden', transition: 'transform 0.3s' }}
-      className="fp-card"
-      onTouchStart={totalImages > 1 ? onTouchStart : undefined}
-      onTouchMove={totalImages > 1 ? onTouchMove : undefined}
-      onTouchEnd={totalImages > 1 ? onTouchEnd : undefined}
-    >
-      <Link href={`/product/${slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={(e) => { if (didSwipe.current) { e.preventDefault(); e.stopPropagation(); didSwipe.current = false; } }}>
-        <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f5f5f7', overflow: 'hidden', marginBottom: 6, touchAction: 'pan-y', userSelect: 'none' }}>
-          {allImages.map((img, i) => (
-            <img key={i} src={img} alt={product.title || ''}
-              style={{
-                position: 'absolute', top: 0,
-                left: isDragging ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)` : `${(i - currentImage) * 100}%`,
-                width: '100%', height: '100%', objectFit: 'cover',
-                transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)', willChange: 'left',
-                zIndex: i === currentImage ? 2 : 1
-              }} />
+    <div className="fp-card" ref={cardRef}>
+      <Link href={`/product/${slug}`} className="fp-card-link">
+        
+        <div className="fp-image-wrap">
+          {allImages.map((img, idx) => (
+            <img 
+              key={idx}
+              src={img} 
+              alt={`${product.title || 'Product'} - Image ${idx + 1}`} 
+              className="fp-image"
+              style={{ opacity: idx === currentImageIndex ? 1 : 0 }}
+            />
           ))}
+          
+          <div className="hover-overlay">
+            <span className="explore-text">Explore</span>
+          </div>
+
           {isOut && (
-            <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 6 }}>
-              <span style={{ background: '#1d1d1f', color: '#fff', fontFamily: "'Inter', sans-serif", fontWeight: 700, fontSize: 9, textTransform: 'uppercase', padding: '5px 14px' }}>Sold Out</span>
-            </div>
-          )}
-          {totalImages > 1 && (
-            <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
-              {allImages.map((_, i) => (
-                <span key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(i); }}
-                  style={{ width: i === currentImage ? 8 : 6, height: i === currentImage ? 8 : 6, borderRadius: '50%', background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)', cursor: 'pointer', transition: 'all 0.35s ease' }} />
-              ))}
+            <div className="fp-soldout-overlay">
+              <span className="fp-soldout-label">Sold Out</span>
             </div>
           )}
         </div>
-        <div style={{ padding: '4px 6px 6px' }}>
-          <h3 style={{ fontFamily: "'Inter', sans-serif", fontWeight: 600, fontSize: 12, color: '#1d1d1f', lineHeight: 1.35, textAlign: 'center', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', margin: 0 }}>{product.title}</h3>
-          {colors.length > 0 && (
-            <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+
+        <div className="fp-info">
+          <h3 className="fp-title">{product.title}</h3>
+          
+          {colors.length > 1 && (
+            <div className="color-swatches">
               {colors.map((c, i) => (
-                <span key={i} title={c.color_name} style={{ width: 11, height: 11, borderRadius: '50%', backgroundColor: c.color_code || '#ccc', border: '1px solid rgba(0,0,0,0.08)', cursor: 'pointer' }} />
+                <span 
+                  key={i} 
+                  className="color-swatch-box" 
+                  style={{ backgroundColor: c.color_code || '#ccc' }}
+                  title={c.color_name}
+                />
               ))}
             </div>
           )}
         </div>
       </Link>
+
       <style jsx>{`
-        .fp-card:active { transform: scale(0.98); }
-        @media (hover: hover) { .fp-card:hover { transform: translateY(-2px); z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.12); } }
+        .fp-card {
+          width: 100%;
+          display: flex;
+          flex-direction: column;
+          flex-shrink: 0;
+        }
+        
+        .fp-card-link {
+          display: flex;
+          flex-direction: column;
+          text-decoration: none;
+          color: inherit;
+          width: 100%;
+        }
+
+        .fp-image-wrap {
+          position: relative;
+          width: 100%;
+          padding-bottom: 133.3333%;
+          background: #f7f7f7;
+          overflow: hidden;
+          border: 1px solid #f0f0f0; 
+          flex-shrink: 0;
+          box-sizing: border-box;
+        }
+
+        .fp-image {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center top; 
+          display: block;
+          transition: opacity 0.8s ease-in-out, transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        @media (hover: hover) {
+          .fp-card-link:hover .fp-image {
+            transform: scale(1.03);
+          }
+          .fp-card-link:hover .hover-overlay {
+            opacity: 1;
+          }
+          .fp-card-link:hover .explore-text {
+            transform: translateY(0);
+          }
+        }
+
+        .hover-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.25);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          z-index: 3; 
+        }
+
+        .explore-text {
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          transform: translateY(10px);
+          transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        .fp-soldout-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(255, 255, 255, 0.6);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 4;
+        }
+
+        .fp-soldout-label {
+          background: #1a1a1a;
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-size: 10px;
+          font-weight: 500;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          padding: 8px 16px;
+        }
+
+        .fp-info {
+          padding: 16px 4px 20px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          box-sizing: border-box;
+          gap: 8px; 
+        }
+
+        .fp-title {
+          font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.12em;
+          text-transform: uppercase;
+          color: #1a1a1a;
+          margin: 0;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          text-align: center;
+          width: 100%;
+        }
+
+        /* ✅ কালার বক্স (বর্গাকার) */
+        .color-swatches {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 5px;
+        }
+
+        .color-swatch-box {
+          width: 10px;
+          height: 10px;
+          border-radius: 0; 
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          display: block;
+        }
+
+        @media (min-width: 768px) {
+          .fp-info { padding: 20px 4px 24px; }
+          .fp-title { font-size: 12px; }
+          .color-swatch-box { width: 12px; height: 12px; }
+        }
       `}</style>
     </div>
   );
