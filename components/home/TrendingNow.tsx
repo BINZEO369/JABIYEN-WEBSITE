@@ -83,7 +83,7 @@ export default function TrendingNow({ products = [] }) {
     if (!el) return;
     const card = el.querySelector('.trending-card');
     const cardW = card ? card.offsetWidth : 500;
-    const gap = 16; // Reduced gap for mobile
+    const gap = 16; 
     el.scrollBy({ left: (cardW + gap) * direction, behavior: 'smooth' });
   };
 
@@ -121,8 +121,8 @@ export default function TrendingNow({ products = [] }) {
 
         {/* ✅ স্লাইডার কন্টেইনার */}
         <div className="tn-scroll" ref={scrollRef}>
-          {items.map(product => (
-            <Card key={product.id} product={product} />
+          {items.map((product, index) => (
+            <Card key={product.id} product={product} index={index} />
           ))}
         </div>
 
@@ -158,7 +158,6 @@ export default function TrendingNow({ products = [] }) {
           position: relative;
         }
 
-        /* ✅ শুধুমাত্র নিচের দিকের সাদা শ্যাডো (Bottom Fade) */
         .tn-header::after {
           content: '';
           position: absolute;
@@ -287,8 +286,9 @@ function Skeleton() {
         {[...Array(3)].map((_, i) => (
           <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360 }}>
             <div style={{ aspectRatio: '3/4', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-            <div style={{ padding: '16px 0', textAlign: 'center' }}>
-              <div style={{ height: 14, background: '#e5e5ea', width: '60%', margin: '0 auto', borderRadius: 4 }} />
+            <div style={{ padding: '16px 0', display: 'flex', justifyContent: 'space-between' }}>
+              <div style={{ height: 14, background: '#e5e5ea', width: '20%', borderRadius: 4 }} />
+              <div style={{ height: 14, background: '#e5e5ea', width: '50%', borderRadius: 4 }} />
             </div>
           </div>
         ))}
@@ -308,16 +308,19 @@ function Empty() {
   );
 }
 
-function Card({ product }) {
+function Card({ product, index }) {
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
   const mainImg = product.img || product.image || product.image_url || '/placeholder.png';
+  
+  // Format number like 01, 02, 03...
+  const displayNumber = String(index + 1).padStart(2, '0');
 
   return (
     <div className="trending-card">
       <Link href={`/product/${slug}`} className="card-link">
         
-        {/* ✅ নিখুঁত সাইজের ইমেজ (অপশন পজিশন ঠিক করা হয়েছে) */}
+        {/* ✅ ইমেজ কন্টেইনার */}
         <div className="image-wrap">
           <img 
             src={mainImg} 
@@ -325,6 +328,12 @@ function Card({ product }) {
             className="product-image" 
             loading="lazy" 
           />
+          
+          {/* ✅ হোভার করলে 'EXPLORE' লেখা ভেসে উঠবে (ডেস্কটপ) */}
+          <div className="hover-overlay">
+            <span className="explore-text">Explore</span>
+          </div>
+
           {isOut && (
             <div className="soldout-overlay">
               <span className="soldout-badge">Sold Out</span>
@@ -332,9 +341,16 @@ function Card({ product }) {
           )}
         </div>
 
-        {/* ✅ বিশ্ব বিখ্যাত ব্র্যান্ডের মতো মিনিমাল টাইটেল */}
+        {/* ✅ এডিটোরিয়াল ইনফো (নাম্বার + টাইটেল + অ্যারো) */}
         <div className="info-wrap">
+          <span className="index-num">{displayNumber}</span>
           <h3 className="product-title">{product.title}</h3>
+          <span className="arrow-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+          </span>
         </div>
       </Link>
 
@@ -354,29 +370,62 @@ function Card({ product }) {
         .image-wrap {
           position: relative;
           width: 100%;
-          aspect-ratio: 3/4; /* ✅ ৩:৪ রেশিও (ফ্যাশন ব্র্যান্ড স্ট্যান্ডার্ড) */
+          aspect-ratio: 3/4; 
           background: #f7f7f7;
           overflow: hidden;
+          border: 1px solid #f0f0f0; /* ✅ হালকা বর্ডার */
         }
 
         .product-image {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center top; /* ✅ ছবির উপরের অংশ ফোকাসে থাকবে */
+          object-position: center top; 
           display: block;
           transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
-        /* হোভার করলে সুন্দর জুম ইফেক্ট */
-        .card-link:hover .product-image {
-          transform: scale(1.04);
+        /* ✅ Hover Overlay */
+        .hover-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.25); /* হালকা কালো শ্যাডো */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          z-index: 1;
+        }
+
+        .explore-text {
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          transform: translateY(10px);
+          transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        /* ডেস্কটপে Hover ইফেক্ট */
+        @media (hover: hover) {
+          .card-link:hover .product-image {
+            transform: scale(1.03);
+          }
+          .card-link:hover .hover-overlay {
+            opacity: 1;
+          }
+          .card-link:hover .explore-text {
+            transform: translateY(0);
+          }
         }
 
         .soldout-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(255, 255, 255, 0.5);
+          background: rgba(255, 255, 255, 0.6);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -394,27 +443,56 @@ function Card({ product }) {
           padding: 8px 16px;
         }
 
+        /* ✅ নতুন ইনফো স্টাইল (ইনডেক্স + টাইটেল + অ্যারো) */
         .info-wrap {
-          padding: 16px 8px 4px;
-          text-align: center;
+          padding: 16px 4px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+        }
+
+        .index-num {
+          font-family: 'Inter', sans-serif;
+          font-size: 10px;
+          font-weight: 500;
+          color: #999;
+          letter-spacing: 0.05em;
         }
 
         .product-title {
           font-family: 'Sora', 'Manrope', 'Inter', sans-serif;
-          font-size: 12px;
+          font-size: 11px;
           font-weight: 500;
-          letter-spacing: 0.15em;
+          letter-spacing: 0.12em;
           text-transform: uppercase;
           color: #1a1a1a;
           margin: 0;
           white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          text-align: center;
+          flex: 1;
+        }
+
+        .arrow-icon {
+          color: #1a1a1a;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.3s ease;
+        }
+
+        @media (hover: hover) {
+          .card-link:hover .arrow-icon {
+            transform: translateX(4px);
+          }
         }
 
         @media (min-width: 768px) {
-          .info-wrap { padding: 20px 8px 4px; }
-          .product-title { font-size: 13px; }
+          .info-wrap { padding: 20px 4px; }
+          .product-title { font-size: 12px; }
+          .index-num { font-size: 11px; }
         }
       `}</style>
     </div>
