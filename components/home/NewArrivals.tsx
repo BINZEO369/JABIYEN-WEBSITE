@@ -630,7 +630,7 @@ function NewArrivalCard({ product, colorCache, setColorCache }) {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center top;
+          object-position: 50% 0%;
           display: block;
           transition:
             opacity 0.8s ease-in-out,
