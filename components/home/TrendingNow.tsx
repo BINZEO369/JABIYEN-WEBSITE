@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import Link from 'next/link';
 
 export default function TrendingNow({ products = [] }) {
@@ -10,7 +10,7 @@ export default function TrendingNow({ products = [] }) {
   const [canScrollRight, setCanScrollRight] = useState(false);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [isScrollable, setIsScrollable] = useState(false);
-  const [colorCache, setColorCache] = useState({}); // ✅ কালার ক্যাশ করার জন্য নতুন স্টেট
+  const [colorCache, setColorCache] = useState({}); 
   const scrollRef = useRef(null);
 
   const maxProducts = 8;
@@ -323,10 +323,12 @@ function Empty() {
 
 function Card({ product, colorCache, setColorCache }) {
   const [colors, setColors] = useState([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isInView, setIsInView] = useState(false);
+  const cardRef = useRef(null);
   
   const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
-  const mainImg = product.img || product.image || product.image_url || '/placeholder.png';
 
   // ✅ কালার ফেচ করার লজিক
   useEffect(() => {
@@ -343,17 +345,66 @@ function Card({ product, colorCache, setColorCache }) {
       .catch(() => {});
   }, [slug, colorCache, setColorCache]);
 
+  // ✅ সব ইমেজ একসাথে করা (মেইন ইমেজ + কালার ইমেজ)
+  const allImages = useMemo(() => {
+    const imgs = [];
+    const main = product.img || product.image || product.image_url;
+    if (main) imgs.push(main);
+    
+    colors.forEach(c => {
+      if (c.color_image && !imgs.includes(c.color_image)) {
+        imgs.push(c.color_image);
+      }
+    });
+    
+    return imgs.length > 0 ? imgs : ['/placeholder.png'];
+  }, [product, colors]);
+
+  // ✅ স্ক্রিনে দৃশ্যমান কিনা তা চেক করা (Intersection Observer)
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0.5 } // ৫০% দৃশ্যমান হলে ট্রিগার হবে
+    );
+    
+    if (cardRef.current) observer.observe(cardRef.current);
+    
+    return () => observer.disconnect();
+  }, []);
+
+  // ✅ অটোমেটিক ইমেজ স্লাইডিং লজিক (প্রতি ৩ সেকেন্ড পর পর)
+  useEffect(() => {
+    let interval;
+    
+    // যদি স্ক্রিনে থাকে এবং একাধিক ছবি থাকে, তবেই স্লাইড শুরু হবে
+    if (isInView && allImages.length > 1) {
+      interval = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
+      }, 3000); // ৩০০০ মিলি সেকেন্ড = ৩ সেকেন্ড
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [isInView, allImages.length]);
+
   return (
-    <div className="trending-card">
+    <div className="trending-card" ref={cardRef}>
       <Link href={`/product/${slug}`} className="card-link">
         
         {/* ✅ ইমেজ বক্স */}
         <div className="image-wrap">
-          <img 
-            src={mainImg} 
-            alt={product.title || 'Product'} 
-            className="product-image" 
-          />
+          
+          {/* ✅ মাল্টিপল ইমেজ স্লাইডার (Crossfade Effect) */}
+          {allImages.map((img, idx) => (
+            <img 
+              key={idx}
+              src={img} 
+              alt={`${product.title || 'Product'} - Image ${idx + 1}`} 
+              className={`product-image ${idx === currentImageIndex ? 'active' : ''}`}
+              style={{ opacity: idx === currentImageIndex ? 1 : 0 }}
+            />
+          ))}
           
           <div className="hover-overlay">
             <span className="explore-text">Explore</span>
@@ -370,7 +421,6 @@ function Card({ product, colorCache, setColorCache }) {
         <div className="info-wrap">
           <h3 className="product-title">{product.title}</h3>
           
-          {/* ✅ একাধিক কালার থাকলে ছোট বর্গাকার বক্স দেখাবে */}
           {colors.length > 1 && (
             <div className="color-swatches">
               {colors.map((c, i) => (
@@ -402,7 +452,6 @@ function Card({ product, colorCache, setColorCache }) {
           width: 100%;
         }
 
-        /* ✅ ইমেজ বক্স: ১০০% নির্ভুল সাইজ */
         .image-wrap {
           position: relative;
           width: 100%;
@@ -414,6 +463,7 @@ function Card({ product, colorCache, setColorCache }) {
           box-sizing: border-box;
         }
 
+        /* ✅ মাল্টিপল ইমেজের জন্য CSS */
         .product-image {
           position: absolute;
           top: 0;
@@ -423,31 +473,7 @@ function Card({ product, colorCache, setColorCache }) {
           object-fit: cover;
           object-position: center top; 
           display: block;
-          transition: transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
-        }
-
-        /* ✅ Hover Overlay */
-        .hover-overlay {
-          position: absolute;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.25);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          opacity: 0;
-          transition: opacity 0.4s ease;
-          z-index: 1;
-        }
-
-        .explore-text {
-          color: #fff;
-          font-family: 'Sora', sans-serif;
-          font-size: 11px;
-          font-weight: 500;
-          letter-spacing: 0.2em;
-          text-transform: uppercase;
-          transform: translateY(10px);
-          transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+          transition: opacity 0.8s ease-in-out, transform 0.8s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
         @media (hover: hover) {
@@ -462,6 +488,29 @@ function Card({ product, colorCache, setColorCache }) {
           }
         }
 
+        .hover-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.25);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.4s ease;
+          z-index: 3; /* Overlay ইমেজের উপরে থাকবে */
+        }
+
+        .explore-text {
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-size: 11px;
+          font-weight: 500;
+          letter-spacing: 0.2em;
+          text-transform: uppercase;
+          transform: translateY(10px);
+          transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
         .soldout-overlay {
           position: absolute;
           inset: 0;
@@ -469,7 +518,7 @@ function Card({ product, colorCache, setColorCache }) {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 2;
+          z-index: 4;
         }
 
         .soldout-badge {
@@ -483,7 +532,6 @@ function Card({ product, colorCache, setColorCache }) {
           padding: 8px 16px;
         }
 
-        /* ✅ ইনফো স্টাইল (টাইটেল + কালার বক্স) */
         .info-wrap {
           padding: 16px 4px 20px;
           display: flex;
@@ -492,7 +540,7 @@ function Card({ product, colorCache, setColorCache }) {
           justify-content: center;
           flex-shrink: 0;
           box-sizing: border-box;
-          gap: 8px; /* টাইটেল এবং কালার বক্সের মাঝে গ্যাপ */
+          gap: 8px; 
         }
 
         .product-title {
@@ -510,7 +558,6 @@ function Card({ product, colorCache, setColorCache }) {
           width: 100%;
         }
 
-        /* ✅ কালার বক্সের স্টাইল (বর্গাকার) */
         .color-swatches {
           display: flex;
           flex-wrap: wrap;
@@ -521,7 +568,7 @@ function Card({ product, colorCache, setColorCache }) {
         .color-swatch-box {
           width: 10px;
           height: 10px;
-          border-radius: 0; /* বর্গাকার (Square) */
+          border-radius: 0; 
           border: 1px solid rgba(0, 0, 0, 0.15);
           display: block;
         }
