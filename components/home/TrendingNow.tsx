@@ -13,7 +13,7 @@ export default function TrendingNow({ products = [] }) {
   const [colorCache, setColorCache] = useState({}); 
   const scrollRef = useRef(null);
   
-  // ✅ অটো-স্ক্রল কন্ট্রোল করার জন্য নতুন রেফ
+  // ✅ অটো-স্ক্রল কন্ট্রোল করার জন্য রেফ
   const autoScrollRef = useRef(null);
   const userInteractedRef = useRef(false);
 
@@ -83,24 +83,21 @@ export default function TrendingNow({ products = [] }) {
     };
   }, [items]);
 
-  // ✅ অটোমেটিক স্ক্রলিং লজিক (শুধুমাত্র প্রথমবার)
+  // ✅ অটোমেটিক স্ক্রলিং লজিক (ডান থেকে বামে)
   useEffect(() => {
-    // যদি লোডিং শেষ হয়, প্রোডাক্ট থাকে এবং ইউজার আগে টাচ না করে থাকে
     if (loading || items.length === 0 || userInteractedRef.current) return;
     
     const el = scrollRef.current;
     if (!el) return;
 
     const maxScroll = el.scrollWidth - el.clientWidth;
-    if (maxScroll <= 0) return; // যদি স্ক্রল করার মতো জায়গা না থাকে
+    if (maxScroll <= 0) return; 
 
     autoScrollRef.current = setInterval(() => {
-      // যখন একদম শেষে পৌঁছে যাবে, তখন বন্ধ হয়ে যাবে
       if (el.scrollLeft >= maxScroll - 1) {
         clearInterval(autoScrollRef.current);
         return;
       }
-      // আস্তে আস্তে ডান থেকে বামে স্ক্রল হবে (1.5 পিক্সেল প্রতি 20ms)
       el.scrollLeft += 1.5; 
     }, 20);
 
@@ -119,7 +116,7 @@ export default function TrendingNow({ products = [] }) {
   };
 
   const scrollByCards = (direction) => {
-    stopAutoScroll(); // অ্যারো ক্লিক করলেও অটো স্ক্রল বন্ধ হবে
+    stopAutoScroll(); 
     const el = scrollRef.current;
     if (!el) return;
     const card = el.querySelector('.trending-card');
@@ -160,7 +157,7 @@ export default function TrendingNow({ products = [] }) {
           </button>
         )}
 
-        {/* ✅ স্লাইডার কন্টেইনার (এখানে ইউজার ইন্টারঅ্যাকশন লিসেনার যুক্ত করা হয়েছে) */}
+        {/* ✅ স্লাইডার কন্টেইনার */}
         <div 
           className="tn-scroll" 
           ref={scrollRef}
@@ -236,8 +233,6 @@ export default function TrendingNow({ products = [] }) {
           position: relative;
         }
 
-        /* ✅ অটো স্ক্রল ঠিকভাবে কাজ করার জন্য scroll-snap-type: none দেওয়া হলো। 
-           ইউজার টাচ করার পর আমরা চাইলে এটা চেঞ্জ করতে পারি, কিন্তু স্মুথ ফিলের জন্য none ভালো কাজ করে। */
         .tn-scroll {
           display: flex;
           gap: 16px;
@@ -332,7 +327,6 @@ export default function TrendingNow({ products = [] }) {
   );
 }
 
-// Skeleton, Empty, এবং Card কম্পোনেন্ট আগের মতোই থাকবে...
 function Skeleton() {
   return (
     <section className="tn-section" style={{ padding: '40px 0' }}>
@@ -414,13 +408,14 @@ function Card({ product, colorCache, setColorCache }) {
     return () => observer.disconnect();
   }, []);
 
+  // ✅ ইমেজ পরিবর্তনের সময় ২ সেকেন্ড (2000ms) করা হলো
   useEffect(() => {
     let interval;
     
     if (isInView && allImages.length > 1) {
       interval = setInterval(() => {
         setCurrentImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
-      }, 3000);
+      }, 2000); // ✅ এখানে ২০০০ দেওয়া হয়েছে
     }
     
     return () => {
