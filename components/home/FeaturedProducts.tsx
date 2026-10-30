@@ -47,6 +47,7 @@ export default function FeaturedProducts({ products = [] }) {
       </div>
 
       <div className="fp-grid-wrap">
+        {/* ✅ Flexbox ব্যবহার করা হয়েছে যাতে অসম সংখ্যক প্রোডাক্ট হলেও মাঝখানে থাকে */}
         <div className="fp-grid">
           {items.map(p => (
             <ProductCard key={p.id} product={p} />
@@ -94,39 +95,56 @@ export default function FeaturedProducts({ products = [] }) {
           display: block;
         }
 
-        /* ✅ গ্রিড কন্টেইনার */
+        /* ✅ কন্টেইনার */
         .fp-grid-wrap {
-          padding: 0 24px;
+          width: 100%;
           max-width: 1400px;
           margin: 0 auto;
+          padding: 0 24px;
+          box-sizing: border-box;
         }
 
+        /* ✅ Flexbox গ্রিড (মাঝখানে রাখার জন্য) */
         .fp-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr); /* মোবাইলে ২টি */
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center; /* এটি শেষ লাইনের প্রোডাক্টগুলোকে মাঝখানে রাখবে */
           gap: 16px;
+        }
+
+        /* মোবাইলে ২টি করে */
+        .fp-grid > :global(.fp-card) {
+          flex: 0 0 calc(50% - 8px);
+          max-width: calc(50% - 8px);
         }
 
         @media (min-width: 640px) {
           .fp-grid { gap: 20px; }
           .fp-grid-wrap { padding: 0 32px; }
+          .fp-grid > :global(.fp-card) {
+            flex: 0 0 calc(50% - 10px);
+            max-width: calc(50% - 10px);
+          }
         }
 
         @media (min-width: 768px) {
           .fp-section { padding: 0 0 60px; }
           .fp-header { height: 180px; margin: 30px 0 40px; }
           .fp-grid-wrap { padding: 0 48px; }
-          .fp-grid {
-            grid-template-columns: repeat(3, 1fr); /* ট্যাবে ৩টি */
-            gap: 24px;
+          .fp-grid { gap: 24px; }
+          /* ট্যাবে ৩টি করে */
+          .fp-grid > :global(.fp-card) {
+            flex: 0 0 calc(33.333% - 16px);
+            max-width: calc(33.333% - 16px);
           }
         }
 
         @media (min-width: 1024px) {
           .fp-header { height: 240px; }
-          .fp-grid {
-            grid-template-columns: repeat(4, 1fr); /* ডেক্সটপে ৪টি */
-            gap: 24px;
+          /* ডেক্সটপে ৪টি করে */
+          .fp-grid > :global(.fp-card) {
+            flex: 0 0 calc(25% - 18px);
+            max-width: calc(25% - 18px);
           }
         }
       `}</style>
@@ -138,9 +156,9 @@ function SectionSkeleton() {
   return (
     <section className="fp-section" style={{ padding: '40px 0' }}>
       <div className="fp-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16, padding: '0 24px' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 16, padding: '0 24px' }}>
         {[...Array(4)].map((_, i) => (
-          <div key={i} style={{ display: 'flex', flexDirection: 'column' }}>
+          <div key={i} style={{ flex: '0 0 calc(50% - 8px)', maxWidth: 'calc(50% - 8px)', display: 'flex', flexDirection: 'column' }}>
             <div style={{ position: 'relative', width: '100%', paddingBottom: '133.3333%', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
             <div style={{ padding: '16px 4px 20px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
               <div style={{ height: 14, background: '#e5e5ea', width: '60%', borderRadius: 4 }} />
@@ -267,6 +285,7 @@ function ProductCard({ product }) {
           display: flex;
           flex-direction: column;
           flex-shrink: 0;
+          box-sizing: border-box;
         }
         
         .fp-card-link {
