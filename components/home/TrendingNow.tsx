@@ -194,7 +194,7 @@ export default function TrendingNow({ products = [] }) {
           padding: 0 24px 20px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
-          align-items: flex-start; /* ✅ ফিক্স: সব কার্ড সমান লাইনে থাকবে */
+          align-items: stretch; /* ✅ ফিক্স: সব কার্ড সমান উচ্চতার হবে */
         }
         .tn-scroll::-webkit-scrollbar { display: none; }
 
@@ -203,8 +203,9 @@ export default function TrendingNow({ products = [] }) {
           flex: 0 0 72vw; 
           max-width: 360px;
           scroll-snap-align: start;
-          display: flex; /* ✅ ফ্লেক্স করা হলো যাতে ভেতরের জিনিস স্ট্রেচ না হয় */
+          display: flex; 
           flex-direction: column;
+          flex-shrink: 0; /* ✅ ফিক্স: কখনো ছোট হবে না */
         }
 
         /* ✅ ট্রেন লাইন প্রগ্রেস বার */
@@ -285,11 +286,11 @@ function Skeleton() {
   return (
     <section className="tn-section" style={{ padding: '40px 0' }}>
       <div className="tn-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
-      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px', alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px', alignItems: 'stretch' }}>
         {[...Array(3)].map((_, i) => (
-          <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360 }}>
-            <div style={{ aspectRatio: '3/4', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-            <div style={{ padding: '16px 0', display: 'flex', justifyContent: 'space-between' }}>
+          <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ position: 'relative', width: '100%', paddingBottom: '133.3333%', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
+            <div style={{ height: 56, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 4px' }}>
               <div style={{ height: 14, background: '#e5e5ea', width: '20%', borderRadius: 4 }} />
               <div style={{ height: 14, background: '#e5e5ea', width: '50%', borderRadius: 4 }} />
             </div>
@@ -322,13 +323,12 @@ function Card({ product, index }) {
     <div className="trending-card">
       <Link href={`/product/${slug}`} className="card-link">
         
-        {/* ✅ ইমেজ কন্টেইনার - এখানে সাইজ লক করা হয়েছে */}
+        {/* ✅ ইমেজ বক্স: padding-bottom ট্রিক দিয়ে সাইজ ১০০% লক করা হয়েছে */}
         <div className="image-wrap">
           <img 
             src={mainImg} 
             alt={product.title || 'Product'} 
             className="product-image" 
-            loading="lazy" 
           />
           
           <div className="hover-overlay">
@@ -342,7 +342,7 @@ function Card({ product, index }) {
           )}
         </div>
 
-        {/* ✅ এডিটোরিয়াল ইনফো (নাম্বার + টাইটেল + অ্যারো) */}
+        {/* ✅ এডিটোরিয়াল ইনফো */}
         <div className="info-wrap">
           <span className="index-num">{displayNumber}</span>
           <h3 className="product-title">{product.title}</h3>
@@ -360,6 +360,7 @@ function Card({ product, index }) {
           width: 100%;
           display: flex;
           flex-direction: column;
+          flex-shrink: 0;
         }
         
         .card-link {
@@ -370,18 +371,19 @@ function Card({ product, index }) {
           width: 100%;
         }
 
-        /* ✅ ইমেজ র‍্যাপার: সাইজ ফিক্স */
+        /* ✅ ইমেজ বক্স: padding-bottom ট্রিক (100% নির্ভুল সাইজ) */
         .image-wrap {
           position: relative;
           width: 100%;
-          aspect-ratio: 3/4; 
+          padding-bottom: 133.3333%; /* ✅ 3:4 Aspect Ratio (Height = Width × 1.333) */
           background: #f7f7f7;
           overflow: hidden;
           border: 1px solid #f0f0f0; 
-          flex-shrink: 0; /* ✅ কখনো ছোট হবে না */
+          flex-shrink: 0;
+          box-sizing: border-box;
         }
 
-        /* ✅ ইমেজ: একদম নিখুঁত সাইজ */
+        /* ✅ ইমেজ: একদম নিখুঁত ফিট */
         .product-image {
           position: absolute;
           top: 0;
@@ -451,14 +453,16 @@ function Card({ product, index }) {
           padding: 8px 16px;
         }
 
-        /* ✅ নতুন ইনফো স্টাইল (ইনডেক্স + টাইটেল + অ্যারো) */
+        /* ✅ ইনফো স্টাইল (Fixed Height) */
         .info-wrap {
-          padding: 16px 4px;
+          height: 56px;
+          padding: 0 4px;
           display: flex;
           align-items: center;
           justify-content: space-between;
           gap: 8px;
           flex-shrink: 0;
+          box-sizing: border-box;
         }
 
         .index-num {
@@ -499,7 +503,7 @@ function Card({ product, index }) {
         }
 
         @media (min-width: 768px) {
-          .info-wrap { padding: 20px 4px; }
+          .info-wrap { height: 64px; }
           .product-title { font-size: 12px; }
           .index-num { font-size: 11px; }
         }
