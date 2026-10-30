@@ -194,6 +194,7 @@ export default function TrendingNow({ products = [] }) {
           padding: 0 24px 20px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
+          align-items: flex-start; /* ✅ ফিক্স: সব কার্ড সমান লাইনে থাকবে */
         }
         .tn-scroll::-webkit-scrollbar { display: none; }
 
@@ -202,6 +203,8 @@ export default function TrendingNow({ products = [] }) {
           flex: 0 0 72vw; 
           max-width: 360px;
           scroll-snap-align: start;
+          display: flex; /* ✅ ফ্লেক্স করা হলো যাতে ভেতরের জিনিস স্ট্রেচ না হয় */
+          flex-direction: column;
         }
 
         /* ✅ ট্রেন লাইন প্রগ্রেস বার */
@@ -282,7 +285,7 @@ function Skeleton() {
   return (
     <section className="tn-section" style={{ padding: '40px 0' }}>
       <div className="tn-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
-      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px' }}>
+      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px', alignItems: 'flex-start' }}>
         {[...Array(3)].map((_, i) => (
           <div key={i} style={{ flex: '0 0 72vw', maxWidth: 360 }}>
             <div style={{ aspectRatio: '3/4', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
@@ -313,14 +316,13 @@ function Card({ product, index }) {
   const slug = (product.slug || product.title || 'product').toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g, '-').replace(/^-+|-+$/g, '');
   const mainImg = product.img || product.image || product.image_url || '/placeholder.png';
   
-  // Format number like 01, 02, 03...
   const displayNumber = String(index + 1).padStart(2, '0');
 
   return (
     <div className="trending-card">
       <Link href={`/product/${slug}`} className="card-link">
         
-        {/* ✅ ইমেজ কন্টেইনার */}
+        {/* ✅ ইমেজ কন্টেইনার - এখানে সাইজ লক করা হয়েছে */}
         <div className="image-wrap">
           <img 
             src={mainImg} 
@@ -329,7 +331,6 @@ function Card({ product, index }) {
             loading="lazy" 
           />
           
-          {/* ✅ হোভার করলে 'EXPLORE' লেখা ভেসে উঠবে (ডেস্কটপ) */}
           <div className="hover-overlay">
             <span className="explore-text">Explore</span>
           </div>
@@ -357,6 +358,8 @@ function Card({ product, index }) {
       <style jsx>{`
         .trending-card {
           width: 100%;
+          display: flex;
+          flex-direction: column;
         }
         
         .card-link {
@@ -367,16 +370,22 @@ function Card({ product, index }) {
           width: 100%;
         }
 
+        /* ✅ ইমেজ র‍্যাপার: সাইজ ফিক্স */
         .image-wrap {
           position: relative;
           width: 100%;
           aspect-ratio: 3/4; 
           background: #f7f7f7;
           overflow: hidden;
-          border: 1px solid #f0f0f0; /* ✅ হালকা বর্ডার */
+          border: 1px solid #f0f0f0; 
+          flex-shrink: 0; /* ✅ কখনো ছোট হবে না */
         }
 
+        /* ✅ ইমেজ: একদম নিখুঁত সাইজ */
         .product-image {
+          position: absolute;
+          top: 0;
+          left: 0;
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -389,7 +398,7 @@ function Card({ product, index }) {
         .hover-overlay {
           position: absolute;
           inset: 0;
-          background: rgba(0, 0, 0, 0.25); /* হালকা কালো শ্যাডো */
+          background: rgba(0, 0, 0, 0.25);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -409,7 +418,6 @@ function Card({ product, index }) {
           transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
         }
 
-        /* ডেস্কটপে Hover ইফেক্ট */
         @media (hover: hover) {
           .card-link:hover .product-image {
             transform: scale(1.03);
@@ -450,6 +458,7 @@ function Card({ product, index }) {
           align-items: center;
           justify-content: space-between;
           gap: 8px;
+          flex-shrink: 0;
         }
 
         .index-num {
