@@ -156,14 +156,14 @@ export default function TrendingNow({ products = [] }) {
         /* ✅ হেডার ইমেজ */
         .tn-header {
           width: 100%;
-          height: 140px;
+          height: 120px;
           margin: 20px 0 30px;
           background: #fff;
           display: block;
           position: relative;
         }
 
-        /* ✅ শুধুমাত্র নিচের দিকের সাদা শ্যাডো (Bottom Fade) - পাওয়ার কম */
+        /* ✅ শুধুমাত্র নিচের দিকের সাদা শ্যাডো (Bottom Fade) */
         .tn-header::after {
           content: '';
           position: absolute;
@@ -193,19 +193,20 @@ export default function TrendingNow({ products = [] }) {
         }
         .tn-scroll {
           display: flex;
-          gap: 24px;
+          gap: 16px;
           overflow-x: auto;
           scroll-snap-type: x mandatory;
-          scroll-padding-left: 32px;
-          padding: 0 32px 20px;
+          scroll-padding-left: 24px;
+          padding: 0 24px 20px;
           -webkit-overflow-scrolling: touch;
           scrollbar-width: none;
         }
         .tn-scroll::-webkit-scrollbar { display: none; }
 
+        /* ✅ কার্ডের সাইজ (ফ্যাশন ব্র্যান্ডের মতো সরু ও লম্বা) */
         .trending-card {
-          flex: 0 0 92vw;
-          max-width: 680px;
+          flex: 0 0 75vw;
+          max-width: 480px;
           scroll-snap-align: start;
         }
 
@@ -255,25 +256,28 @@ export default function TrendingNow({ products = [] }) {
           color: #fff;
           border-color: #1a1a1a;
         }
-        .tn-arrow-left { left: 32px; }
-        .tn-arrow-right { right: 32px; }
+        .tn-arrow-left { left: 24px; }
+        .tn-arrow-right { right: 24px; }
 
         @media (min-width: 640px) {
-          .trending-card { flex: 0 0 65vw; max-width: 580px; }
+          .tn-scroll { gap: 20px; scroll-padding-left: 32px; padding: 0 32px 20px; }
+          .trending-card { flex: 0 0 50vw; max-width: 420px; }
         }
 
         @media (min-width: 768px) {
           .tn-section { padding: 0 0 60px; }
-          .tn-header { height: 200px; margin: 30px 0 40px; }
-          .tn-scroll { gap: 30px; scroll-padding-left: 60px; padding: 0 60px 24px; }
-          .trending-card { flex: 0 0 54vw; max-width: 640px; }
+          .tn-header { height: 180px; margin: 30px 0 40px; }
+          .tn-scroll { gap: 24px; scroll-padding-left: 48px; padding: 0 48px 24px; }
+          .trending-card { flex: 0 0 320px; max-width: none; }
           .tn-arrow { display: flex; }
-          .tn-track-container { padding: 35px 60px 0; }
+          .tn-arrow-left { left: 32px; }
+          .tn-arrow-right { right: 32px; }
+          .tn-track-container { padding: 35px 48px 0; }
         }
 
         @media (min-width: 1024px) {
-          .tn-header { height: 280px; margin: 40px 0 50px; }
-          .trending-card { flex: 0 0 45vw; max-width: 700px; }
+          .tn-header { height: 240px; }
+          .trending-card { flex: 0 0 360px; }
         }
       `}</style>
     </section>
@@ -284,10 +288,10 @@ function Skeleton() {
   return (
     <section className="tn-section" style={{ padding: '40px 0' }}>
       <div className="tn-header" style={{ background: '#f0f0f0', margin: '20px 0 30px' }} />
-      <div style={{ display: 'flex', gap: 24, overflow: 'hidden', padding: '0 32px' }}>
+      <div style={{ display: 'flex', gap: 16, overflow: 'hidden', padding: '0 24px' }}>
         {[...Array(3)].map((_, i) => (
-          <div key={i} style={{ flex: '0 0 92vw', maxWidth: 680 }}>
-            <div style={{ aspectRatio: '4/5', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
+          <div key={i} style={{ flex: '0 0 75vw', maxWidth: 480 }}>
+            <div style={{ aspectRatio: '3/4', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
             <div style={{ padding: '20px 0', textAlign: 'center' }}>
               <div style={{ height: 14, background: '#e5e5ea', width: '60%', margin: '0 auto', borderRadius: 4 }} />
             </div>
@@ -360,13 +364,15 @@ function Card({ product, colorCache, setColorCache }) {
     >
       <Link href={`/product/${slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={(e) => { if (didSwipe.current) { e.preventDefault(); e.stopPropagation(); didSwipe.current = false; } }}>
         
-        {/* ✅ বড় এবং একই সাইজের ইমেজ */}
-        <div style={{ position: 'relative', aspectRatio: '4/5', background: '#f7f7f7', overflow: 'hidden' }}>
+        {/* ✅ বড় এবং ফ্যাশন ব্র্যান্ডের মতো ইমেজ */}
+        <div style={{ position: 'relative', aspectRatio: '3/4', background: '#f7f7f7', overflow: 'hidden' }}>
           {allImages.map((img, i) => (
             <img key={i} src={img} alt={product.title || ''} style={{
               position: 'absolute', top: 0,
               left: isDragging ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)` : `${(i - currentImage) * 100}%`,
-              width: '100%', height: '100%', objectFit: 'cover',
+              width: '100%', height: '100%', 
+              objectFit: 'cover',
+              objectPosition: 'center top', // ✅ ছবির উপরের অংশ (মাথা/পোশাক) কাটা যাবে না
               transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)', willChange: 'left',
               zIndex: i === currentImage ? 2 : 1
             }} />
@@ -379,20 +385,20 @@ function Card({ product, colorCache, setColorCache }) {
           )}
           
           {total > 1 && (
-            <div style={{ position: 'absolute', bottom: 10, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
+            <div style={{ position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6, zIndex: 4 }}>
               {allImages.map((_, i) => (
-                <span key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(i); }} style={{ width: i === currentImage ? 8 : 6, height: i === currentImage ? 8 : 6, borderRadius: '50%', background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)', cursor: 'pointer', transition: 'all 0.35s ease' }} />
+                <span key={i} onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigate(i); }} style={{ width: i === currentImage ? 8 : 6, height: i === currentImage ? 8 : 6, borderRadius: '50%', background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)', cursor: 'pointer', transition: 'all 0.35s ease', boxShadow: '0 0 4px rgba(0,0,0,0.1)' }} />
               ))}
             </div>
           )}
         </div>
 
         {/* ✅ বিশ্ব বিখ্যাত ফ্যাশন ব্র্যান্ডের মতো মিনিমাল টাইটেল */}
-        <div style={{ padding: '20px 4px 4px', textAlign: 'center' }}>
+        <div style={{ padding: '16px 4px 4px', textAlign: 'center' }}>
           <h3 style={{ 
             fontFamily: "'Sora', 'Manrope', 'Inter', sans-serif", 
             fontWeight: 400, 
-            fontSize: 14, 
+            fontSize: 13, 
             letterSpacing: '0.16em', 
             textTransform: 'uppercase', 
             color: '#1a1a1a', 
@@ -410,11 +416,11 @@ function Card({ product, colorCache, setColorCache }) {
       <style jsx>{`
         .trending-card:active { transform: scale(0.98); }
         @media (hover: hover) { 
-          .trending-card:hover { transform: translateY(-2px); z-index: 2; box-shadow: 0 8px 25px rgba(0,0,0,0.12); } 
+          .trending-card:hover { transform: translateY(-4px); z-index: 2; box-shadow: 0 12px 30px rgba(0,0,0,0.1); } 
         }
         @media (min-width: 768px) {
-          .trending-card div[style*="padding: '20px 4px 4px'"] { padding: 24px 4px 4px !important; }
-          .trending-card h3 { font-size: 15px !important; }
+          .trending-card div { padding-top: 20px !important; }
+          .trending-card h3 { font-size: 14px !important; }
         }
       `}</style>
     </div>
