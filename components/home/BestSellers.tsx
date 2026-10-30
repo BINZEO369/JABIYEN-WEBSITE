@@ -5,32 +5,23 @@ import Link from 'next/link';
 
 const MAX_PRODUCTS = 8;
 
-/* 🔥 module-level cache — component unmount হলেও থাকে, in-flight request dedupe করে */
+/* 🔥 Module-level cache — unmount হলেও থাকে, কখনো রি-ফেচ হয় না */
 const colorCache = new Map();
-const colorPromises = new Map();
 
-async function fetchColorsCached(slug) {
-  if (!slug) return [];
+async function fetchColors(slug, signal) {
   if (colorCache.has(slug)) return colorCache.get(slug);
-  if (colorPromises.has(slug)) return colorPromises.get(slug);
-
-  const promise = fetch(`/api/product-colors?slug=${encodeURIComponent(slug)}`)
-    .then((r) => (r.ok ? r.json() : []))
-    .then((d) => {
-      const arr = Array.isArray(d) ? d : [];
-      colorCache.set(slug, arr);
-      colorPromises.delete(slug);
-      return arr;
-    })
-    .catch(() => {
-      colorPromises.delete(slug);
-      return [];
-    });
-
-  colorPromises.set(slug, promise);
-  return promise;
+  const res = await fetch(
+    `/api/product-colors?slug=${encodeURIComponent(slug)}`,
+    { signal }
+  );
+  if (!res.ok) throw new Error(`Colors API failed: ${res.status}`);
+  const data = await res.json();
+  const colors = Array.isArray(data) ? data : [];
+  colorCache.set(slug, colors);
+  return colors;
 }
 
+/* ✅ সব জায়গায় একই লজিক */
 function isBest(p) {
   const v = p?.is_best;
   return v === true || v === 1 || v === 'true' || v === '1';
@@ -51,7 +42,10 @@ function getImageUrl(product) {
   return '/placeholder.png';
 }
 
-export default function BestSellers({ products = [] }) {
+export default function BestSellers({
+  products = [],
+  bannerSrc = '/homesection/Bestsellers.png', // ✅ কাস্টম ব্যানার path
+}) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,59 +93,220 @@ export default function BestSellers({ products = [] }) {
     };
   }, [products]);
 
-  if (loading) {
-    return (
-      <section style={{ padding: '32px 0', background: '#fff' }}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>Best Sellers</h2>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }}>
-          {[...Array(4)].map((_, i) => (
-            <div key={i} style={{ background: '#fff' }}>
-              <div style={{ aspectRatio: '4/5', background: 'linear-gradient(90deg, #e5e5ea 0%, #f0f0f5 40%, #e5e5ea 80%)', backgroundSize: '800px 100%', animation: 'shimmer 1.8s infinite linear' }} />
-              <div style={{ padding: '4px 6px' }}><div style={{ height: 13, background: '#e5e5ea', width: '85%', margin: '0 auto', borderRadius: 4 }} /></div>
-            </div>
-          ))}
-        </div>
-        <style>{`@keyframes shimmer { 0% { background-position: -468px 0; } 100% { background-position: 468px 0; } }`}</style>
-      </section>
-    );
-  }
-
-  if (!items.length) {
-    return (
-      <section style={{ padding: '32px 0', background: '#fff' }}>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
-          <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f' }}>Best Sellers</h2>
-        </div>
-        <div style={{ textAlign: 'center', padding: '60px 20px', maxWidth: 400, margin: '0 auto' }}>
-          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#ccc" strokeWidth="1.5" style={{ margin: '0 auto 16px', opacity: 0.4 }}>
-            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-          </svg>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#86868b' }}>No best sellers right now</p>
-          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 12, color: '#b0b0b5', marginTop: 6 }}>Top picks coming soon — stay tuned</p>
-        </div>
-      </section>
-    );
-  }
+  if (loading) return <SectionSkeleton bannerSrc={bannerSrc} />;
+  if (!items.length) return <EmptyState bannerSrc={bannerSrc} />;
 
   return (
-    <section style={{ padding: '32px 0', maxWidth: 1400, margin: '0 auto', background: '#fff' }}>
-      <div style={{ textAlign: 'center', marginBottom: 20, padding: '0 8px' }}>
-        <h2 style={{ fontFamily: "'Manrope', sans-serif", fontWeight: 700, fontSize: 22, color: '#1d1d1f', letterSpacing: '-0.3px' }}>Best Sellers</h2>
+    <section className="bs-section">
+      {/* ✅ Full-width edge-to-edge banner */}
+      <div className="bs-header">
+        <img
+          src={bannerSrc}
+          alt="Best Sellers"
+          className="bs-header-img"
+          loading="eager"
+          onError={(e) => {
+            e.currentTarget.style.opacity = '0';
+          }}
+        />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 1 }} className="bs-grid">
-        {items.map((product, idx) => (
-          <ProductCard
-            key={product.id || product.slug || idx}
-            product={product}
-          />
+
+      <div className="bs-grid-wrap">
+        <div className="bs-grid">
+          {items.map((p, i) => (
+            <ProductCard key={p.id || p.slug || i} product={p} />
+          ))}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .bs-section {
+          padding: 0 0 50px;
+          background: #fff;
+          overflow: hidden;
+        }
+        /* ✅ ব্যানার */
+        .bs-header {
+          width: 100%;
+          height: 120px;
+          margin: 20px 0 30px;
+          background: #fff;
+          display: block;
+          position: relative;
+        }
+        .bs-header::after {
+          content: '';
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          height: 40%;
+          background: linear-gradient(
+            to top,
+            rgba(255, 255, 255, 1) 0%,
+            rgba(255, 255, 255, 0.6) 40%,
+            rgba(255, 255, 255, 0) 100%
+          );
+          z-index: 2;
+          pointer-events: none;
+        }
+        .bs-header-img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center;
+          display: block;
+          transition: opacity 0.3s ease;
+        }
+        /* ✅ কন্টেইনার */
+        .bs-grid-wrap {
+          width: 100%;
+          max-width: 1400px;
+          margin: 0 auto;
+          padding: 0 16px;
+          box-sizing: border-box;
+        }
+        /* ✅ Flexbox — অসম সংখ্যায় শেষ লাইন সেন্টার হবে */
+        .bs-grid {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 8px;
+        }
+        .bs-grid > :global(.bs-card) {
+          flex: 0 0 calc(50% - 4px);
+          max-width: calc(50% - 4px);
+        }
+        @media (min-width: 640px) {
+          .bs-grid { gap: 10px; }
+          .bs-grid-wrap { padding: 0 24px; }
+          .bs-grid > :global(.bs-card) {
+            flex: 0 0 calc(50% - 5px);
+            max-width: calc(50% - 5px);
+          }
+        }
+        @media (min-width: 768px) {
+          .bs-section { padding: 0 0 60px; }
+          .bs-header { height: 180px; margin: 30px 0 40px; }
+          .bs-grid-wrap { padding: 0 32px; }
+          .bs-grid { gap: 12px; }
+          .bs-grid > :global(.bs-card) {
+            flex: 0 0 calc(33.333% - 8px);
+            max-width: calc(33.333% - 8px);
+          }
+        }
+        @media (min-width: 1024px) {
+          .bs-header { height: 240px; }
+          .bs-grid-wrap { padding: 0 48px; }
+          .bs-grid { gap: 16px; }
+          .bs-grid > :global(.bs-card) {
+            flex: 0 0 calc(25% - 12px);
+            max-width: calc(25% - 12px);
+          }
+        }
+      `}</style>
+    </section>
+  );
+}
+
+function SectionSkeleton({ bannerSrc }) {
+  return (
+    <section className="bs-section" style={{ padding: '40px 0' }}>
+      <div
+        className="bs-header"
+        style={{
+          height: 120,
+          margin: '20px 0 30px',
+          background: '#f0f0f0',
+          width: '100%',
+        }}
+      />
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          gap: 8,
+          padding: '0 16px',
+        }}
+      >
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            style={{
+              flex: '0 0 calc(50% - 4px)',
+              maxWidth: 'calc(50% - 4px)',
+              background: '#fff',
+            }}
+          >
+            <div
+              style={{
+                aspectRatio: '4 / 5',
+                background:
+                  'linear-gradient(90deg,#e5e5ea 0%,#f0f0f5 40%,#e5e5ea 80%)',
+                backgroundSize: '800px 100%',
+                animation: 'shimmer 1.8s infinite linear',
+              }}
+            />
+            <div style={{ padding: '4px 6px' }}>
+              <div
+                style={{
+                  height: 13,
+                  background: '#e5e5ea',
+                  width: '85%',
+                  margin: '0 auto',
+                  borderRadius: 4,
+                }}
+              />
+            </div>
+          </div>
         ))}
       </div>
-      <style jsx>{`
-        @media (min-width: 768px) { .bs-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-        @media (min-width: 1024px) { .bs-grid { grid-template-columns: repeat(4, 1fr) !important; } }
-      `}</style>
+      <style>{`@keyframes shimmer{0%{background-position:-468px 0}100%{background-position:468px 0}}`}</style>
+    </section>
+  );
+}
+
+function EmptyState({ bannerSrc }) {
+  return (
+    <section className="bs-section" style={{ padding: '40px 0' }}>
+      <div
+        className="bs-header"
+        style={{ height: 120, margin: '20px 0 30px', background: '#f0f0f0' }}
+      >
+        {bannerSrc && (
+          <img
+            src={bannerSrc}
+            alt="Best Sellers"
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              opacity: 0,
+            }}
+          />
+        )}
+      </div>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '60px 20px',
+          maxWidth: 400,
+          margin: '0 auto',
+        }}
+      >
+        <p
+          style={{
+            fontFamily: "'Sora', sans-serif",
+            fontSize: 14,
+            color: '#86868b',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+          }}
+        >
+          No best sellers right now
+        </p>
+      </div>
     </section>
   );
 }
@@ -164,39 +319,65 @@ function ProductCard({ product }) {
   const [currentImage, setCurrentImage] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [isInView, setIsInView] = useState(false);
+  const [isPaused, setIsPaused] = useState(false); // ✅ hover এ pause
+
   const startX = useRef(0);
   const didSwipe = useRef(false);
+  const cardRef = useRef(null);
 
-  const isOut = product.is_out_of_stock || product.stock === 0 || product.stock === '0';
+  const isOut =
+    product.is_out_of_stock || product.stock === 0 || product.stock === '0';
 
-  /* ✅ কালার ফেচ — cache + cancelled-guard */
+  /* ✅ কালার ফেচ (cached + abortable) */
   useEffect(() => {
-    let cancelled = false;
-    setColors(colorCache.get(slug) || []);
-    fetchColorsCached(slug).then((c) => {
-      if (!cancelled) setColors(c);
-    });
-    return () => { cancelled = true; };
+    const controller = new AbortController();
+    fetchColors(slug, controller.signal)
+      .then((c) => setColors(c))
+      .catch((err) => {
+        if (err.name !== 'AbortError') setColors([]);
+      });
+    return () => controller.abort();
   }, [slug]);
 
-  /* ✅ সব ইমেজ — memoized */
+  /* ✅ সব ইমেজ */
   const allImages = useMemo(() => {
     const imgs = [];
     if (mainImg !== '/placeholder.png') imgs.push(mainImg);
     colors.forEach((c) => {
-      if (c.color_image?.trim() && !imgs.includes(c.color_image)) {
+      if (c.color_image?.trim() && !imgs.includes(c.color_image))
         imgs.push(c.color_image);
-      }
     });
     return imgs.length > 0 ? imgs : ['/placeholder.png'];
   }, [mainImg, colors]);
 
   const totalImages = allImages.length;
 
-  /* ✅ ইমেজ লিস্ট বদলালে index clamp */
+  /* ✅ ইমেজ লিস্ট বদলালে index reset */
   useEffect(() => {
-    setCurrentImage((prev) => (prev >= totalImages ? 0 : prev));
+    setCurrentImage(0);
   }, [totalImages]);
+
+  /* ✅ IntersectionObserver (threshold 0.3) */
+  useEffect(() => {
+    const node = cardRef.current;
+    if (!node) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0.3 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  /* ✅ অটো-স্লাইড (hover/drag এ pause) */
+  useEffect(() => {
+    if (!isInView || totalImages <= 1 || isPaused || isDragging) return;
+    const interval = setInterval(() => {
+      setCurrentImage((prev) => (prev + 1) % totalImages);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isInView, totalImages, isPaused, isDragging]);
 
   const navigate = (i) => {
     if (i >= 0 && i < totalImages) {
@@ -205,15 +386,14 @@ function ProductCard({ product }) {
     }
   };
 
+  /* Swipe handlers */
   const onTouchStart = (e) => {
-    if (totalImages <= 1) return;
     startX.current = e.touches[0].clientX;
     didSwipe.current = false;
     setIsDragging(true);
   };
-
   const onTouchMove = (e) => {
-    if (!isDragging || totalImages <= 1) return;
+    if (!isDragging) return;
     const diff = e.touches[0].clientX - startX.current;
     if (Math.abs(diff) > 8) {
       e.preventDefault();
@@ -221,30 +401,30 @@ function ProductCard({ product }) {
     }
     setDragOffset(diff);
   };
-
   const onTouchEnd = () => {
-    if (!isDragging) return;
     setIsDragging(false);
     if (Math.abs(dragOffset) > 60) {
-      if (dragOffset < 0 && currentImage < totalImages - 1) navigate(currentImage + 1);
-      else if (dragOffset > 0 && currentImage > 0) navigate(currentImage - 1);
-      else setDragOffset(0);
-    } else {
-      setDragOffset(0);
+      if (dragOffset < 0 && currentImage < totalImages - 1)
+        navigate(currentImage + 1);
+      else if (dragOffset > 0 && currentImage > 0)
+        navigate(currentImage - 1);
     }
+    setDragOffset(0);
   };
 
   return (
     <div
-      style={{ position: 'relative', background: '#fff', cursor: 'pointer', overflow: 'hidden', transition: 'transform 0.3s' }}
+      ref={cardRef}
       className="bs-card"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
       onTouchStart={totalImages > 1 ? onTouchStart : undefined}
       onTouchMove={totalImages > 1 ? onTouchMove : undefined}
       onTouchEnd={totalImages > 1 ? onTouchEnd : undefined}
     >
       <Link
         href={`/product/${encodeURIComponent(slug)}`}
-        style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }}
+        className="bs-link"
         onClick={(e) => {
           if (didSwipe.current) {
             e.preventDefault();
@@ -253,80 +433,35 @@ function ProductCard({ product }) {
           }
         }}
       >
-        <div
-          style={{
-            position: 'relative',
-            aspectRatio: '4/5',
-            background: '#f5f5f7',
-            overflow: 'hidden',
-            marginBottom: 6,
-            touchAction: 'pan-y',
-            userSelect: 'none',
-          }}
-        >
+        <div className="bs-image-wrap">
           {allImages.map((img, i) => (
             <img
               key={i}
               src={img}
               alt={`${product.title || 'Product'} - Image ${i + 1}`}
+              className="bs-image"
               loading={i === 0 ? 'eager' : 'lazy'}
               decoding="async"
               style={{
-                position: 'absolute',
-                top: 0,
                 left: isDragging
                   ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)`
                   : `${(i - currentImage) * 100}%`,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                transition: isDragging ? 'none' : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)',
-                willChange: 'left',
+                transition: isDragging
+                  ? 'none'
+                  : 'left 0.45s cubic-bezier(0.25,0.1,0.25,1)',
                 zIndex: i === currentImage ? 2 : 1,
               }}
             />
           ))}
 
           {isOut && (
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                background: 'rgba(255,255,255,0.7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 6,
-              }}
-            >
-              <span
-                style={{
-                  background: '#1d1d1f',
-                  color: '#fff',
-                  fontFamily: "'Inter', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 9,
-                  textTransform: 'uppercase',
-                  padding: '5px 14px',
-                }}
-              >
-                Sold Out
-              </span>
+            <div className="bs-soldout-overlay">
+              <span className="bs-soldout-label">Sold Out</span>
             </div>
           )}
 
           {totalImages > 1 && (
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 10,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                display: 'flex',
-                gap: 6,
-                zIndex: 4,
-              }}
-            >
+            <div className="bs-dots">
               {allImages.map((_, i) => (
                 <span
                   key={i}
@@ -335,52 +470,25 @@ function ProductCard({ product }) {
                     e.stopPropagation();
                     navigate(i);
                   }}
-                  style={{
-                    width: i === currentImage ? 8 : 6,
-                    height: i === currentImage ? 8 : 6,
-                    borderRadius: '50%',
-                    background: i === currentImage ? '#fff' : 'rgba(255,255,255,0.55)',
-                    cursor: 'pointer',
-                    transition: 'all 0.35s ease',
-                  }}
+                  className={`bs-dot ${i === currentImage ? 'is-active' : ''}`}
                 />
               ))}
             </div>
           )}
         </div>
 
-        <div style={{ padding: '4px 6px 6px' }}>
-          <h3
-            style={{
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 600,
-              fontSize: 12,
-              color: '#1d1d1f',
-              lineHeight: 1.35,
-              textAlign: 'center',
-              display: '-webkit-box',
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: 'vertical',
-              overflow: 'hidden',
-              margin: 0,
-            }}
-          >
-            {product.title}
-          </h3>
+        <div className="bs-info">
+          <h3 className="bs-title">{product.title}</h3>
+
+          {/* ✅ কালার swatch — বর্গ (border-radius:0) */}
           {colors.length > 0 && (
-            <div style={{ display: 'flex', gap: 5, justifyContent: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+            <div className="bs-swatches">
               {colors.map((c, i) => (
                 <span
                   key={i}
                   title={c.color_name}
-                  style={{
-                    width: 11,
-                    height: 11,
-                    borderRadius: '50%',
-                    backgroundColor: c.color_code || '#ccc',
-                    border: '1px solid rgba(0,0,0,0.08)',
-                    cursor: 'pointer',
-                  }}
+                  className="bs-swatch-box"
+                  style={{ backgroundColor: c.color_code || '#ccc' }}
                 />
               ))}
             </div>
@@ -389,13 +497,131 @@ function ProductCard({ product }) {
       </Link>
 
       <style jsx>{`
-        .bs-card:active { transform: scale(0.98); }
+        .bs-card {
+          position: relative;
+          background: #fff;
+          cursor: pointer;
+          overflow: hidden;
+          transition: transform 0.3s;
+          display: flex;
+          flex-direction: column;
+        }
+        .bs-card:active {
+          transform: scale(0.98);
+        }
         @media (hover: hover) {
           .bs-card:hover {
             transform: translateY(-2px);
             z-index: 2;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
           }
+        }
+        .bs-link {
+          text-decoration: none;
+          color: inherit;
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+        }
+        .bs-image-wrap {
+          position: relative;
+          aspect-ratio: 4 / 5;
+          background: #f5f5f7;
+          overflow: hidden;
+          margin-bottom: 6px;
+          touch-action: pan-y;
+          user-select: none;
+        }
+        .bs-image {
+          position: absolute;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          object-position: center top;
+          will-change: left;
+          display: block;
+        }
+        .bs-soldout-overlay {
+          position: absolute;
+          inset: 0;
+          background: rgba(255, 255, 255, 0.7);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 6;
+        }
+        .bs-soldout-label {
+          background: #1d1d1f;
+          color: #fff;
+          font-family: 'Sora', sans-serif;
+          font-weight: 700;
+          font-size: 9px;
+          letter-spacing: 0.15em;
+          text-transform: uppercase;
+          padding: 5px 14px;
+        }
+        .bs-dots {
+          position: absolute;
+          bottom: 10px;
+          left: 50%;
+          transform: translateX(-50%);
+          display: flex;
+          gap: 6px;
+          z-index: 4;
+        }
+        .bs-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.55);
+          cursor: pointer;
+          transition: all 0.35s ease;
+          display: block;
+        }
+        .bs-dot.is-active {
+          width: 8px;
+          height: 8px;
+          background: #fff;
+        }
+        .bs-info {
+          padding: 4px 6px 6px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 6px;
+        }
+        .bs-title {
+          font-family: 'Sora', 'Inter', sans-serif;
+          font-weight: 600;
+          font-size: 12px;
+          color: #1d1d1f;
+          line-height: 1.35;
+          text-align: center;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+          margin: 0;
+          width: 100%;
+        }
+        .bs-swatches {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: center;
+          gap: 5px;
+        }
+        /* ✅ বর্গাকার কালার swatch */
+        .bs-swatch-box {
+          width: 10px;
+          height: 10px;
+          border-radius: 0;
+          border: 1px solid rgba(0, 0, 0, 0.15);
+          display: block;
+        }
+        @media (min-width: 768px) {
+          .bs-title { font-size: 13px; }
+          .bs-swatch-box { width: 12px; height: 12px; }
         }
       `}</style>
     </div>
