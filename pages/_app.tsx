@@ -21,6 +21,15 @@ export default function App({ Component, pageProps }) {
         <meta name="author" content="BINZEO" />
         <meta name="robots" content="index, follow" />
         <meta name="theme-color" content="#ffffff" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function () {
+            try {
+              document.documentElement.dataset.theme = localStorage.getItem('jabiyen_theme') === 'dark' ? 'dark' : 'light';
+            } catch (e) {
+              document.documentElement.dataset.theme = 'light';
+            }
+          })();
+        ` }} />
 
         <link rel="canonical" href="https://jabiyen-website.vercel.app/" />
         <link rel="icon" type="image/png" sizes="32x32" href="/logo.png" />
@@ -112,6 +121,73 @@ export default function App({ Component, pageProps }) {
         .cookie-btn.decline { background: transparent; color: #a1a1a6; border: 1px solid #48484a; }
         @media (max-width: 767px) { .carousel-container { padding: 0 20px; } .carousel-section { padding: 32px 0; } .carousel-nav { display: none; } :root { --card-width: 220px; --card-gap: 12px; } }
         @media (min-width: 1400px) { :root { --card-width: 300px; --card-gap: 20px; } }
+
+        /* Appearance theme: layout, spacing, typography and component structure stay unchanged. */
+        html[data-theme="dark"] { color-scheme: dark; }
+        html[data-theme="dark"] body,
+        html[data-theme="dark"] main,
+        html[data-theme="dark"] .page-section,
+        html[data-theme="dark"] section,
+        html[data-theme="dark"] article,
+        html[data-theme="dark"] .carousel-section,
+        html[data-theme="dark"] .carousel-card,
+        html[data-theme="dark"] .carousel-card .card-body {
+          background-color: #111214 !important;
+          color: #f5f5f7 !important;
+        }
+        html[data-theme="dark"] .carousel-card .card-img,
+        html[data-theme="dark"] .carousel-card .card-soldout-overlay {
+          background-color: #1b1c20 !important;
+        }
+        html[data-theme="dark"] h1,
+        html[data-theme="dark"] h2,
+        html[data-theme="dark"] h3,
+        html[data-theme="dark"] h4,
+        html[data-theme="dark"] h5,
+        html[data-theme="dark"] h6,
+        html[data-theme="dark"] p,
+        html[data-theme="dark"] span,
+        html[data-theme="dark"] label,
+        html[data-theme="dark"] a,
+        html[data-theme="dark"] li,
+        html[data-theme="dark"] dt,
+        html[data-theme="dark"] dd,
+        html[data-theme="dark"] .card-title,
+        html[data-theme="dark"] .card-price,
+        html[data-theme="dark"] .card-category,
+        html[data-theme="dark"] .section-title {
+          color: #f5f5f7 !important;
+        }
+        html[data-theme="dark"] input,
+        html[data-theme="dark"] textarea,
+        html[data-theme="dark"] select,
+        html[data-theme="dark"] button {
+          background-color: #1d1f24 !important;
+          color: #f5f5f7 !important;
+          border-color: #3a3d45 !important;
+        }
+        html[data-theme="dark"] input::placeholder,
+        html[data-theme="dark"] textarea::placeholder { color: #9297a3 !important; }
+        html[data-theme="dark"] [style*="border"] { border-color: #343740 !important; }
+        html[data-theme="dark"] .glass-nav {
+          background: rgba(17,18,20,0.82) !important;
+          border-bottom-color: rgba(255,255,255,0.10) !important;
+          box-shadow: 0 4px 30px rgba(0,0,0,0.25) !important;
+        }
+        html[data-theme="dark"] .menu-drawer {
+          background: rgba(25,27,32,0.94) !important;
+          border-left-color: rgba(255,255,255,0.12) !important;
+          box-shadow: -20px 0 60px rgba(0,0,0,0.35) !important;
+        }
+        html[data-theme="dark"] .menu-drawer .menu-theme-control {
+          background: transparent !important;
+          border-color: rgba(255,255,255,0.10) !important;
+        }
+        .menu-theme-toggle { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid #e5e5e5; border-radius: 999px; background: #f5f5f7; }
+        .menu-theme-toggle button { padding: 7px 10px; border: 0; border-radius: 999px; background: transparent; color: #3a3a3c; font: 600 10px/1 'Manrope', sans-serif; cursor: pointer; }
+        .menu-theme-toggle button.active { background: #1d1d1f; color: #fff; }
+        html[data-theme="dark"] .menu-theme-toggle { border-color: #3a3d45; background: #111214; }
+        html[data-theme="dark"] .menu-theme-toggle button.active { background: #f5f5f7 !important; color: #111214 !important; }
       `}</style>
 
       <CurrencyProvider>
