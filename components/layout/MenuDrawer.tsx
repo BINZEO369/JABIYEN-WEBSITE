@@ -35,17 +35,6 @@ export default function MenuDrawer({ isOpen, onClose }) {
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
   const [openSubmenus, setOpenSubmenus] = useState({});
-  const [theme, setTheme] = useState('light');
-
-  useEffect(() => {
-    setTheme(localStorage.getItem('jabiyen_theme') === 'dark' ? 'dark' : 'light');
-  }, []);
-
-  const changeTheme = (nextTheme) => {
-    setTheme(nextTheme);
-    localStorage.setItem('jabiyen_theme', nextTheme);
-    document.documentElement.dataset.theme = nextTheme;
-  };
 
   useEffect(() => {
     async function fetchData() {
@@ -214,7 +203,7 @@ export default function MenuDrawer({ isOpen, onClose }) {
         transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
         display: 'flex', flexDirection: 'column',
         boxShadow: '-20px 0 60px rgba(0,0,0,0.03)'
-      }} className="menu-drawer">
+      }}>
         {/* Header */}
         <div style={{
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -278,21 +267,6 @@ export default function MenuDrawer({ isOpen, onClose }) {
               </Link>
             );
           })}
-        </div>
-
-        {/* Appearance */}
-        <div className="menu-theme-control" style={{ padding: '0 24px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <span style={{ fontFamily: "'Manrope', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', color: '#3a3a3c' }}>Appearance</span>
-            <div className="menu-theme-toggle" role="group" aria-label="Appearance">
-              <button type="button" onClick={() => changeTheme('light')} className={theme === 'light' ? 'active' : ''} aria-pressed={theme === 'light'}>
-                <span aria-hidden="true">☀</span> Light
-              </button>
-              <button type="button" onClick={() => changeTheme('dark')} className={theme === 'dark' ? 'active' : ''} aria-pressed={theme === 'dark'}>
-                <span aria-hidden="true">☾</span> Dark
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Footer */}
