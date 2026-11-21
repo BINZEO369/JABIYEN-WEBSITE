@@ -113,8 +113,9 @@ export default function App({ Component, pageProps }) {
         /* Desktop-only product media guard: preserve the existing mobile/tablet layout. */
         @media (min-width: 1024px) {
           .na-header {
-            height: clamp(260px, 22vw, 360px) !important;
-            max-height: 360px;
+            height: auto !important;
+            aspect-ratio: 1570 / 1002;
+            max-height: none;
           }
           .na-card,
           .trending-card {

@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 export default function HeroBanner({ slides = [] }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [currentImageRatio, setCurrentImageRatio] = useState(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const slideIntervalRef = useRef(null);
   const containerRef = useRef(null);
@@ -63,6 +64,12 @@ export default function HeroBanner({ slides = [] }) {
   if (!slides.length) return null;
 
   const current = slides[currentSlide];
+  const isDesktop = typeof window !== 'undefined' && window.innerWidth > 1024;
+  const responsiveHeight = isDesktop && currentImageRatio
+    ? `calc(100vw / ${currentImageRatio})`
+    : typeof window !== 'undefined' && window.innerWidth <= 480 ? 750 :
+      typeof window !== 'undefined' && window.innerWidth <= 768 ? 850 :
+      typeof window !== 'undefined' && window.innerWidth <= 1024 ? 700 : 900;
 
   return (
     <>
@@ -75,9 +82,7 @@ export default function HeroBanner({ slides = [] }) {
         onTouchEnd={handleTouchEnd}
         style={{
           position: 'relative', width: '100%', overflow: 'hidden', background: '#fff',
-          height: typeof window !== 'undefined' && window.innerWidth <= 480 ? 750 :
-                 typeof window !== 'undefined' && window.innerWidth <= 768 ? 850 :
-                 typeof window !== 'undefined' && window.innerWidth <= 1024 ? 700 : 900
+          height: responsiveHeight
         }}
       >
         {/* Slides */}
@@ -98,6 +103,11 @@ export default function HeroBanner({ slides = [] }) {
               style={{
                 width: '100%', height: '100%', objectFit: 'cover',
                 animation: index === currentSlide ? 'heroZoom 20s ease-in-out infinite alternate' : 'none',
+              }}
+              onLoad={(e) => {
+                if (index === currentSlide && e.currentTarget.naturalWidth && e.currentTarget.naturalHeight) {
+                  setCurrentImageRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight);
+                }
               }}
             />
           </div>
