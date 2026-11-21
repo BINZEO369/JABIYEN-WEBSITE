@@ -203,7 +203,6 @@ export default function BestSellers({
             flex: 0 0 calc(25% - 12px);
             max-width: calc(25% - 12px);
           }
-          .bs-image { object-fit: contain; background: #fff; }
         }
       `}</style>
     </section>

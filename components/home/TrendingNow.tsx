@@ -320,8 +320,7 @@ export default function TrendingNow({ products = [] }) {
 
         @media (min-width: 1024px) {
           .tn-header { height: 240px; }
-          .trending-card { flex: 0 0 300px; }
-          .product-image { object-fit: contain; background: #fff; }
+          .trending-card { flex: 0 0 360px; }
         }
       `}</style>
     </section>

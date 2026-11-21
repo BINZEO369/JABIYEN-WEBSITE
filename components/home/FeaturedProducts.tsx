@@ -146,7 +146,6 @@ export default function FeaturedProducts({ products = [] }) {
             flex: 0 0 calc(25% - 18px);
             max-width: calc(25% - 18px);
           }
-          .fp-image { object-fit: contain; background: #fff; }
         }
       `}</style>
     </section>

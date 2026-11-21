@@ -45,10 +45,7 @@ export default function LimitedEdition({ products = [] }) {
       </div>
       <style jsx>{`
         @media (min-width: 768px) { .le-grid { grid-template-columns: repeat(3, 1fr) !important; } }
-        @media (min-width: 1024px) {
-          .le-grid { grid-template-columns: repeat(4, 1fr) !important; }
-          :global(.le-image) { object-fit: contain !important; background: #2d2d2f; }
-        }
+        @media (min-width: 1024px) { .le-grid { grid-template-columns: repeat(4, 1fr) !important; } }
       `}</style>
     </section>
   );
@@ -137,7 +134,7 @@ function Card({ product, colorCache, setColorCache }) {
       <Link href={`/product/${slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', flexDirection: 'column', height: '100%' }} onClick={(e) => { if (didSwipe.current) { e.preventDefault(); e.stopPropagation(); didSwipe.current = false; } }}>
         <div style={{ position: 'relative', aspectRatio: '4/5', background: '#2d2d2f', overflow: 'hidden', marginBottom: 6 }}>
           {allImages.map((img, i) => (
-            <img key={i} src={img} alt={product.title || ''} className="le-image" style={{
+            <img key={i} src={img} alt={product.title || ''} style={{
               position: 'absolute', top: 0,
               left: isDragging ? `calc(${(i - currentImage) * 100}% + ${dragOffset}px)` : `${(i - currentImage) * 100}%`,
               width: '100%', height: '100%', objectFit: 'cover',
