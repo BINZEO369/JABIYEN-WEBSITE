@@ -1163,6 +1163,7 @@ export default function ProductPage() {
             }
             .product-hero { height: auto; min-height: 500px; max-height: none; border-radius: 4px; }
             .product-hero img { max-height: 80vh; }
+            .complete-look-image-wrap .product-image { object-fit: contain !important; background: #fff; }
             .full-width-section { grid-column: 1 / -1; width: 100%; margin-top: 20px; }
             .mobile-video-section, .mobile-banner-section, .desktop-full-width-buttons { grid-column: 1 / -1; width: 100%; }
             .video-section { min-height: 560px; }
