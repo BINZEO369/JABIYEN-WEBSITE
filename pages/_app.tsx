@@ -110,6 +110,32 @@ export default function App({ Component, pageProps }) {
         .cookie-btn { padding: 10px 24px; border-radius: 50px; font-size: 11px; font-weight: 700; text-transform: uppercase; cursor: pointer; border: none; }
         .cookie-btn.accept { background: #007aff; color: white; }
         .cookie-btn.decline { background: transparent; color: #a1a1a6; border: 1px solid #48484a; }
+        /* Desktop-only product media guard: preserve the existing mobile/tablet layout. */
+        @media (min-width: 1024px) {
+          .na-header {
+            height: clamp(260px, 22vw, 360px) !important;
+            max-height: 360px;
+          }
+          .na-card,
+          .trending-card {
+            flex-basis: clamp(260px, 22vw, 320px) !important;
+          }
+          .na-image,
+          .product-image,
+          .fp-image,
+          .bs-image,
+          .os-card img,
+          .le-card img,
+          .carousel-card .card-img img {
+            object-fit: contain !important;
+            object-position: center !important;
+            background: #fff;
+          }
+          .le-card img { background: #2d2d2f; }
+          .carousel-card .card-img {
+            max-height: min(68vh, 560px);
+          }
+        }
         @media (max-width: 767px) { .carousel-container { padding: 0 20px; } .carousel-section { padding: 32px 0; } .carousel-nav { display: none; } :root { --card-width: 220px; --card-gap: 12px; } }
         @media (min-width: 1400px) { :root { --card-width: 300px; --card-gap: 20px; } }
       `}</style>
